@@ -1,0 +1,32 @@
+# Code Review Checklist
+
+- [ ] timer.ts 模块独立可加载，`Timer.init()` 正常工作
+- [ ] 计时器正向计时正确（每 100ms 更新显示）
+- [ ] 时/分/秒设置功能正确（+- 按钮、输入框、进位/借位）
+- [ ] 进度条在 targetTime > 0 时正常更新百分比
+- [ ] 开始/暂停/重置按钮状态切换正确
+- [ ] random-selector.ts 模块独立可加载
+- [ ] 选项添加（按钮 + Enter 键）和删除功能正常
+- [ ] 随机抽取功能正常（随机选一项并显示）
+- [ ] 清空选项功能正常（含 confirm）
+- [ ] .txt/.md 文件导入功能正常（文本分行填充）
+- [ ] .docx 文件导入功能正常（mammoth 解析后填充）
+- [ ] mammoth CDN 失败时自动回退到本地 public/libs/mammoth/
+- [ ] 不支持的格式显示错误提示
+- [ ] 选项卡切换（计时器 ↔ 随机选择器）正常
+- [ ] 切换选项卡计时器状态保持一致
+- [ ] 键盘 ArrowLeft/ArrowRight 切换选项卡
+- [ ] markdown-renderer.ts 模块使用 npm import（非 CDN 加载）
+- [ ] Markdown 输入后点击渲染，预览区正确显示
+- [ ] 代码块语法高亮（highlight.js）正常
+- [ ] 数学公式渲染（KaTeX 行内 $ 和块级 $$）正常
+- [ ] 图片自动添加 caption（从 alt 属性提取）
+- [ ] 折叠/展开预览功能正常（折叠显示摘要 + 渐变遮罩）
+- [ ] 导出 HTML 功能正常（下载独立 HTML 文件）
+- [ ] 复制 HTML 功能正常（clipboard API）
+- [ ] 加载示例功能正常
+- [ ] 清空功能正常
+- [ ] 快捷键：Ctrl+Enter 渲染、Ctrl+S 导出
+- [ ] 工具页专属样式不污染其他页面
+- [ ] `npm run build` 零错误零警告
+- [ ] 旧 `timetable.html` 和 `markdown-to-html-tool.html` 未被修改

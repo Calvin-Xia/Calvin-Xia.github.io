@@ -1,0 +1,27 @@
+# Code Review Checklist
+
+- [ ] `src/content/config.ts` 定义 4 个集合 schema，`npm run dev` 无类型错误
+- [ ] 6 篇 .md 文件 frontmatter 字段齐全（title, date, excerpt, category, tags）
+- [ ] frontmatter 中 `date` 格式为 `YYYY-MM-DD`
+- [ ] frontmatter 中 `tags` 为数组格式
+- [ ] works/tools/updates JSON 文件与 schema 定义一致
+- [ ] `articles/` 列表页显示所有 6 篇文章
+- [ ] 文章按日期降序排列
+- [ ] 分类过滤按钮正常（点击后仅显示对应分类文章）
+- [ ] 标签过滤按钮正常（点击后仅显示含对应标签文章）
+- [ ] 分类和标签可组合过滤
+- [ ] 搜索框输入关键词后显示建议下拉
+- [ ] 搜索建议最多 6 条，关键词高亮显示
+- [ ] 搜索结果显示类型 badge + 标题 + 摘要 + 标签 + 日期
+- [ ] 搜索时分类/标签过滤器隐藏
+- [ ] 清空搜索框恢复文章列表视图
+- [ ] 键盘上下键切换搜索建议，Enter 跳转，Escape 关闭
+- [ ] `articles/20260411-ai-reliance/` 详情页文章内容完整
+- [ ] 每篇文章详情页 Markdown 渲染样式与 global.css 匹配
+- [ ] 详情页含 "← 返回文章列表" 链接
+- [ ] 详情页显示日期、分类、标签信息
+- [ ] `updates/fingerprint-app-update-log/` 详情页内容完整
+- [ ] 首页最近更新区域显示 4 条内容卡片
+- [ ] 最近更新卡片按优先级和日期排序
+- [ ] `npm run build` 零错误零警告
+- [ ] 旧文件未被修改

@@ -1,0 +1,40 @@
+# Code Review Checklist
+
+- [ ] 根目录 8 个 `.html` 文件已删除
+- [ ] `blog/` 目录 6 个文章 `.html` 文件已删除
+- [ ] `blog/convert.py` 已删除
+- [ ] `blog/blog-files.json` 和 `blog/blog-metadata.json` 已删除
+- [ ] `blog/README.md`、`blog/移动端适配说明.md`、`blog/blog-files-example.json`、`blog/blog-metadata-example.json` 保留
+- [ ] `css/` 目录不存在
+- [ ] `js/` 目录不存在
+- [ ] `content/` 目录不存在
+- [ ] `scripts/` 目录（Python）不存在
+- [ ] `UpdateLog/` 目录不存在
+- [ ] `libs/` 仅保留 `mammoth/mammoth.browser.min.js`
+- [ ] `public/about.html` 重定向到 `/about/`
+- [ ] `public/Works.html` 重定向到 `/works/`
+- [ ] `public/timetable.html` 重定向到 `/tools/`
+- [ ] `public/statement.html` 重定向到 `/articles/`
+- [ ] `public/markdown-to-html-tool.html` 重定向到 `/markdown-tool/`
+- [ ] `public/styleguide.html` 重定向到 `/styleguide/`
+- [ ] `public/blog/` 下 6 个重定向文件正确
+- [ ] `public/UpdateLog/fingerprint-app-update-log.html` 重定向正确
+- [ ] 每个重定向文件包含 `<link rel="canonical">` 指向新 URL
+- [ ] `.github/workflows/content-check.yml` 已更新为 npm build
+- [ ] `README.md` 反映 Astro 工作流
+- [ ] `AGENTS.md` 项目规则已同步（如适用）
+- [ ] `npm run build` 零错误零警告
+- [ ] `dist/` 目录文件结构完整
+- [ ] `npm run preview` 所有页面可正常访问
+- [ ] 浏览器控制台无 JS 错误
+- [ ] 所有内部导航链接指向新 URL（无断链）
+- [ ] 首页视觉效果与原站一致
+- [ ] 关于页视觉效果一致
+- [ ] 作品页视觉效果一致
+- [ ] 工具页视觉效果和功能一致
+- [ ] 文章列表页功能一致（过滤 + 搜索）
+- [ ] 文章详情页内容完整
+- [ ] 404 页样式正确
+- [ ] Markdown 工具页功能完整
+- [ ] 移动端响应式正常
+- [ ] Lighthouse 可访问性评分 ≥ 迁移前

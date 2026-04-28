@@ -1,0 +1,22 @@
+# Code Review Checklist
+
+- [ ] `npm run dev` 启动无错误，首页可访问
+- [ ] `npm run build` 成功，无 TypeScript 错误，无构建警告
+- [ ] `src/styles/global.css` 与原 `css/style.css` 内容一致（语法无需修改）
+- [ ] CSS 变量（`:root` 中定义的所有变量）在 Astro 环境下正确生效
+- [ ] BaseLayout 正确渲染 `<html lang="zh-CN">`、`<head>` meta 标签、favicon 链接
+- [ ] Header 导航链接 5 项齐全且 `href` 指向正确路径
+- [ ] Footer 包含完整 ICP 备案和公安备案链接及图片
+- [ ] SkipLink 组件输出 `<a class="skip-link" href="#main-content">跳到主要内容</a>`
+- [ ] DynamicBackground 组件输出 `<div class="bg-img"></div>`
+- [ ] TransitionIndicator 组件输出带 spinner 的指示器 `<div>`
+- [ ] 首页英雄区域标题 "欢迎来到 Mr.Xia 的小站" 正确显示
+- [ ] 首页 `.current-time` 元素显示当前时间并每秒更新
+- [ ] 首页三张快速导航卡片布局正确
+- [ ] 首页最近更新区域存在（内容待后续 Phase 补充）
+- [ ] `aria-current="page"` 在首页导航中正确标记 "首页" 链接
+- [ ] `<body>` 内 `<div class="bg-img">` 动态背景正确显示
+- [ ] `astro.config.mjs` 中 `base: '/'` 已设置
+- [ ] `.gitignore` 已包含 `dist/` 和 `node_modules/`
+- [ ] `dist/` 构建输出包含 `index.html`，且可通过 `npm run preview` 正常访问
+- [ ] 旧文件（`index.html`、`css/`、`js/` 等）未被修改或删除
