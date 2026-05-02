@@ -1,230 +1,147 @@
 # 站点维护与界面更新说明
 
-这份文档描述 Phase 1 完成后，站点各个界面应该如何更新，以及哪些内容会自动同步到首页和搜索页。
+这份文档描述 Phase 2 完成后的维护方式。当前推荐维护入口是 Astro 内容集合；旧 HTML/JSON/Python 管线仍保留到 Phase 4 清理。
 
-## 一句话理解现在的结构
+## 当前内容结构
 
-- 原始内容源分两组：
-  - 博客文章：`blog/blog-metadata.json`、`blog/blog-files.json`
-  - 其他内容：`content/works-metadata.json`、`content/tools-metadata.json`、`content/update-logs-metadata.json`
-- 统一索引输出：`content/content-manifest.json`
-- 前端消费方式：
-  - `index.html` 用 manifest 渲染“最近更新”
-  - `statement.html` 用 manifest 做搜索，但只搜索 `article / work / tool`
+Astro 内容集合：
 
-## 先记住这 4 个命令
+- 博客文章：`src/content/blog/*.md`
+- 作品：`src/content/works/*.json`
+- 工具：`src/content/tools/*.json`
+- 更新日志：`src/content/updates/*.json`
+- Schema：`src/content.config.ts`
 
-在仓库根目录运行：
+辅助脚本：
 
-```bash
-python scripts/content_pipeline.py validate-blog
-python scripts/content_pipeline.py generate-manifest
-python scripts/content_pipeline.py check
-python scripts/content_pipeline.py add
-```
+- `tools/api-server.js`：本地 `/new-post/` API
+- `scripts/publish-post.js`：Obsidian→R2 发布管线
+- `scripts/post-utils.js`、`scripts/markdown-utils.js`、`scripts/slug.js`、`scripts/content-types.js`：发布和文件操作工具
 
-- `validate-blog`
-  - 只检查博客双 JSON 是否一致、字段是否完整、文章文件是否存在。
-- `generate-manifest`
-  - 重新汇总所有内容源，生成 `content/content-manifest.json`。
-- `check`
-  - 先校验博客，再生成 manifest。
-- `add`
-  - 通过控制台交互新增一条内容，并自动写回对应 JSON。
+旧内容层：
 
-## 各页面现在是怎么联动的
+- `blog/blog-files.json`
+- `blog/blog-metadata.json`
+- `content/*.json`
+- `content/content-manifest.json`
+- `scripts/content_pipeline.py`
 
-- 首页 `index.html`
-  - “最近更新”来自 `content/content-manifest.json`
-  - 会显示文章、作品、更新日志；不足时才用工具补位
-- 文章页 `statement.html`
-  - 默认显示文章列表
-  - 搜索时会搜索文章、作品、工具
-  - 更新日志不会出现在搜索结果里
-- 作品页 `Works.html`
-  - 作品条目本身仍然手动维护页面内容
-  - 但作品是否能被首页/搜索正确跳转，取决于 metadata 里的 `filePath`
-- 工具页 `timetable.html`、`markdown-to-html-tool.html`
-  - 页面内容仍然手动维护
-  - 是否能被搜索命中，取决于 `content/tools-metadata.json`
-- 更新日志页 `UpdateLog/*.html`
-  - 页面内容仍然手动维护
-  - 是否出现在首页最近更新，取决于 `content/update-logs-metadata.json`
+旧内容层继续服务旧页面；新功能优先使用 Astro 内容集合。
 
-## 最常见的 4 种更新方式
+## 页面联动
 
-### 1. 新增文章
+- 首页 `/`
+  - 从 Astro 内容集合静态生成最近更新。
+- 文章页 `/articles/`
+  - 默认展示 blog 集合文章。
+  - 搜索范围由构建时 payload 的 `searchableTypes` 控制，目前包括 article、work、tool。
+- 文章详情 `/articles/{slug}/`
+  - 从 `src/content/blog/*.md` 静态生成。
+  - 图片 `alt` 会渲染为灰色说明文字。
+- 作品页 `/works/`
+  - 使用 Astro 页面和内容集合入口。
+- 更新日志 `/updates/fingerprint-app-update-log/`
+  - 从 `src/content/updates/*.json` 的结构化 `timeline` 渲染。
 
-1. 先在 `blog/` 下新建文章 HTML。
+## 新增文章
+
+推荐流程：
+
+1. 在 Obsidian vault 中准备文章目录和 `file/` 资源。
 2. 运行：
 
 ```bash
-python scripts/content_pipeline.py add
+npm run publish -- --dry-run <obsidian-post-dir>
 ```
 
-3. 选择 `article`。
-4. 按提示填写标题、摘要、日期、标签、分类、`filePath`。
-5. 脚本会自动写入：
-   - `blog/blog-metadata.json`
-   - `blog/blog-files.json`
-6. 写入完成后会自动跑一次 `check`。
-
-结果：
-
-- `statement.html` 默认文章列表会出现这篇文章
-- 首页最近更新可能会出现这篇文章
-- 全站搜索可以搜到这篇文章
-
-### 2. 新增作品
-
-1. 先把作品卡片加到 `Works.html`。
-2. 给卡片补一个稳定锚点，例如：
-
-```html
-<div id="work-your-project" class="card project-card">
-```
-
-3. 运行：
+3. 检查目标 Markdown 路径、R2 object key 和公网 URL。
+4. 确认后运行：
 
 ```bash
-python scripts/content_pipeline.py add
+npm run publish <obsidian-post-dir>
 ```
 
-4. 选择 `work`，把 `filePath` 填成类似 `Works.html#work-your-project`。
-5. 写入后脚本会自动重新校验和生成 manifest。
-
-结果：
-
-- 首页最近更新可能出现这条作品
-- `statement.html` 搜索可以搜到这条作品
-- 点击结果会直接跳到 `Works.html` 对应卡片
-
-### 3. 新增工具
-
-1. 先在对应页面补好工具入口。
-2. 如果工具挂在已有页面里，优先给目标区域一个稳定锚点。
-3. 运行：
+5. 运行：
 
 ```bash
-python scripts/content_pipeline.py add
+npm test
+npm run build
 ```
 
-4. 选择 `tool`，填写 `filePath`，例如：
-   - `timetable.html#timer`
-   - `timetable.html#random-selector`
-   - `markdown-to-html-tool.html`
+发布脚本只修改仓库中的 Markdown 副本，不修改 Obsidian vault 原始内容。
 
-结果：
+## 本地快速创建文章
 
-- `statement.html` 搜索可以搜到这条工具
-- 首页最近更新只有在主要内容不足时才会用工具补位
-
-### 4. 新增更新日志
-
-1. 先写好 `UpdateLog/` 下的更新日志页面。
-2. 运行：
+1. 运行本地 API：
 
 ```bash
-python scripts/content_pipeline.py add
+npm run api
 ```
 
-3. 选择 `update-log`。
-4. 填写标题、摘要、日期和 `filePath`。
-
-结果：
-
-- 首页最近更新可以显示更新日志
-- `statement.html` 搜索不会返回更新日志
-
-## 如果你只是在改现有内容
-
-### 改文章文案
-
-- 只改文章 HTML：改完后建议跑一次 `python scripts/content_pipeline.py validate-blog`
-- 如果标题、摘要、日期、标签、分类变了：要同步改 `blog/blog-metadata.json`
-- 如果文章文件路径变了：要同步改 `blog/blog-files.json`
-
-### 改作品文案或卡片样式
-
-- 直接改 `Works.html`
-- 如果标题、摘要、日期、标签、锚点、跳转路径有变化，也要同步改 `content/works-metadata.json`
-- 改完后跑：
+2. 运行 Astro dev server：
 
 ```bash
-python scripts/content_pipeline.py generate-manifest
+npm run dev
 ```
 
-### 改工具说明或入口
+3. 打开 `/new-post/`，使用 `.env` 中的 `NEW_POST_SECRET` 提交。
 
-- 直接改 `timetable.html` 或 `markdown-to-html-tool.html`
-- 如果标题、摘要、标签、锚点、路径有变化，也要同步改 `content/tools-metadata.json`
-- 改完后跑：
+生产构建不会暴露可提交表单或完整本地 API 地址。
+
+## 更新作品、工具、更新日志
+
+修改对应集合文件：
+
+- `src/content/works/*.json`
+- `src/content/tools/*.json`
+- `src/content/updates/*.json`
+
+然后运行：
 
 ```bash
-python scripts/content_pipeline.py generate-manifest
+npm test
+npm run build
 ```
 
-### 改更新日志页面
-
-- 直接改 `UpdateLog/*.html`
-- 如果标题、摘要、日期、路径有变化，也要同步改 `content/update-logs-metadata.json`
-- 改完后跑：
-
-```bash
-python scripts/content_pipeline.py generate-manifest
-```
-
-## 哪些界面是自动更新的
-
-- 自动更新：
-  - 首页最近更新
-  - 文章页搜索结果
-  - 文章页默认文章列表中的 metadata 展示
-- 不自动更新：
-  - `Works.html` 里的卡片正文
-  - `timetable.html`、`markdown-to-html-tool.html` 里的工具内容
-  - `UpdateLog/*.html` 的日志正文
-
-换句话说，metadata 负责“被索引、被展示、被跳转”，页面 HTML 负责“具体长什么样、写了什么”。
-
-## 推荐的日常维护流程
-
-### 新增内容时
-
-1. 先改页面 HTML。
-2. 再运行 `python scripts/content_pipeline.py add` 写 metadata。
-3. 本地检查：
+如果改动影响旧页面入口或旧 manifest，再运行：
 
 ```bash
 python scripts/content_pipeline.py check
-python -m http.server 3001
 ```
 
-4. 打开：
-   - `http://localhost:3001/index.html`
-   - `http://localhost:3001/statement.html`
+## 配置维护
 
-### 只改 metadata 时
+- `BASE_URL`：Astro canonical 主域名，一次构建只配置一个。
+- `R2_PUBLIC_URL`：文章资源公网 URL，不等同于站点主域名。
+- `NEW_POST_ALLOWED_ORIGINS`：本地 API 允许的额外精确 origin。
+- `.gitattributes`：源码文件统一 LF 行尾，减少 Windows/CI diff 噪声。
 
-1. 手动改对应 JSON。
-2. 运行：
+不要提交 `.env` 或任何真实凭证。
+
+## 验证流程
+
+常规提交前：
 
 ```bash
-python scripts/content_pipeline.py generate-manifest
+npm test
+npm run build
+git diff --check
 ```
 
-3. 刷新首页和文章页确认结果。
+涉及文件操作、发布脚本、本地 API 或审查补充测试：
 
-## 写 metadata 时的约定
+```bash
+npm run test:coverage
+```
 
-- `date` 必须是 `YYYY-MM-DD`
-- `tags` 必须是字符串数组
-- `filePath` 使用站内相对路径，必要时带锚点
-- `externalUrl` 只是补充信息，不作为站内主跳转入口
-- `id` 必须唯一
+涉及旧内容索引：
 
-## 现在最关键的维护认知
+```bash
+python scripts/content_pipeline.py check
+```
 
-- 想让内容出现在首页最近更新或文章页搜索里，核心不是只改页面，而是要让对应 metadata 正确进入 manifest。
-- 想让用户点进去的位置准确，核心不是只填页面名，而是要给目标区域一个稳定锚点。
-- 更新日志目前保留在首页最近更新里，但不参与搜索。
+## CI
+
+- `astro-build-check.yml` 构建 Astro 并验证关键静态输出。
+- `phase-2-content-check.yml` 运行 npm 测试、coverage、内容文件检查和 Astro build。
+- `content-check.yml` 保留旧 Python manifest 检查。

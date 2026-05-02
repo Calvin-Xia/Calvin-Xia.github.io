@@ -1,0 +1,10 @@
+{
+    "title": "指纹验证应用",
+    "excerpt": "使用 FusionApp 2.0 编写的轻量指纹验证应用，提供下载入口并配套展示版本更新日志。",
+    "date": "2024-10-01",
+    "filePath": "/works/#work-fingerprint-app",
+    "tags": ["Android APK", "FusionApp 2.0", "持续更新"],
+    "category": "Android 应用",
+    "featured": true,
+    "status": "active"
+}

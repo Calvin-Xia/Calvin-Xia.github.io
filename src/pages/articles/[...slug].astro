@@ -1,0 +1,54 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { isFreshDate } from '../../lib/content';
+
+export async function getStaticPaths() {
+    const posts = await getCollection('blog', ({ data }) => data.status !== 'draft');
+
+    return posts.map((post) => ({
+        params: { slug: post.id },
+        props: { post },
+    }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<BaseLayout title={`${post.data.title} - Mr.Xia`} description={post.data.excerpt} currentPage="articles">
+    <article class="article-detail section-stack">
+        <div class="page-return article-return">
+            <a href="/articles/" class="btn btn-secondary" data-history="true" data-title="文章">
+                ← 返回文章列表
+            </a>
+        </div>
+
+        <header class="page-intro article-hero">
+            <p class="section-kicker">{post.data.category}</p>
+            <h1 class="page-title">{post.data.title}</h1>
+            <p class="page-subtitle">{post.data.excerpt}</p>
+            <div class="blog-card-meta article-meta">
+                {isFreshDate(post.data.date) && (
+                    <span class="content-type-badge content-type-badge--new">NEW</span>
+                )}
+                <span class="blog-card-category">{post.data.category}</span>
+                {post.data.tags.map((tag) => <span class="blog-card-tag">{tag}</span>)}
+                <span class="blog-card-date article-date">{post.data.date}</span>
+                {post.data.readTime && <span class="blog-card-date article-date">{post.data.readTime}</span>}
+            </div>
+        </header>
+
+        <section class="markdown-container" aria-label="文章正文">
+            <div class="markdown-content">
+                <Content />
+            </div>
+        </section>
+    </article>
+
+    <script>
+        import { enhanceArticleImageCaptions } from '../../lib/article-image-captions.js';
+
+        enhanceArticleImageCaptions(document.querySelector('.markdown-content'));
+    </script>
+</BaseLayout>

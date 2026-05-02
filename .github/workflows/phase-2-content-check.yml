@@ -1,0 +1,41 @@
+name: Phase 2 Content Check
+
+on:
+  push:
+    branches:
+      - main
+      - codex-phase-2-content
+  pull_request:
+
+jobs:
+  validate-content-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run file operation tests
+        run: npm test
+
+      - name: Run coverage report
+        run: npm run test:coverage
+
+      - name: Validate JSON content files
+        run: |
+          node -e "const fs=require('fs'); for (const file of ['content/works-metadata.json','content/tools-metadata.json','content/update-logs-metadata.json','blog/blog-metadata.json']) JSON.parse(fs.readFileSync(file,'utf8'));"
+          test -f src/content.config.ts
+          test -f src/content/blog/20260411-ai-reliance.md
+          test -f src/content/updates/fingerprint-app-update-log.json
+
+      - name: Build Astro site
+        run: npm run build

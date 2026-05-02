@@ -29,3 +29,6 @@ prd/
 dist/
 node_modules/
 
+# Local secrets
+.env
+

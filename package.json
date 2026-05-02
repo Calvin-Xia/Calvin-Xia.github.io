@@ -10,7 +10,11 @@
         "dev": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro dev",
         "build": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro build",
         "preview": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro preview",
-        "astro": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro"
+        "astro": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro",
+        "api": "node tools/api-server.js",
+        "publish": "node scripts/publish-post.js",
+        "test": "node --test tests/*.test.js",
+        "test:coverage": "node --test --experimental-test-coverage tests/*.test.js"
     },
     "dependencies": {
         "astro": "^6.1.10",
@@ -20,6 +24,8 @@
         "marked": "^17.0.1"
     },
     "devDependencies": {
-        "cross-env": "^10.1.0"
+        "@aws-sdk/client-s3": "^3.1039.0",
+        "cross-env": "^10.1.0",
+        "dotenv": "^17.4.2"
     }
 }

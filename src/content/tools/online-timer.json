@@ -1,0 +1,10 @@
+{
+    "title": "在线计时器",
+    "excerpt": "支持小时、分钟、秒的可视化设置，并提供进度显示、暂停和重置操作的轻量计时工具。",
+    "date": "2026-02-18",
+    "filePath": "/timetable.html#timer",
+    "tags": ["计时", "倒计时", "效率工具"],
+    "category": "效率工具",
+    "featured": true,
+    "status": "active"
+}

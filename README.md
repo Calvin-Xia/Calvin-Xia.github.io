@@ -1,199 +1,160 @@
 # Mr.Xia 个人网站
 
-这是一个静态个人站点仓库，当前用于维护首页、作品页、工具页、文章页，以及一套基于 JSON 的内容索引。仓库已开始迁移到 Astro；Phase 0 已建立 Astro 基础环境，旧 HTML/CSS/JS 页面仍保留并与新项目共存。
+这是一个静态个人站点仓库，正在从根目录 HTML/CSS/vanilla JS 迁移到 Astro。Phase 2 已完成：Astro 内容集合已接管博客、作品、工具和更新日志的数据层，`/articles/`、文章详情页、首页最近更新、新建文章工具和 Obsidian→R2 发布管线已经可用。
 
-旧站页面由 HTML、CSS、原生 JavaScript 组成；Astro 迁移版本由 `src/`、`public/` 和 npm 脚本维护。内容索引和发布辅助流程仍由 Python 脚本维护，后续 Phase 会逐步替换为 Astro 内容集合。
-
-如果你是第一次接手这个仓库，建议先看 [QUICKSTART.md](./QUICKSTART.md)，再按需要查看 [site-maintenance-guide.md](./site-maintenance-guide.md)。
+旧 HTML/JSON/Python 管线仍保留到 Phase 4 清理阶段，用于兼容旧页面和旧 URL。新开发优先放在 `src/`、`src/content/`、`scripts/*.js` 和 `tools/` 中。
 
 ## 当前结构
 
 ```text
 mr.xia.github.io/
-├── index.html                    # 首页
-├── about.html                    # 关于页
-├── Works.html                    # 作品页
-├── timetable.html                # 工具页
-├── statement.html                # 文章页 / 全站搜索入口
-├── markdown-to-html-tool.html    # Markdown 转 HTML 工具
-├── 404.html                      # 404 页面
-├── package.json                  # Astro 项目脚本与依赖
-├── astro.config.mjs              # Astro 站点配置
-├── tsconfig.json                 # Astro TypeScript 配置
+├── astro.config.mjs              # Astro 站点配置，site 来自 BASE_URL
+├── package.json                  # npm 脚本与依赖
 ├── src/
+│   ├── content.config.ts         # Astro 内容集合 schema 与 loader
+│   ├── content/                  # blog / works / tools / updates 内容集合
 │   ├── components/               # Astro 共享组件
 │   ├── layouts/                  # BaseLayout 等布局
-│   ├── pages/                    # Astro 页面
-│   ├── scripts/                  # Astro 客户端脚本模块
-│   └── styles/global.css         # 从 css/style.css 迁入的全局样式
-├── public/
-│   ├── storage/                  # Astro 静态资源
-│   ├── .well-known/              # 域名/证书验证文件
-│   └── libs/mammoth/             # mammoth 本地回退
-├── css/
-│   └── style.css                 # 全站样式
-├── js/
-│   ├── main.js                   # 通用交互
-│   ├── navigation.js             # 页面导航
-│   └── content-hub.js            # 最近更新与全站搜索逻辑
-├── blog/
-│   ├── blog-files.json           # 文章文件索引
-│   ├── blog-metadata.json        # 文章元数据
-│   └── *.html                    # 文章内容页
-├── content/
-│   ├── works-metadata.json       # 作品元数据
-│   ├── tools-metadata.json       # 工具元数据
-│   ├── update-logs-metadata.json # 更新日志元数据
-│   ├── content-manifest.json     # 统一内容索引
-│   └── README.md                 # 内容层说明
-├── scripts/
-│   └── content_pipeline.py       # 校验、索引生成、交互式录入
-├── UpdateLog/                    # 更新日志页面
-├── storage/                      # 图片、下载文件等静态资源
-├── QUICKSTART.md                 # 快速开始
-├── site-maintenance-guide.md     # 全站维护说明
-└── AGENTS.md                     # 仓库协作约定
+│   ├── lib/                      # 内容转换、排序、Markdown 增强工具
+│   ├── pages/                    # Astro 页面与动态路由
+│   ├── scripts/                  # Astro 客户端脚本
+│   └── styles/global.css         # Astro 全局样式
+├── scripts/                      # 发布、slug、Markdown、Content-Type 工具
+├── tools/api-server.js           # 本地 new-post API
+├── tests/                        # Node test suites
+├── public/                       # Astro 静态资源
+├── .github/workflows/            # Astro / legacy / Phase 2 CI
+├── .env.example                  # 本地配置模板，不含真实凭证
+├── .gitattributes                # LF 行尾规则
+├── index.html 等旧页面           # 保留到 Phase 4 清理
+├── blog/、content/、UpdateLog/    # 旧内容索引与旧更新日志
+└── move-to-astro/                # 迁移规格、任务和验收清单
 ```
 
-## 本地预览
-
-Astro 迁移版本：
+## 本地开发
 
 ```bash
 npm install
 npm run dev
-npm run build
-npm run preview
 ```
 
-默认访问：
+默认访问 `http://localhost:4321/`。常用 Astro 路由：
 
-- `http://localhost:4321/`
+- `/`
+- `/articles/`
+- `/articles/20260411-ai-reliance/`
+- `/works/`
+- `/new-post/`（仅 dev 模式启用可提交表单）
 
-旧 HTML 版本仍可通过本地服务器预览，避免 `fetch` 读取 JSON 时受到 `file://` 限制。
+旧 HTML 仍可用本地静态服务器预览：
 
 ```bash
 python -m http.server 3001
 ```
 
-然后访问：
+然后访问 `http://localhost:3001/index.html` 或 `http://localhost:3001/statement.html`。
 
-- `http://localhost:3001/index.html`
-- `http://localhost:3001/statement.html`
+## 环境配置
 
-如果你只想快速检查静态布局，也可以直接打开 HTML 文件，但文章页和内容搜索不建议在 `file://` 环境下验证。
+复制 `.env.example` 为 `.env`，填入本机配置和 R2 凭证。
 
-如果你刚修改了 `js/content-hub.js`、`content/content-manifest.json`，但浏览器里还是旧结果，先做一次强制刷新。必要时可以同步调整 `index.html` 和 `statement.html` 中 `js/content-hub.js?v=...` 的版本戳。
+- `BASE_URL`：Astro 构建使用的单一 canonical 主域名，默认 `https://calvin-xia.cn`
+- `OKP_VAULT`：Obsidian vault 路径
+- `R2_*`：Cloudflare R2 S3 兼容上传配置
+- `NEW_POST_SECRET`：`/new-post/` 本地 API 鉴权密钥
+- `NEW_POST_ALLOWED_ORIGINS`：额外允许调用本地 API 的精确 origin
+
+`.env` 已被 `.gitignore` 排除，不要提交真实凭证。
 
 ## 常用命令
-
-Astro 迁移相关命令：
 
 ```bash
 npm run dev
 npm run build
 npm run preview
+npm test
+npm run test:coverage
+npm run api
+npm run publish -- --dry-run <obsidian-post-dir>
+npm run publish <obsidian-post-dir>
 ```
 
-内容维护相关命令都在仓库根目录执行：
+- `npm run api` 启动本地 new-post API，默认监听 `127.0.0.1:4322`
+- `npm run publish -- --dry-run <dir>` 只打印 Obsidian→R2 发布计划，不写文件、不上传
+- `npm run publish <dir>` 复制 Obsidian Markdown 到 `src/content/blog/`，上传 `file/` 资源到 R2，并替换副本中的资源 URL
+
+旧站内容索引仍可用：
 
 ```bash
-python scripts/content_pipeline.py validate-blog
-python scripts/content_pipeline.py generate-manifest
 python scripts/content_pipeline.py check
-python scripts/content_pipeline.py add
 ```
 
-- `validate-blog`
-  - 校验 `blog/blog-files.json` 与 `blog/blog-metadata.json` 的一致性、字段完整性和文件路径。
-- `generate-manifest`
-  - 汇总文章、作品、工具、更新日志 metadata，生成 `content/content-manifest.json`。
-- `check`
-  - 先校验博客，再重新生成 manifest。
-- `add`
-  - 通过控制台交互新增一条内容，并写回对应 JSON。
+这条命令维护旧 `content/content-manifest.json`，主要服务旧页面，Phase 4 前仍保留。
 
-## 页面与数据关系
+## 内容维护
 
-- `index.html`
-  - 展示站点首页
-  - “最近更新”读取 `content/content-manifest.json`
-- `statement.html`
-  - 默认展示文章列表
-  - 站内搜索会搜索文章、作品、工具
-  - 更新日志不会出现在搜索结果里
-- `Works.html`
-  - 作品卡片内容手动维护
-  - 是否能被首页和搜索正确跳转，取决于 `content/works-metadata.json` 中的 `filePath`
-- `timetable.html` / `markdown-to-html-tool.html`
-  - 工具内容手动维护
-  - 是否能被搜索命中，取决于 `content/tools-metadata.json`
-- `UpdateLog/*.html`
-  - 更新日志页面手动维护
-  - 是否进入首页最近更新，取决于 `content/update-logs-metadata.json`
+### 新增 Astro 文章
 
-## 日常维护建议
+推荐路径：
 
-### 新增文章
+1. 在 Obsidian 中准备文章目录与 `file/` 资源。
+2. 运行 `npm run publish -- --dry-run <dir>` 预览目标 Markdown 和 R2 key。
+3. 确认后运行 `npm run publish <dir>`。
+4. 运行 `npm test` 和 `npm run build`。
 
-1. 在 `blog/` 下创建文章 HTML。
-2. 运行 `python scripts/content_pipeline.py add`。
-3. 选择 `article` 并填写字段。
-4. 写入后脚本会自动执行一次 `check`。
+临时本地写作也可以使用：
 
-### 新增作品或工具
+1. 同时运行 `npm run api` 和 `npm run dev`。
+2. 打开 `/new-post/`。
+3. 使用 `NEW_POST_SECRET` 提交表单，生成 `src/content/blog/*.md`。
 
-1. 先在对应 HTML 页面补好实际内容。
-2. 如果内容挂在现有页面中，优先补稳定锚点。
-3. 运行 `python scripts/content_pipeline.py add`。
-4. 选择 `work` 或 `tool`，把 `filePath` 指向具体页面或锚点。
+### 更新作品、工具或更新日志
 
-### 新增更新日志
+Astro 内容集合文件位于：
 
-1. 在 `UpdateLog/` 下创建或更新日志页面。
-2. 运行 `python scripts/content_pipeline.py add`。
-3. 选择 `update-log`。
+- `src/content/works/*.json`
+- `src/content/tools/*.json`
+- `src/content/updates/*.json`
 
-### 修改 metadata 后
-
-如果你是手动修改 JSON，而不是通过 `add` 命令录入，至少再执行一次：
+更新后运行：
 
 ```bash
-python scripts/content_pipeline.py generate-manifest
+npm test
+npm run build
 ```
+
+旧页面和旧 metadata 仍保留到 Phase 4。如果修改的是旧 HTML 入口或旧 JSON，还需要运行 `python scripts/content_pipeline.py check`。
 
 ## 推荐验证流程
 
-在提交或发布前，建议至少做一轮本地检查：
+在提交或发布前建议运行：
 
 ```bash
+npm test
+npm run test:coverage
 npm run build
-python scripts/content_pipeline.py check
-python -m http.server 3001
+git diff --check
 ```
 
-重点确认：
+如果改动影响旧页面或 legacy metadata，再加：
 
-- 首页最近更新是否正常
-- `statement.html` 默认文章列表是否正常
-- 搜索是否能命中文章、作品、工具
-- 清空搜索后是否恢复文章视图
-- 浏览器控制台没有新增错误
-- 如果结果看起来仍是旧内容，先强制刷新再复查
+```bash
+python scripts/content_pipeline.py check
+```
+
+## CI/CD
+
+当前 CI 包括：
+
+- `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出
+- `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容文件存在性检查和 Astro build
+- `content-check.yml`：保留旧 Python 内容 manifest 检查
 
 ## 相关说明文档
 
 - [QUICKSTART.md](./QUICKSTART.md)
-- [content/README.md](./content/README.md)
 - [site-maintenance-guide.md](./site-maintenance-guide.md)
-- [blog/README.md](./blog/README.md)
+- [move-to-astro/README.md](./move-to-astro/README.md)
 - [AGENTS.md](./AGENTS.md)
-
-## 仓库说明
-
-- 这是静态站点仓库；旧站不需要打包构建，Astro 迁移版本需要运行 `npm run build` 生成 `dist/`。
-- 修改页面样式时，优先复用 `css/style.css` 中已有变量和结构。
-- Astro 全局样式入口为 `src/styles/global.css`，Phase 0 中与 `css/style.css` 保持一致。
-- 修改文章内容时，要注意 `blog/blog-files.json` 和 `blog/blog-metadata.json` 保持一致。
-- 修改作品、工具、更新日志相关入口时，要注意同步更新对应 metadata 和 manifest。
-- 仓库已配置内容一致性检查和 Astro 构建检查，提交或发起 PR 时会运行 `python scripts/content_pipeline.py check`、`npm run build`，并校验 `content/content-manifest.json` 与 `dist/index.html`。
+- [content/README.md](./content/README.md)
+- [blog/README.md](./blog/README.md)

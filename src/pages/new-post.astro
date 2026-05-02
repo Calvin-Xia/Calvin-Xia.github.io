@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import PageIntro from '../components/PageIntro.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getUniqueValues } from '../lib/content';
+
+const blogEntries = await getCollection('blog');
+const categories = getUniqueValues(blogEntries.map((entry) => entry.data.category));
+const today = new Date().toISOString().slice(0, 10);
+const isNewPostEnabled = import.meta.env.DEV;
+const newPostApiBase = isNewPostEnabled ? 'http://localhost:4322' : '';
+const NewPostForm = isNewPostEnabled ? (await import('../components/NewPostForm.astro')).default : null;
+---
+
+<BaseLayout title="新建文章 - Mr.Xia" description="通过本地 API 创建新的博客 Markdown 文件。" currentPage="articles">
+    <PageIntro
+        kicker="本地创作"
+        title="新建文章"
+        subtitle="填写元数据与正文，提交后生成 Astro 内容集合 Markdown。"
+        compact
+    />
+
+    {
+        isNewPostEnabled ? (
+            <NewPostForm categories={categories} today={today} apiBase={newPostApiBase} />
+        ) : (
+            <section class="new-post-workbench">
+                <div class="card new-post-form">
+                    <p class="form-status form-status--pending" role="status">
+                        新建文章工具仅在本地开发环境可用。
+                    </p>
+                </div>
+            </section>
+        )
+    }
+</BaseLayout>

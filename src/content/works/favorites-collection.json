@@ -1,0 +1,9 @@
+{
+    "title": "网址收藏夹",
+    "excerpt": "包含静态版与动态版两种实现，方便对比轻量部署和完整应用架构下的收藏导航体验。",
+    "date": "2025-12-24",
+    "filePath": "/works/#work-favorites-collection",
+    "tags": ["静态版", "动态版", "Next.js"],
+    "category": "收藏与导航",
+    "status": "active"
+}

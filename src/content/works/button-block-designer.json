@@ -1,0 +1,10 @@
+{
+    "title": "网页按钮块设计器",
+    "excerpt": "使用 Next.js 编写的按钮块设计工具，适合快速探索按钮层次、原型样式和组件视觉方案。",
+    "date": "2025-12-27",
+    "filePath": "/works/#work-button-block-designer",
+    "tags": ["Next.js", "设计工具", "在线体验"],
+    "category": "设计工具",
+    "externalUrl": "https://vibeui-generator.pages.dev/",
+    "status": "active"
+}

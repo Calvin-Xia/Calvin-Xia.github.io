@@ -1,0 +1,586 @@
+---
+import { getCollection } from 'astro:content';
+import PageIntro from '../components/PageIntro.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import {
+    CONTENT_TYPES,
+    blogEntryToItem,
+    compareContentItems,
+    dataEntryToItem,
+    getUniqueValues,
+    isFreshDate,
+} from '../lib/content';
+
+const blogEntries = await getCollection('blog', ({ data }) => data.status !== 'draft');
+const workEntries = await getCollection('works', ({ data }) => data.status !== 'draft');
+const toolEntries = await getCollection('tools', ({ data }) => data.status !== 'draft');
+
+const articles = blogEntries.map(blogEntryToItem).sort(compareContentItems);
+const works = workEntries.map((entry) => dataEntryToItem('work', entry));
+const tools = toolEntries.map((entry) => dataEntryToItem('tool', entry));
+const searchableTypes = ['article', 'work', 'tool'];
+const searchItems = [...articles, ...works, ...tools]
+    .filter((item) => searchableTypes.includes(item.type))
+    .sort(compareContentItems);
+const categories = getUniqueValues(articles.map((item) => item.category));
+const tags = getUniqueValues(articles.flatMap((item) => item.tags));
+
+const payload = {
+    articles,
+    searchItems,
+    searchableTypes,
+};
+---
+
+<BaseLayout title="文章与全站搜索 - Mr.Xia" description="浏览 Mr.Xia 的文章，并搜索作品与工具。" currentPage="articles">
+    <PageIntro
+        kicker="内容中枢"
+        title="文章与全站搜索"
+        subtitle="默认展示博客文章，也可以跨栏目搜索作品和工具。"
+        compact
+    />
+
+    <section id="content-search" class="section-stack articles-search-section" aria-label="全站搜索">
+        <div class="search-container">
+            <div class="search-box">
+                <input
+                    id="search-input"
+                    type="search"
+                    placeholder="搜索文章、作品或工具..."
+                    autocomplete="off"
+                    aria-label="搜索全站内容"
+                    aria-describedby="search-hint"
+                    aria-controls="search-suggestions"
+                    aria-autocomplete="list"
+                    aria-expanded="false"
+                />
+                <button id="search-btn" class="search-btn" aria-label="搜索">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+            </div>
+            <p id="search-hint" class="text-small search-hint">输入关键词搜索标题、摘要、标签和内容类型</p>
+            <p id="content-search-status" class="text-small search-status" aria-live="polite"></p>
+            <div id="search-suggestions" class="search-suggestions" role="listbox" aria-label="搜索建议"></div>
+        </div>
+    </section>
+
+    <div id="article-filter-nav" class="filter-nav">
+        <div class="filter-section">
+            <h2>文章分类</h2>
+            <div id="category-filters" class="filter-tags">
+                <button class="filter-tag active" type="button" data-filter="all" data-type="category" aria-pressed="true">全部</button>
+                {categories.map((category) => (
+                    <button class="filter-tag" type="button" data-filter={category} data-type="category" aria-pressed="false">
+                        {category}
+                    </button>
+                ))}
+            </div>
+        </div>
+        <div class="filter-section">
+            <h2>文章标签</h2>
+            <div id="tag-filters" class="filter-tags">
+                <button class="filter-tag active" type="button" data-filter="all" data-type="tag" aria-pressed="true">全部</button>
+                {tags.map((tag) => (
+                    <button class="filter-tag" type="button" data-filter={tag} data-type="tag" aria-pressed="false">
+                        {tag}
+                    </button>
+                ))}
+            </div>
+        </div>
+    </div>
+
+    <section id="blog-container" aria-live="polite" aria-label="内容列表">
+        <div id="content-skeletons" class="skeleton-list" hidden>
+            {Array.from({ length: 4 }).map(() => (
+                <div class="skeleton-card" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            ))}
+        </div>
+        <div id="content-results" class="content-results">
+            {articles.map((article, index) => (
+                <article class="blog-card content-card-enter" style={`--stagger-index: ${index}`}>
+                    <a href={article.filePath} class="blog-card-link">
+                        <h2 class="blog-card-title">{article.title}</h2>
+                        <p class="blog-card-excerpt">{article.excerpt}</p>
+                    </a>
+                    <div class="blog-card-meta">
+                        {isFreshDate(article.date) && (
+                            <span class="content-type-badge content-type-badge--new">NEW</span>
+                        )}
+                        <span class="blog-card-category">{article.category}</span>
+                        {article.tags.map((tag) => <span class="blog-card-tag">{tag}</span>)}
+                    </div>
+                    <div class="blog-card-date">{article.date}</div>
+                </article>
+            ))}
+        </div>
+    </section>
+
+    <div class="page-return">
+        <a href="/" class="btn btn-secondary" data-history="true" data-title="首页">
+            ← 返回首页
+        </a>
+    </div>
+</BaseLayout>
+
+<script id="content-search-data" type="application/json" set:html={JSON.stringify(payload)}></script>
+<script>
+    import { CONTENT_TYPES, compareContentItems, isFreshDate } from '../lib/shared-content.js';
+
+    (() => {
+        const payloadElement = document.getElementById('content-search-data');
+        const payload = JSON.parse(payloadElement?.textContent || '{"articles":[],"searchItems":[],"searchableTypes":[]}');
+        const searchableTypes = new Set(payload.searchableTypes || []);
+        const state = {
+            currentCategory: 'all',
+            currentTag: 'all',
+            isSearchMode: false,
+            debounceTimer: null,
+            selectedSuggestionIndex: -1,
+            suggestionItems: [],
+        };
+
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const suggestionsContainer = document.getElementById('search-suggestions');
+        const resultsContainer = document.getElementById('content-results');
+        const skeletons = document.getElementById('content-skeletons');
+        const filterNav = document.getElementById('article-filter-nav');
+        const searchStatus = document.getElementById('content-search-status');
+        const categoryContainer = document.getElementById('category-filters');
+        const tagContainer = document.getElementById('tag-filters');
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const searchableItems = payload.searchItems.filter((item) => searchableTypes.has(item.type));
+
+        function escapeRegExp(value) {
+            return String(value).replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
+        }
+
+        function highlightedFragment(value, query) {
+            const fragment = document.createDocumentFragment();
+            const source = String(value || '');
+            const normalizedQuery = String(query || '').trim();
+
+            if (!normalizedQuery) {
+                fragment.append(document.createTextNode(source));
+                return fragment;
+            }
+
+            const pattern = new RegExp(escapeRegExp(normalizedQuery), 'gi');
+            let lastIndex = 0;
+
+            for (const match of source.matchAll(pattern)) {
+                const matchIndex = match.index ?? 0;
+                if (matchIndex > lastIndex) {
+                    fragment.append(document.createTextNode(source.slice(lastIndex, matchIndex)));
+                }
+
+                const mark = document.createElement('mark');
+                mark.className = 'search-highlight';
+                mark.textContent = match[0];
+                fragment.append(mark);
+                lastIndex = matchIndex + match[0].length;
+            }
+
+            if (lastIndex < source.length) {
+                fragment.append(document.createTextNode(source.slice(lastIndex)));
+            }
+
+            return fragment;
+        }
+
+        function rankItems(items, query) {
+            const keywords = query
+                .toLowerCase()
+                .split(/\s+/)
+                .map((keyword) => keyword.trim())
+                .filter(Boolean);
+
+            return items
+                .map((item) => ({ item, score: calculateScore(item, keywords) }))
+                .filter((result) => result.score > 0)
+                .sort((left, right) => right.score - left.score || compareContentItems(left.item, right.item))
+                .map((result) => result.item);
+        }
+
+        function calculateScore(item, keywords) {
+            const title = item.title.toLowerCase();
+            const excerpt = item.excerpt.toLowerCase();
+            const category = item.category.toLowerCase();
+            const tags = item.tags.join(' ').toLowerCase();
+            const typeLabel = (CONTENT_TYPES[item.type]?.label || '').toLowerCase();
+
+            return keywords.reduce((score, keyword) => {
+                let nextScore = score;
+                if (title.includes(keyword)) nextScore += 6;
+                if (tags.includes(keyword)) nextScore += 4;
+                if (excerpt.includes(keyword)) nextScore += 3;
+                if (category.includes(keyword)) nextScore += 2;
+                if (typeLabel.includes(keyword)) nextScore += 1;
+                return nextScore;
+            }, 0);
+        }
+
+        function setSearchStatus(message) {
+            if (searchStatus) {
+                searchStatus.textContent = message;
+            }
+        }
+
+        function setFilterVisibility(isVisible) {
+            if (!filterNav) {
+                return;
+            }
+
+            if (!isVisible && filterNav.contains(document.activeElement)) {
+                searchInput?.focus();
+            }
+
+            filterNav.classList.toggle('is-hidden', !isVisible);
+            filterNav.setAttribute('aria-hidden', String(!isVisible));
+        }
+
+        function showSkeletonThen(renderFn) {
+            if (!resultsContainer || !skeletons) {
+                renderFn();
+                return;
+            }
+
+            resultsContainer.innerHTML = '';
+            skeletons.hidden = false;
+
+            window.setTimeout(() => {
+                skeletons.hidden = true;
+                renderFn();
+            }, reducedMotion ? 0 : 160);
+        }
+
+        function createTypeBadge(type) {
+            const badge = document.createElement('span');
+            badge.className = `content-type-badge content-type-badge--${type}`;
+            badge.textContent = CONTENT_TYPES[type]?.label || '内容';
+            return badge;
+        }
+
+        function createContentCard(item, { mixed = false, index = 0 } = {}) {
+            const card = document.createElement('article');
+            card.className = `blog-card content-card-enter${mixed ? ' blog-card--mixed' : ''}`;
+            card.style.setProperty('--stagger-index', String(index));
+
+            const link = document.createElement('a');
+            link.href = item.filePath;
+            link.className = 'blog-card-link';
+
+            const title = document.createElement('h2');
+            title.className = 'blog-card-title';
+            title.textContent = item.title;
+
+            const excerpt = document.createElement('p');
+            excerpt.className = 'blog-card-excerpt';
+            excerpt.textContent = item.excerpt;
+
+            link.append(title, excerpt);
+            card.append(link);
+
+            const meta = document.createElement('div');
+            meta.className = 'blog-card-meta';
+
+            if (mixed) {
+                meta.append(createTypeBadge(item.type));
+            }
+
+            if (isFreshDate(item.date)) {
+                const freshBadge = document.createElement('span');
+                freshBadge.className = 'content-type-badge content-type-badge--new';
+                freshBadge.textContent = 'NEW';
+                meta.append(freshBadge);
+            }
+
+            if (item.category) {
+                const category = document.createElement('span');
+                category.className = 'blog-card-category';
+                category.textContent = item.category;
+                meta.append(category);
+            }
+
+            item.tags.slice(0, mixed ? 3 : item.tags.length).forEach((tag) => {
+                const tagNode = document.createElement('span');
+                tagNode.className = 'blog-card-tag';
+                tagNode.textContent = tag;
+                meta.append(tagNode);
+            });
+
+            const dateElement = document.createElement('div');
+            dateElement.className = 'blog-card-date';
+            dateElement.textContent = item.date;
+
+            card.append(meta, dateElement);
+            return card;
+        }
+
+        function getFilteredArticles() {
+            return payload.articles.filter((item) => {
+                const categoryMatch = state.currentCategory === 'all' || item.category === state.currentCategory;
+                const tagMatch = state.currentTag === 'all' || item.tags.includes(state.currentTag);
+                return categoryMatch && tagMatch;
+            });
+        }
+
+        function renderCards(items, options = {}) {
+            if (!resultsContainer) {
+                return;
+            }
+
+            resultsContainer.innerHTML = '';
+            items.forEach((item, index) => {
+                resultsContainer.append(createContentCard(item, { ...options, index }));
+            });
+        }
+
+        function resetFilterButtons(container) {
+            container?.querySelectorAll('.filter-tag').forEach((button) => {
+                const active = button.dataset.filter === 'all';
+                button.classList.toggle('active', active);
+                button.setAttribute('aria-pressed', String(active));
+            });
+        }
+
+        function renderNoResults() {
+            if (!resultsContainer) {
+                return;
+            }
+
+            resultsContainer.innerHTML = '';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'no-results';
+
+            const title = document.createElement('p');
+            title.textContent = '没有找到匹配的文章';
+
+            const description = document.createElement('p');
+            description.className = 'text-small';
+            description.textContent = '可以清空关键词，或换一个分类和标签组合。';
+
+            const actions = document.createElement('div');
+            actions.className = 'no-results-actions';
+
+            const resetButton = document.createElement('button');
+            resetButton.type = 'button';
+            resetButton.className = 'btn btn-outline';
+            resetButton.textContent = '重置筛选';
+            resetButton.addEventListener('click', () => {
+                searchInput.value = '';
+                state.currentCategory = 'all';
+                state.currentTag = 'all';
+                resetFilterButtons(categoryContainer);
+                resetFilterButtons(tagContainer);
+                restoreArticleView();
+            });
+
+            actions.append(resetButton);
+            wrapper.append(title, description, actions);
+            resultsContainer.append(wrapper);
+        }
+
+        function renderArticleList() {
+            const filtered = getFilteredArticles();
+            if (!filtered.length) {
+                renderNoResults();
+                return;
+            }
+
+            renderCards(filtered, { mixed: false });
+        }
+
+        function restoreArticleView() {
+            state.isSearchMode = false;
+            setFilterVisibility(true);
+            setSearchStatus('');
+            showSkeletonThen(renderArticleList);
+        }
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            clearTimeout(state.debounceTimer);
+            hideSuggestions();
+
+            if (!query) {
+                restoreArticleView();
+                return;
+            }
+
+            const results = rankItems(searchableItems, query);
+            state.isSearchMode = true;
+            setFilterVisibility(false);
+            setSearchStatus(`搜索 “${query}” 共匹配到 ${results.length} 条内容`);
+
+            showSkeletonThen(() => {
+                if (!results.length) {
+                    renderNoResults();
+                    return;
+                }
+
+                renderCards(results, { mixed: true });
+            });
+        }
+
+        function showSuggestions(query) {
+            const suggestions = rankItems(searchableItems, query).slice(0, 6);
+            suggestionsContainer.innerHTML = '';
+            state.suggestionItems = [];
+
+            if (!suggestions.length) {
+                hideSuggestions();
+                return;
+            }
+
+            state.suggestionItems = suggestions.map((item, index) => {
+                const suggestion = document.createElement('div');
+                suggestion.className = 'suggestion-item';
+                suggestion.id = `suggestion-${item.id}`;
+                suggestion.dataset.index = String(index);
+                suggestion.setAttribute('role', 'option');
+
+                const title = document.createElement('div');
+                title.className = 'suggestion-title';
+                title.append(highlightedFragment(item.title, query));
+
+                const meta = document.createElement('div');
+                meta.className = 'suggestion-meta';
+                meta.textContent = [CONTENT_TYPES[item.type]?.label, item.category, item.date].filter(Boolean).join(' · ');
+
+                suggestion.append(title, meta);
+                suggestion.addEventListener('click', () => {
+                    window.location.href = item.filePath;
+                });
+                suggestionsContainer.append(suggestion);
+                return suggestion;
+            });
+
+            state.selectedSuggestionIndex = -1;
+            suggestionsContainer.classList.add('active');
+            searchInput.setAttribute('aria-expanded', 'true');
+        }
+
+        function hideSuggestions() {
+            suggestionsContainer.classList.remove('active');
+            suggestionsContainer.innerHTML = '';
+            state.suggestionItems = [];
+            state.selectedSuggestionIndex = -1;
+            searchInput.setAttribute('aria-expanded', 'false');
+            searchInput.removeAttribute('aria-activedescendant');
+        }
+
+        function updateSuggestionSelection() {
+            state.suggestionItems.forEach((item, index) => {
+                const selected = index === state.selectedSuggestionIndex;
+                item.classList.toggle('is-selected', selected);
+                item.setAttribute('aria-selected', String(selected));
+
+                if (selected) {
+                    searchInput.setAttribute('aria-activedescendant', item.id);
+                }
+            });
+        }
+
+        function handleFilterClick(event) {
+            if (state.isSearchMode) {
+                return;
+            }
+
+            const button = event.currentTarget;
+            const filterValue = button.dataset.filter;
+            const filterType = button.dataset.type;
+            const container = filterType === 'category' ? categoryContainer : tagContainer;
+
+            container?.querySelectorAll('.filter-tag').forEach((tag) => {
+                tag.classList.remove('active');
+                tag.setAttribute('aria-pressed', 'false');
+            });
+
+            button.classList.add('active');
+            button.setAttribute('aria-pressed', 'true');
+
+            if (filterType === 'category') {
+                state.currentCategory = filterValue;
+            } else {
+                state.currentTag = filterValue;
+            }
+
+            showSkeletonThen(renderArticleList);
+        }
+
+        function bindEvents() {
+            categoryContainer?.querySelectorAll('.filter-tag').forEach((button) => {
+                button.addEventListener('click', handleFilterClick);
+            });
+            tagContainer?.querySelectorAll('.filter-tag').forEach((button) => {
+                button.addEventListener('click', handleFilterClick);
+            });
+
+            searchInput.addEventListener('input', (event) => {
+                clearTimeout(state.debounceTimer);
+                const query = event.target.value.trim();
+
+                if (!query) {
+                    hideSuggestions();
+                    restoreArticleView();
+                    return;
+                }
+
+                state.debounceTimer = window.setTimeout(() => showSuggestions(query), 180);
+            });
+
+            searchInput.addEventListener('keydown', (event) => {
+                if (!state.suggestionItems.length || !suggestionsContainer.classList.contains('active')) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        performSearch();
+                    }
+                    return;
+                }
+
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    state.selectedSuggestionIndex = Math.min(state.selectedSuggestionIndex + 1, state.suggestionItems.length - 1);
+                    updateSuggestionSelection();
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    state.selectedSuggestionIndex = Math.max(state.selectedSuggestionIndex - 1, 0);
+                    updateSuggestionSelection();
+                } else if (event.key === 'Enter' && state.selectedSuggestionIndex >= 0) {
+                    event.preventDefault();
+                    state.suggestionItems[state.selectedSuggestionIndex].click();
+                } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    performSearch();
+                } else if (event.key === 'Escape') {
+                    hideSuggestions();
+                }
+            });
+
+            searchBtn.addEventListener('click', performSearch);
+
+            document.addEventListener('click', (event) => {
+                if (!searchInput.contains(event.target) && !suggestionsContainer.contains(event.target)) {
+                    hideSuggestions();
+                }
+            });
+        }
+
+        if (searchInput && searchBtn && suggestionsContainer && resultsContainer) {
+            bindEvents();
+
+            if (window.location.hash === '#content-search') {
+                requestAnimationFrame(() => searchInput.focus());
+            }
+        }
+    })();
+</script>

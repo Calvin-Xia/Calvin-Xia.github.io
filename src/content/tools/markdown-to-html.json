@@ -1,0 +1,10 @@
+{
+    "title": "Markdown 转 HTML 工具",
+    "excerpt": "独立的 Markdown 渲染工具，支持代码高亮、数学公式、预览折叠与导出 HTML。",
+    "date": "2026-03-21",
+    "filePath": "/markdown-to-html-tool.html",
+    "tags": ["Markdown", "HTML", "渲染"],
+    "category": "内容工具",
+    "featured": true,
+    "status": "active"
+}

@@ -1,0 +1,72 @@
+---
+import { getCollection } from 'astro:content';
+import PageIntro from '../../components/PageIntro.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+    const updates = await getCollection('updates', ({ data }) => data.status !== 'draft');
+
+    return updates.map((update) => ({
+        params: { slug: update.id },
+        props: { update },
+    }));
+}
+
+const { update } = Astro.props;
+const updateTypeClasses: Record<string, string> = {
+    new: 'type-new',
+    update: 'type-update',
+    fix: 'type-fix',
+    optimize: 'type-optimize',
+    cancel: 'type-cancel',
+    note: 'type-note',
+};
+const calloutItemClasses: Record<string, string> = {
+    bug: 'bug-item',
+    info: 'note-item',
+};
+---
+
+<BaseLayout title={`${update.data.title} - Mr.Xia`} description={update.data.excerpt} currentPage="works">
+    <section class="update-log-page">
+        <PageIntro
+            kicker={update.data.category}
+            title={update.data.title}
+            subtitle={update.data.excerpt}
+            center
+        />
+
+        <section class="update-log" aria-label="版本时间线">
+            <div class="page-return">
+                <a href="/works/" class="btn btn-secondary back-link" data-history="true" data-title="作品">
+                    ← 返回作品页
+                </a>
+            </div>
+            {update.data.timeline.map((version) => (
+                <div class="version-section">
+                    <div class="version-header">
+                        <div class="version-number">{version.version}</div>
+                        <div class="update-date">更新时间：{version.updatedAt}</div>
+                    </div>
+                    <div class="update-content">
+                        {version.items.map((item) => (
+                            calloutItemClasses[item.type] ? (
+                                <div class={calloutItemClasses[item.type]}>
+                                    {item.label && <strong>{item.label}</strong>}
+                                    {item.text}
+                                </div>
+                            ) : (
+                                <div class="update-item">
+                                    <span class={`update-type ${updateTypeClasses[item.type] || 'type-note'}`}>
+                                        {item.label || item.text}
+                                    </span>
+                                    {item.label ? item.text : ''}
+                                </div>
+                            )
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </section>
+    </section>
+</BaseLayout>

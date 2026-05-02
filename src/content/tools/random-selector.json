@@ -1,0 +1,9 @@
+{
+    "title": "随机选择器",
+    "excerpt": "支持手动输入与导入 TXT、Markdown、Word 文档后快速抽取选项的随机选择工具。",
+    "date": "2025-12-25",
+    "filePath": "/timetable.html#random-selector",
+    "tags": ["随机选择", "文件导入", "Word 支持"],
+    "category": "效率工具",
+    "status": "active"
+}

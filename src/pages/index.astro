@@ -1,5 +1,25 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import {
+    CONTENT_TYPES,
+    blogEntryToItem,
+    dataEntryToItem,
+    getHomepageUpdates,
+    isFreshDate,
+} from '../lib/content';
+
+const blogEntries = await getCollection('blog', ({ data }) => data.status !== 'draft');
+const workEntries = await getCollection('works', ({ data }) => data.status !== 'draft');
+const updateEntries = await getCollection('updates', ({ data }) => data.status !== 'draft');
+const toolEntries = await getCollection('tools', ({ data }) => data.status !== 'draft');
+
+const homepageUpdates = getHomepageUpdates([
+    ...blogEntries.map(blogEntryToItem),
+    ...workEntries.map((entry) => dataEntryToItem('work', entry)),
+    ...updateEntries.map((entry) => dataEntryToItem('update-log', entry)),
+    ...toolEntries.map((entry) => dataEntryToItem('tool', entry)),
+]);
 ---
 
 <BaseLayout
@@ -76,10 +96,28 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </a>
         </div>
         <div id="recent-updates-list" class="cards-grid home-updates-grid" aria-live="polite">
-            <div class="card recent-update-card recent-update-card--empty">
-                <p class="recent-update-title">最近更新正在整理中</p>
-                <p class="recent-update-excerpt">内容索引生成后，这里会显示最新的文章、作品和更新日志。</p>
-            </div>
+            {
+                homepageUpdates.map((item) => (
+                    <article class="card recent-update-card">
+                        <div class="recent-update-meta">
+                            <span class={`content-type-badge content-type-badge--${item.type}`}>
+                                {CONTENT_TYPES[item.type].label}
+                            </span>
+                            {isFreshDate(item.date) && (
+                                <span class="content-type-badge content-type-badge--new">NEW</span>
+                            )}
+                            <span class="recent-update-date">{item.date}</span>
+                        </div>
+                        <h3 class="recent-update-title">{item.title}</h3>
+                        <p class="recent-update-excerpt">{item.excerpt}</p>
+                        <div class="recent-update-actions">
+                            <a href={item.filePath} class="btn btn-outline">
+                                {CONTENT_TYPES[item.type].action}
+                            </a>
+                        </div>
+                    </article>
+                ))
+            }
         </div>
     </section>
 
