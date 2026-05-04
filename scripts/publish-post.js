@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
 import { getContentType } from './content-types.js';
-import { buildPublishPlan, readTransformedMarkdown } from './post-utils.js';
+import { buildPublishPlan, deriveDateFromDirName, readTransformedMarkdown } from './post-utils.js';
 
 dotenv.config({ quiet: true });
 
@@ -179,6 +179,25 @@ async function confirmPlan() {
     }
 }
 
+async function promptForPostMetadata(dirName) {
+    const rl = createInterface({ input, output });
+    const derivedDate = deriveDateFromDirName(dirName);
+    try {
+        console.log('\n请输入文章元数据：');
+        const title = (await rl.question('标题: ')).trim();
+        if (!title) throw new Error('标题不能为空');
+        const date = (await rl.question(`日期 [${derivedDate}]: `)).trim() || derivedDate;
+        const excerpt = (await rl.question('摘要: ')).trim();
+        const category = (await rl.question('分类 [未分类]: ')).trim() || '未分类';
+        const tagsInput = (await rl.question('标签 (逗号分隔): ')).trim();
+        const tags = tagsInput ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean) : [];
+
+        return { title, date, excerpt, category, tags };
+    } finally {
+        rl.close();
+    }
+}
+
 async function main() {
     console.log('Obsidian Post Publisher');
 
@@ -196,6 +215,10 @@ async function main() {
     });
 
     printPlan(plan);
+
+    if (!dryRun) {
+        plan.metadata = await promptForPostMetadata(plan.dirName);
+    }
 
     if (!directDirName) {
         const confirmed = await confirmPlan();

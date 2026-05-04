@@ -13,6 +13,48 @@ function compactDate(date) {
     return String(date || '').replaceAll('-', '');
 }
 
+function extractYamlFrontmatter(markdown) {
+    const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+    if (!match) return { frontmatterStr: null, body: markdown };
+    return { frontmatterStr: match[1], body: markdown.slice(match[0].length) };
+}
+
+function parseSimpleYaml(yamlStr) {
+    if (!yamlStr) return {};
+    const result = {};
+    const lines = yamlStr.split('\n');
+    let currentKey = null;
+
+    for (const line of lines) {
+        const keyMatch = line.match(/^(\w+):\s*(.*)/);
+        if (keyMatch) {
+            currentKey = keyMatch[1];
+            const value = keyMatch[2].trim();
+            const unquoted = value.replace(/^["']|["']$/g, '');
+            if (unquoted) {
+                result[currentKey] = unquoted;
+            } else {
+                result[currentKey] = [];
+            }
+        } else if (currentKey && Array.isArray(result[currentKey])) {
+            const itemMatch = line.match(/^\s*-\s*(.*)/);
+            if (itemMatch) {
+                result[currentKey].push(itemMatch[1].trim().replace(/^["']|["']$/g, ''));
+            }
+        }
+    }
+
+    return result;
+}
+
+export function deriveDateFromDirName(dirName) {
+    const match = String(dirName).match(/^(\d{4})(\d{2})(\d{2})/);
+    if (match) {
+        return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+    return '';
+}
+
 export function validatePostPayload(payload) {
     const source = payload && typeof payload === 'object' ? payload : {};
     const title = String(source.title || '').trim();
@@ -130,8 +172,28 @@ export async function buildPublishPlan({ vaultDir, dirName, outputDir, publicUrl
 
 export async function readTransformedMarkdown(plan) {
     const markdown = await readFile(plan.sourceMarkdownPath, 'utf8');
-    return transformMarkdownAssetLinks(markdown, {
+    const { frontmatterStr, body } = extractYamlFrontmatter(markdown);
+    const sourceMeta = parseSimpleYaml(frontmatterStr);
+
+    const transformedBody = transformMarkdownAssetLinks(body, {
         publicUrl: plan.publicUrl,
         assetSlug: plan.assetSlug,
     });
+
+    const userMeta = plan.metadata || {};
+
+    const post = {
+        title: userMeta.title || sourceMeta.title || plan.dirName,
+        date: userMeta.date || sourceMeta.date || deriveDateFromDirName(plan.dirName),
+        excerpt: userMeta.excerpt || sourceMeta.excerpt || '',
+        category: userMeta.category || sourceMeta.category || '未分类',
+        tags: userMeta.tags || sourceMeta.tags || [],
+        body: transformedBody,
+        featured: userMeta.featured ?? sourceMeta.featured,
+        author: userMeta.author || sourceMeta.author,
+        readTime: userMeta.readTime || sourceMeta.readTime,
+        status: userMeta.status || sourceMeta.status,
+    };
+
+    return buildMarkdownDocument(post);
 }

@@ -58,7 +58,7 @@ export function transformMarkdownAssetLinks(markdown, { publicUrl, assetSlug }) 
     const baseUrl = String(publicUrl || '').replace(/\/+$/, '');
     const safeAssetSlug = encodeUrlPath(assetSlug);
 
-    return String(markdown || '').replace(/(!?\[[^\]]*]\()\s*(?:\.\/)?file\/([^)]+)\)/gi, (_match, prefix, assetPath) => {
+    return String(markdown || '').replace(/(!?\[[^\]]*]\()\s*(?:\.\/|\.)?file\/([^)]+)\)/gi, (_match, prefix, assetPath) => {
         const cleanAssetPath = String(assetPath || '').trim().replace(/^\/+/, '');
         return `${prefix}${baseUrl}/${safeAssetSlug}/${encodeUrlPath(cleanAssetPath)})`;
     });
