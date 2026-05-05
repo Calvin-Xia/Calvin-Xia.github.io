@@ -1,0 +1,334 @@
+<div class="tool-workbench markdown-tool-widget">
+    <section class="markdown-command-surface" aria-labelledby="markdown-tool-title">
+        <div class="markdown-command-copy">
+            <p class="section-kicker">Markdown Studio</p>
+            <h2 id="markdown-tool-title">Markdown 发布工作台</h2>
+        </div>
+        <div class="markdown-command-actions" aria-label="Markdown 主要操作">
+            <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.loadSample()">加载示例</button>
+            <button class="btn btn-danger" type="button" onclick="MarkdownRenderer.clearEditor()">清空</button>
+            <button class="btn btn-secondary" type="button" onclick="MarkdownRenderer.render()">渲染预览</button>
+            <button class="btn markdown-primary-action" type="button" onclick="MarkdownRenderer.copyWeChatHTML()" id="wechat-copy-btn">
+                复制到公众号
+            </button>
+        </div>
+    </section>
+
+    <div class="markdown-workspace">
+        <section class="editor-panel markdown-editor-panel" aria-label="Markdown 编辑器">
+            <div class="panel-header markdown-panel-header">
+                <div>
+                    <span class="markdown-panel-kicker">输入</span>
+                    <h3 class="panel-title">Markdown</h3>
+                </div>
+            </div>
+            <textarea
+                id="markdown-input"
+                class="markdown-editor"
+                placeholder="写正文、标题、列表或代码块"
+                spellcheck="false"
+            ></textarea>
+        </section>
+
+        <section class="editor-panel preview-panel markdown-preview-panel" aria-label="HTML 预览">
+            <div class="panel-header markdown-panel-header">
+                <div>
+                    <span class="markdown-panel-kicker">预览</span>
+                    <h3 class="panel-title">HTML</h3>
+                </div>
+                <div class="panel-actions">
+                    <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.togglePreview()" id="toggle-btn">折叠</button>
+                </div>
+            </div>
+            <div class="preview-content" aria-live="polite">
+                <div id="markdown-output" class="markdown-content">
+                    <p style="text-align: center; color: var(--text-secondary);">预览区域</p>
+                </div>
+            </div>
+        </section>
+
+        <aside class="wechat-publish-panel" aria-labelledby="wechat-publish-title">
+            <div>
+                <span class="markdown-panel-kicker">公众号</span>
+                <h3 id="wechat-publish-title" class="panel-title">微信公众平台</h3>
+            </div>
+            <div class="wechat-publish-actions">
+                <button
+                    class="btn btn-outline"
+                    type="button"
+                    onclick="MarkdownRenderer.toggleWeChatMode()"
+                    id="wechat-toggle-btn"
+                    aria-pressed="false"
+                >
+                    公众号预览
+                </button>
+                <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.copyHTML()" id="copy-html-btn">复制 HTML</button>
+                <button class="btn btn-secondary" type="button" onclick="MarkdownRenderer.exportHTML()">导出 HTML</button>
+            </div>
+            <div id="wechat-copy-status" class="wechat-copy-status" aria-live="polite">富文本剪贴板待复制</div>
+        </aside>
+    </div>
+
+    <div id="loading-indicator" role="status" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span id="loading-text">处理中</span>
+    </div>
+</div>
+
+<style>
+    .markdown-tool-widget {
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .markdown-command-surface {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 1rem;
+        padding: clamp(1rem, 2.5vw, 1.35rem);
+        border: 1px solid rgba(47, 143, 131, 0.16);
+        border-radius: var(--radius-lg);
+        background:
+            linear-gradient(135deg, rgba(255, 252, 248, 0.96), rgba(236, 247, 243, 0.86)),
+            var(--surface-strong);
+        box-shadow: 0 22px 46px rgba(61, 77, 68, 0.1);
+    }
+
+    .markdown-command-copy {
+        min-width: 0;
+    }
+
+    .markdown-command-copy h2 {
+        margin: 0;
+        font-size: clamp(1.45rem, 3vw, 2.15rem);
+        line-height: 1.18;
+    }
+
+    .markdown-command-actions,
+    .wechat-publish-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.65rem;
+    }
+
+    .markdown-command-actions .btn,
+    .wechat-publish-actions .btn {
+        min-height: 2.8rem;
+        white-space: nowrap;
+    }
+
+    .markdown-primary-action {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+        color: #fffaf4;
+        box-shadow: 0 16px 28px rgba(47, 143, 131, 0.18);
+    }
+
+    .markdown-primary-action:hover {
+        color: #fffaf4;
+        transform: translateY(-1px);
+    }
+
+    .markdown-workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+            "editor preview"
+            "wechat wechat";
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .markdown-editor-panel {
+        grid-area: editor;
+    }
+
+    .markdown-preview-panel {
+        grid-area: preview;
+    }
+
+    .wechat-publish-panel {
+        grid-area: wechat;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.9rem 1rem;
+        padding: 1rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(87, 96, 132, 0.14);
+        background: rgba(255, 252, 248, 0.86);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    }
+
+    .markdown-tool-widget .editor-panel {
+        min-width: 0;
+        height: clamp(34rem, 72vh, 46rem);
+        min-height: 0;
+        padding: 1rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(184, 107, 70, 0.12);
+        background: rgba(255, 252, 248, 0.82);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+    }
+
+    .markdown-panel-header {
+        margin-bottom: 0.85rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .markdown-panel-kicker {
+        display: block;
+        margin-bottom: 0.18rem;
+        color: var(--text-subtle);
+        font-size: 0.76rem;
+        font-weight: 800;
+    }
+
+    .markdown-editor {
+        flex: 1;
+        min-height: 0;
+        padding: 1rem;
+        border-radius: 1rem;
+        line-height: 1.65;
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        overflow: auto;
+        resize: vertical;
+    }
+
+    .markdown-tool-widget .preview-content {
+        flex: 1;
+        min-height: 0;
+        padding: 1rem;
+        border-radius: 1rem;
+        background: rgba(255, 249, 243, 0.72);
+        overflow: auto;
+    }
+
+    .markdown-tool-widget .markdown-content {
+        min-height: 100%;
+    }
+
+    .markdown-tool-widget .markdown-content--wechat {
+        max-width: 680px;
+        margin-inline: auto;
+        padding: clamp(1rem, 3vw, 1.5rem);
+        background: #ffffff;
+        box-shadow: 0 14px 34px rgba(47, 55, 71, 0.1);
+    }
+
+    .wechat-copy-status {
+        grid-column: 1 / -1;
+        min-height: 2.6rem;
+        padding: 0.72rem 0.9rem;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(47, 143, 131, 0.14);
+        background: rgba(216, 237, 233, 0.42);
+        color: var(--text-secondary);
+        font-size: 0.92rem;
+        line-height: 1.45;
+    }
+
+    .wechat-copy-status[data-state="success"] {
+        border-color: rgba(46, 140, 99, 0.22);
+        background: rgba(46, 140, 99, 0.1);
+        color: var(--success-color);
+    }
+
+    .wechat-copy-status[data-state="fallback"] {
+        border-color: rgba(245, 158, 11, 0.3);
+        background: rgba(245, 158, 11, 0.1);
+        color: #8a5a00;
+    }
+
+    .wechat-copy-status[data-state="error"] {
+        border-color: rgba(191, 93, 103, 0.24);
+        background: rgba(191, 93, 103, 0.08);
+        color: var(--error-color);
+    }
+
+    .markdown-tool-widget .image-caption {
+        color: var(--text-subtle);
+        font-size: 0.86rem;
+        line-height: 1.5;
+        text-align: center;
+    }
+
+    .markdown-tool-widget #loading-indicator {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 1202;
+        display: none;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.8rem 1rem;
+        border-radius: var(--radius-pill);
+        background: rgba(255, 249, 243, 0.96);
+        border: 1px solid rgba(184, 107, 70, 0.14);
+        box-shadow: var(--shadow-md);
+        color: var(--text-primary);
+    }
+
+    .markdown-tool-widget #loading-indicator.active {
+        display: flex;
+    }
+
+    @media (max-width: 980px) {
+        .markdown-command-surface,
+        .wechat-publish-panel {
+            grid-template-columns: 1fr;
+        }
+
+        .markdown-command-actions,
+        .wechat-publish-actions {
+            justify-content: flex-start;
+        }
+
+        .markdown-workspace {
+            grid-template-columns: 1fr;
+            grid-template-areas:
+                "editor"
+                "preview"
+                "wechat";
+        }
+    }
+
+    @media (max-width: 640px) {
+        .markdown-command-actions,
+        .wechat-publish-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .markdown-command-actions .btn,
+        .wechat-publish-actions .btn {
+            width: 100%;
+        }
+
+        .markdown-tool-widget .editor-panel {
+            height: clamp(28rem, 68vh, 34rem);
+            padding: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+    import '../scripts/markdown-renderer.ts';
+
+    function initMarkdownToolWidget() {
+        const MarkdownRenderer = window.MarkdownRenderer;
+        if (MarkdownRenderer) {
+            MarkdownRenderer.init();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMarkdownToolWidget, { once: true });
+    } else {
+        initMarkdownToolWidget();
+    }
+
+    document.addEventListener('astro:page-load', initMarkdownToolWidget);
+</script>

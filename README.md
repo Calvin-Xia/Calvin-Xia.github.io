@@ -1,6 +1,6 @@
 # Mr.Xia 个人网站
 
-这是一个静态个人站点仓库，正在从根目录 HTML/CSS/vanilla JS 迁移到 Astro。Phase 2 已完成：Astro 内容集合已接管博客、作品、工具和更新日志的数据层，`/articles/`、文章详情页、首页最近更新、新建文章工具和 Obsidian→R2 发布管线已经可用。Phase 2.5 已完成文章阅读体验增强：图片灯箱、标题锚点、阅读目录、阅读进度、文章切换和 TeX 公式渲染已经接入 Astro 文章页。
+这是一个静态个人站点仓库，正在从根目录 HTML/CSS/vanilla JS 迁移到 Astro。Phase 2 已完成：Astro 内容集合已接管博客、作品、工具和更新日志的数据层，`/articles/`、文章详情页、首页最近更新、新建文章工具和 Obsidian→R2 发布管线已经可用。Phase 2.5 已完成文章阅读体验增强：图片灯箱、标题锚点、阅读目录、阅读进度、文章切换和 TeX 公式渲染已经接入 Astro 文章页。Phase 3 已完成工具页迁移：作品页提供工具集入口，完整工具台位于 `/works/tools/`，Markdown 工具也保留独立 `/markdown-tool/` 页面。
 
 旧 HTML/JSON/Python 管线仍保留到 Phase 4 清理阶段，用于兼容旧页面和旧 URL。新开发优先放在 `src/`、`src/content/`、`scripts/*.js` 和 `tools/` 中。
 
@@ -44,6 +44,8 @@ npm run dev
 - `/articles/`
 - `/articles/20260411-ai-reliance/`
 - `/works/`
+- `/works/tools/`
+- `/markdown-tool/`
 - `/new-post/`（仅 dev 模式启用可提交表单）
 
 旧 HTML 仍可用本地静态服务器预览：

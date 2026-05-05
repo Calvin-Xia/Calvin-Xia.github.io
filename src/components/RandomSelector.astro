@@ -1,0 +1,60 @@
+<div class="card random-selector-container selector-shell">
+    <h3 class="tool-heading">随机选择器</h3>
+    <div class="selector-actions selector-actions--editor">
+        <input
+            type="text"
+            id="itemInput"
+            class="selector-input"
+            placeholder="请输入选项，回车或点击添加"
+            aria-label="输入待抽取选项"
+            autocomplete="off"
+        />
+        <div class="selector-actions selector-actions--compact">
+            <button class="btn btn-secondary selector-action-btn" type="button" onclick="RandomSelector.addItem()">添加</button>
+            <button class="btn btn-outline selector-action-btn" type="button" onclick="RandomSelector.deleteAll()">清空</button>
+        </div>
+    </div>
+
+    <ul id="items" class="selector-list"></ul>
+
+    <div class="selector-actions selector-actions--center">
+        <button class="btn" type="button" onclick="RandomSelector.chooseRandom()">随机抽取</button>
+    </div>
+
+    <span id="chosen" class="selector-result" aria-live="polite"></span>
+
+    <div id="upload" class="tool-upload">
+        <div class="tool-upload-controls">
+            <button type="button" class="btn btn-secondary tool-file-trigger" onclick="RandomSelector.openFilePicker()">选择文件</button>
+            <button class="btn tool-upload-submit" type="button" onclick="RandomSelector.handleFiles()" aria-label="上传文档并自动填充">
+                导入并自动填充
+            </button>
+        </div>
+        <input
+            type="file"
+            id="fileInput"
+            class="tool-upload-input tool-upload-input--hidden"
+            accept=".txt,.md,.docx"
+            multiple
+            aria-label="上传文档文件"
+        />
+        <div id="fileSelectionStatus" class="tool-upload-status" aria-live="polite">未选择任何文件</div>
+        <div class="tool-note">支持 TXT、Markdown、Word 文档</div>
+    </div>
+</div>
+
+<script>
+    import '../scripts/random-selector.ts';
+
+    function initRandomSelectorWidget() {
+        window.RandomSelector?.init();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initRandomSelectorWidget, { once: true });
+    } else {
+        initRandomSelectorWidget();
+    }
+
+    document.addEventListener('astro:page-load', initRandomSelectorWidget);
+</script>

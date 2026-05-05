@@ -1,0 +1,24 @@
+---
+import PageIntro from '../../components/PageIntro.astro';
+import ToolsSection from '../../components/ToolsSection.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Mr.Xia - 工具集" description="作品体系下的在线工具集" currentPage="works">
+    <div class="tool-page-main">
+        <PageIntro
+            kicker="作品工具"
+            title="工具集"
+            subtitle="计时器、随机选择器和 Markdown 渲染工具集中放在这个子页面，入口归属作品页。"
+            center
+        />
+
+        <ToolsSection />
+
+        <div class="page-return">
+            <a href="/works/" class="btn btn-secondary" data-history="true" data-title="作品">
+                返回作品页
+            </a>
+        </div>
+    </div>
+</BaseLayout>

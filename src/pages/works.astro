@@ -179,6 +179,36 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
     </section>
 
+    <section class="section-stack">
+        <div class="card project-card project-card--featured">
+            <div class="project-card-layout">
+                <div class="project-card-copy">
+                    <p class="card-kicker">工具集</p>
+                    <h3>在线工具集</h3>
+                    <p>
+                        计时器、随机选择器和 Markdown 渲染工具已整理到作品页下的独立工具路由，避免挤占作品列表。
+                    </p>
+                    <p class="project-meta">包含：在线计时器、随机选择器、Markdown 渲染工具</p>
+                </div>
+                <aside class="project-card-side" aria-label="工具集摘要与操作">
+                    <div class="project-tag-list" aria-label="工具标签">
+                        <span class="project-tag">计时器</span>
+                        <span class="project-tag">随机抽取</span>
+                        <span class="project-tag">Markdown</span>
+                    </div>
+                    <p class="project-side-note">
+                        作为作品体系下的子页面维护，保留完整交互，同时让作品页保持轻量。
+                    </p>
+                    <div class="action-row project-card-actions">
+                        <a href="/works/tools/" class="btn" data-history="true" data-title="工具集">
+                            打开工具集
+                        </a>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
     <div class="page-return">
         <a href="/" class="btn btn-secondary" data-history="true" data-title="首页">
             ← 返回首页

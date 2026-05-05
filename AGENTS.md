@@ -8,6 +8,7 @@ This repository is a static website currently migrating from root-level HTML/CSS
 - Astro config and source: `package.json`, `astro.config.mjs`, `tsconfig.json`, `src/`.
 - Astro content collections: `src/content.config.ts`, `src/content/blog/`, `src/content/works/`, `src/content/tools/`, `src/content/updates/`.
 - Astro static assets: `public/` mirrors deployable static assets such as `storage/`, `.well-known/`, and selected local fallback libraries.
+- Astro tool routes: `src/pages/works/tools.astro` (作品体系下的工具集) and `src/pages/markdown-tool.astro` (Markdown 工具独立页).
 - RSS and SEO: `src/pages/rss.xml.ts` (RSS 2.0 feed), `astro.config.mjs` (`@astrojs/sitemap` integration).
 - Comments: `src/components/GiscusComments.astro` (giscus + GitHub Discussions).
 - Legacy blog content and metadata: `blog/` (including `blog-files.json` and `blog-metadata.json`) remain until cleanup.

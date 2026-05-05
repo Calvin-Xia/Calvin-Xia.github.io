@@ -1073,26 +1073,84 @@ textarea:focus-visible {
     animation: fadeInUp 320ms ease;
 }
 
-.tools-intro {
-    text-align: center;
-    gap: 0.38rem;
-    width: min(100%, 960px);
+.tools-shell {
+    display: grid;
+    gap: 1rem;
+    width: min(100%, 1080px);
     margin-inline: auto;
-    padding-bottom: 0.4rem;
+    padding: clamp(0.95rem, 2.4vw, 1.35rem);
+    border: 1px solid rgba(47, 143, 131, 0.14);
+    border-radius: var(--radius-xl);
+    background:
+        linear-gradient(135deg, rgba(255, 252, 248, 0.92), rgba(236, 247, 243, 0.78)),
+        var(--surface-base);
+    box-shadow: 0 24px 58px rgba(61, 77, 68, 0.11);
+}
+
+.tools-intro {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: left;
+}
+
+.tools-intro-copy {
+    display: grid;
+    gap: 0.28rem;
+    min-width: 0;
 }
 
 .tools-intro .page-subtitle {
-    max-width: 34rem;
+    max-width: 38rem;
 }
 
-.tools-intro .tabs {
-    margin-top: 0.4rem;
+.tools-quick-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    min-width: min(100%, 20rem);
+}
+
+.tools-quick-stats span {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.36rem;
+    min-height: 2.45rem;
+    padding: 0.48rem 0.72rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(87, 96, 132, 0.12);
+    background: rgba(255, 252, 248, 0.72);
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.tools-quick-stats strong {
+    color: var(--accent-color);
+    font-size: 1.08rem;
+}
+
+.tools-tabs {
+    justify-content: flex-start;
     margin-bottom: 0;
+    padding: 0.34rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(184, 107, 70, 0.12);
+    background: rgba(255, 248, 241, 0.64);
 }
 
-.tools-intro + .tab-content {
-    width: min(100%, 960px);
-    margin: 1.1rem auto 1rem;
+.tools-tabs .tab-btn {
+    flex: 0 1 auto;
+    min-width: 8.5rem;
+    box-shadow: none;
+}
+
+.tools-tab-content {
+    width: 100%;
+    margin: 0;
 }
 
 .timer-container,
@@ -3246,8 +3304,25 @@ textarea {
         gap: 0.35rem;
     }
 
-    .tools-intro .tabs {
-        margin-top: 0.5rem;
+    .tools-intro {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tools-quick-stats {
+        justify-content: flex-start;
+        min-width: 0;
+    }
+
+    .tools-tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+        border-radius: var(--radius-lg);
+    }
+
+    .tools-tabs .tab-btn {
+        width: 100%;
+        min-width: 0;
     }
 
     .articles-intro .search-container {

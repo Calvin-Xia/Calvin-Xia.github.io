@@ -1,0 +1,146 @@
+---
+import MarkdownToolWidget from './MarkdownToolWidget.astro';
+import RandomSelector from './RandomSelector.astro';
+import TimerWidget from './TimerWidget.astro';
+---
+
+<section class="section-stack tools-section" data-tools-section aria-labelledby="tools-section-title">
+    <div class="tools-shell">
+        <div class="tools-intro">
+            <div class="tools-intro-copy">
+                <p class="section-kicker">工具集</p>
+                <h2 id="tools-section-title" class="section-heading">作品工具台</h2>
+                <p class="page-subtitle">计时、随机抽取和 Markdown 发布工具集中在这里。</p>
+            </div>
+            <div class="tools-quick-stats" aria-label="工具概览">
+                <span><strong>3</strong> 个工具</span>
+                <span><strong>1</strong> 个发布工作台</span>
+            </div>
+        </div>
+
+        <div class="tabs tools-tabs" role="tablist" aria-label="工具选项卡">
+            <button
+                class="tab-btn active"
+                type="button"
+                data-tab="timer"
+                role="tab"
+                aria-selected="true"
+                aria-controls="timer"
+                id="tab-timer"
+            >
+                计时器
+            </button>
+            <button
+                class="tab-btn"
+                type="button"
+                data-tab="random-selector"
+                role="tab"
+                aria-selected="false"
+                aria-controls="random-selector"
+                id="tab-random-selector"
+                tabindex="-1"
+            >
+                随机抽取
+            </button>
+            <button
+                class="tab-btn"
+                type="button"
+                data-tab="markdown-tool"
+                role="tab"
+                aria-selected="false"
+                aria-controls="markdown-tool"
+                id="tab-markdown-tool"
+                tabindex="-1"
+            >
+                Markdown 发布
+            </button>
+        </div>
+
+        <div class="tab-content tools-tab-content">
+            <div id="timer" class="tab-panel active" role="tabpanel" aria-labelledby="tab-timer">
+                <TimerWidget />
+            </div>
+            <div id="random-selector" class="tab-panel" role="tabpanel" aria-labelledby="tab-random-selector" hidden>
+                <RandomSelector />
+            </div>
+            <div id="markdown-tool" class="tab-panel" role="tabpanel" aria-labelledby="tab-markdown-tool" hidden>
+                <MarkdownToolWidget />
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function initToolsSectionTabs() {
+        document.querySelectorAll('[data-tools-section]').forEach((section) => {
+            if (section instanceof HTMLElement && section.dataset.tabsReady === 'true') {
+                return;
+            }
+
+            if (section instanceof HTMLElement) {
+                section.dataset.tabsReady = 'true';
+            }
+
+            const tabBtns = Array.from(section.querySelectorAll('[role="tab"]'));
+            const tabPanels = Array.from(section.querySelectorAll('[role="tabpanel"]'));
+
+            /** @param {Element} btn */
+            function activateTab(btn) {
+                const targetTab = btn.getAttribute('data-tab');
+                if (!targetTab) {
+                    return;
+                }
+
+                tabBtns.forEach((tab) => {
+                    tab.classList.remove('active');
+                    tab.setAttribute('aria-selected', 'false');
+                    tab.setAttribute('tabindex', '-1');
+                });
+
+                tabPanels.forEach((panel) => {
+                    panel.classList.remove('active');
+                    panel.setAttribute('hidden', '');
+                });
+
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+                btn.removeAttribute('tabindex');
+
+                const activePanel = section.querySelector(`#${targetTab}`);
+                if (activePanel) {
+                    activePanel.classList.add('active');
+                    activePanel.removeAttribute('hidden');
+                }
+
+                if (targetTab === 'timer' && window.MrXiaApp && window.MrXiaApp.Timer) {
+                    window.MrXiaApp.Timer.syncDisplay();
+                }
+            }
+
+            tabBtns.forEach((btn) => {
+                btn.addEventListener('click', () => activateTab(btn));
+                btn.addEventListener('keydown', (event) => {
+                    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    const currentIndex = tabBtns.indexOf(btn);
+                    const offset = event.key === 'ArrowLeft' ? -1 : 1;
+                    const nextIndex = (currentIndex + offset + tabBtns.length) % tabBtns.length;
+                    const nextTab = tabBtns[nextIndex];
+                    nextTab.focus();
+                    activateTab(nextTab);
+                });
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initToolsSectionTabs, { once: true });
+    } else {
+        initToolsSectionTabs();
+    }
+
+    document.addEventListener('astro:page-load', initToolsSectionTabs);
+</script>

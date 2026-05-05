@@ -1,0 +1,28 @@
+---
+import MarkdownToolWidget from '../components/MarkdownToolWidget.astro';
+import PageIntro from '../components/PageIntro.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+    title="Mr.Xia - Markdown 渲染工具"
+    description="Markdown 即时渲染、格式化 HTML 输出与微信公众号格式转换工具"
+    currentPage="works"
+>
+    <div class="tool-page-main">
+        <PageIntro
+            kicker="独立工具"
+            title="Markdown 渲染工具"
+            subtitle="用于 Markdown 即时预览、HTML 导出、格式化复制和微信公众号格式转换。"
+            center
+        />
+
+        <MarkdownToolWidget />
+
+        <div class="page-return">
+            <a href="/works/" class="btn btn-secondary" data-history="true" data-title="作品">
+                返回作品页
+            </a>
+        </div>
+    </div>
+</BaseLayout>

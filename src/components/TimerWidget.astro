@@ -1,0 +1,116 @@
+<div class="card timer-container">
+    <div class="timer-setup">
+        <h3 class="tool-heading">设置计时时间</h3>
+        <div class="time-inputs">
+            <div class="time-input-group">
+                <label for="hours">小时</label>
+                <div class="time-input-wrapper">
+                    <button class="time-btn time-decrease" type="button" onclick="changeTime('hours', -1)" aria-label="减少小时">-</button>
+                    <input
+                        type="number"
+                        id="hours"
+                        name="hours"
+                        min="0"
+                        max="99"
+                        value="0"
+                        class="time-input"
+                        aria-label="小时"
+                        aria-describedby="timer-instructions"
+                    />
+                    <button class="time-btn time-increase" type="button" onclick="changeTime('hours', 1)" aria-label="增加小时">+</button>
+                </div>
+            </div>
+            <span class="time-separator">:</span>
+            <div class="time-input-group">
+                <label for="minutes">分钟</label>
+                <div class="time-input-wrapper">
+                    <button class="time-btn time-decrease" type="button" onclick="changeTime('minutes', -1)" aria-label="减少分钟">-</button>
+                    <input
+                        type="number"
+                        id="minutes"
+                        name="minutes"
+                        min="0"
+                        max="59"
+                        value="0"
+                        class="time-input"
+                        aria-label="分钟"
+                        aria-describedby="timer-instructions"
+                    />
+                    <button class="time-btn time-increase" type="button" onclick="changeTime('minutes', 1)" aria-label="增加分钟">+</button>
+                </div>
+            </div>
+            <span class="time-separator">:</span>
+            <div class="time-input-group">
+                <label for="seconds">秒数</label>
+                <div class="time-input-wrapper">
+                    <button class="time-btn time-decrease" type="button" onclick="changeTime('seconds', -1)" aria-label="减少秒数">-</button>
+                    <input
+                        type="number"
+                        id="seconds"
+                        name="seconds"
+                        min="0"
+                        max="59"
+                        value="0"
+                        class="time-input"
+                        aria-label="秒数"
+                        aria-describedby="timer-instructions"
+                    />
+                    <button class="time-btn time-increase" type="button" onclick="changeTime('seconds', 1)" aria-label="增加秒数">+</button>
+                </div>
+            </div>
+        </div>
+        <button id="set-time" class="btn btn-outline" type="button">设置时间</button>
+    </div>
+
+    <div id="timer-display">00:00:00</div>
+
+    <div class="timer-progress" aria-label="计时进度">
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div class="progress-info">
+            <span id="progress-text">0%</span>
+        </div>
+    </div>
+
+    <div class="timer-controls">
+        <button id="start" class="btn" type="button">开始</button>
+        <button id="pause" class="btn btn-secondary" type="button">暂停</button>
+        <button id="reset" class="btn btn-outline" type="button">重置</button>
+    </div>
+
+    <div class="timer-info">
+        <p id="timer-instructions" class="text-small">
+            提示：先设置时间，再开始计时；暂停用于临时中断，重置会回到刚设置的时长。
+        </p>
+    </div>
+</div>
+
+<div class="shadowbox tool-feature-card">
+    <h3>功能特点</h3>
+    <ul class="feature-list">
+        <li>精确到秒的计时功能</li>
+        <li>支持暂停和继续计时</li>
+        <li>一键重置计时器</li>
+        <li>进度条随目标时长同步更新</li>
+    </ul>
+</div>
+
+<script>
+    import '../scripts/timer.ts';
+
+    function initTimerWidget() {
+        const Timer = window.MrXiaApp?.Timer;
+        if (Timer) {
+            Timer.init();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTimerWidget, { once: true });
+    } else {
+        initTimerWidget();
+    }
+
+    document.addEventListener('astro:page-load', initTimerWidget);
+</script>

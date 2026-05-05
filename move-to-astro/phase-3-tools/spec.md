@@ -3,12 +3,12 @@
 ## Why
 当前两个工具页包含密集的客户端交互逻辑（计时器、随机选择器、Word 文档导入、Markdown 即时渲染、导出 HTML 等）。这些页面需要精细的拆分策略：HTML 结构迁入 Astro 组件，交互逻辑提取为独立 TypeScript 模块，通过 Astro 的 `<script>` 标签加载。
 
-**入口调整**：工具不再作为顶部导航的独立一级入口，改为下沉到"作品"页面内部，以"工具集"区域呈现，与现有作品卡片并列。
+**入口调整**：工具不再作为顶部导航的独立一级入口，改为下沉到"作品"体系内。`/works/` 页面只显示"工具集"入口卡片，完整工具台单开为 `/works/tools/` 子路由。
 
 ## What Changes
-- 迁移 `timetable.html` → 工具集区域（计时器 + 随机选择器两选项卡），嵌入 `works.astro`
+- 迁移 `timetable.html` → `/works/tools/` 工具集子页面（计时器 + 随机选择器两选项卡）
 - 迁移 `markdown-to-html-tool.html` → `markdown-tool.astro`（Markdown 即时渲染工具）
-- 将 Markdown 渲染工具作为工具集区域的第三个选项卡接入
+- 将 Markdown 渲染工具作为 `/works/tools/` 工具集页面的第三个选项卡接入
 - 创建 `TimerWidget.astro` 和 `RandomSelector.astro` 组件（纯 HTML 结构）
 - 创建 `MarkdownToolWidget.astro` 组件（编辑器 + 预览面板 + 工具栏）
 - 提取 `src/scripts/timer.ts`（从 `main.js` Timer 模块）
@@ -20,29 +20,40 @@
 - 新增"微信公众号格式"渲染模式：将 Markdown 渲染为带内联样式的 HTML，兼容微信编辑器粘贴
 - mammoth 保持 CDN + 本地回退策略，保留 `public/libs/mammoth/` 本地副本
 - 从 `Header.astro` 的 `navItems` 中移除"工具"项
+- 将首页快捷入口从旧 `/tools/` 更新为 `/works/tools/`
+- 在 `works.astro` 作品卡片下方添加"工具集"入口卡片，链接到 `/works/tools/`
+- 新增 `src/pages/works/tools.astro`，渲染完整 ToolsSection 工具台
 
 ## Impact
-- New files: `src/pages/markdown-tool.astro`, `src/components/TimerWidget.astro`, `src/components/RandomSelector.astro`, `src/components/MarkdownToolWidget.astro`, `src/components/ToolsSection.astro`, `src/scripts/timer.ts`, `src/scripts/random-selector.ts`, `src/scripts/markdown-renderer.ts`
-- Modified files: `src/pages/works.astro`（嵌入 ToolsSection 组件）, `src/components/Header.astro`（移除"工具"导航项）, `src/styles/global.css`（可为工具页添加微小样式调整）
+- New files: `src/pages/works/tools.astro`, `src/pages/markdown-tool.astro`, `src/components/TimerWidget.astro`, `src/components/RandomSelector.astro`, `src/components/MarkdownToolWidget.astro`, `src/components/ToolsSection.astro`, `src/scripts/timer.ts`, `src/scripts/random-selector.ts`, `src/scripts/markdown-renderer.ts`
+- Modified files: `src/pages/works.astro`（添加工具集入口卡片）, `src/components/Header.astro`（移除"工具"导航项）, `src/styles/global.css`（可为工具页添加微小样式调整）
 - Retained files: `public/libs/mammoth/mammoth.browser.min.js`（从 `libs/mammoth/` 移动或保持）
-- 删除的文件：`src/pages/tools.astro` 不再需要（工具入口直接在 works.astro 内）
+- 删除的文件：`src/pages/tools.astro` 不再需要（工具入口位于 works.astro，完整工具台位于 `/works/tools/`）
 - 不影响旧 HTML 文件
 
 ## ADDED Requirements
 
-### Requirement: 导航调整——工具入口下沉至作品栏
-"工具" SHALL NOT 出现在顶部导航栏中，工具入口 SHALL 作为 works.astro 页面内的一个区域呈现。
+### Requirement: 导航调整——工具入口下沉至作品子路由
+"工具" SHALL NOT 出现在顶部导航栏中，工具入口 SHALL 作为 works.astro 页面内的入口卡片呈现，并链接到 `/works/tools/`。
 
 #### Scenario: 顶部导航
 - **WHEN** 用户访问任意页面
 - **THEN** Header 导航项为：首页、作品、文章、关于（不含"工具"）
 
+#### Scenario: 首页快捷入口
+- **WHEN** 用户在首页点击"使用工具"
+- **THEN** 链接目标为 `/works/tools/`，不再访问旧 `/tools/`
+
 #### Scenario: 作品页内工具入口
 - **WHEN** 用户访问 `/works/`
-- **THEN** 在作品卡片列表下方显示"工具集"区域，包含工具选项卡
+- **THEN** 在作品卡片列表下方显示"工具集"入口卡片，点击后进入 `/works/tools/`
 
-### Requirement: ToolsSection 组件（作品页内工具区域）
-`ToolsSection.astro` SHALL 在作品页内渲染工具集区域，包含三个选项卡：在线计时器、随机选择器、Markdown 渲染工具。
+#### Scenario: 作品工具子路由
+- **WHEN** 用户访问 `/works/tools/`
+- **THEN** 显示完整"工具集"工具台，包含三个工具选项卡
+
+### Requirement: ToolsSection 组件（作品工具子路由）
+`ToolsSection.astro` SHALL 在 `/works/tools/` 页面渲染工具集区域，包含三个选项卡：在线计时器、随机选择器、Markdown 渲染工具。
 
 #### Scenario: 区域结构
 - **WHEN** ToolsSection 渲染
@@ -94,8 +105,8 @@
 - **WHEN** CDN 加载 mammoth 失败
 - **THEN** 自动切换到本地 `public/libs/mammoth/mammoth.browser.min.js`
 
-### Requirement: MarkdownToolWidget 组件（作品页内嵌版）
-`MarkdownToolWidget.astro` SHALL 渲染 Markdown 编辑器和预览面板的完整 HTML 结构，作为 ToolsSection 的第三个选项卡。
+### Requirement: MarkdownToolWidget 组件（工具集子路由内嵌版）
+`MarkdownToolWidget.astro` SHALL 渲染 Markdown 编辑器和预览面板的完整 HTML 结构，作为 `/works/tools/` ToolsSection 的第三个选项卡。
 
 #### Scenario: 编辑器面板
 - **WHEN** MarkdownToolWidget 渲染

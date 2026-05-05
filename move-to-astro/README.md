@@ -23,7 +23,7 @@
 | Phase 1 | 低复杂度页面迁移 | 迁移 about、works、404、styleguide 页面；拆分 main.js 脚本模块 |
 | Phase 2 | 内容体系迁移 | 建立 Astro 内容集合，迁移博客/作品/工具/更新日志，实现搜索和过滤 |
 | Phase 2.5 | 文章体验增强 | 实现图片灯箱、文章平滑切换、标题锚点、阅读侧栏和 TeX 公式渲染 |
-| Phase 3 | 工具页迁移 | 迁移 tools（计时器+随机选择器）和 markdown-tool 页面 |
+| Phase 3 | 工具页迁移 | 迁移 `/works/tools/`（计时器+随机选择器+Markdown 工具）和 markdown-tool 页面 |
 | Phase 4 | 清理与收尾 | 删除旧文件，旧 URL 重定向，CI/CD 更新，文档更新，全站验证 |
 | Phase 5 | SEO 与评论系统 | RSS feed、sitemap 自动生成、giscus 评论区集成 |
 
@@ -35,7 +35,7 @@
 | Phase 1 | 已完成 | 已迁移 about、works、404、styleguide 页面，完善首页脚本接线并完成脚本模块对象导出 |
 | Phase 2 | 已完成 | 已建立 Astro 6 内容集合、迁移博客/作品/工具/更新日志，完成文章列表/详情、全站搜索、最近更新、新建文章工具与 Obsidian→R2 发布管线 |
 | Phase 2.5 | 已完成 | 已完成图片灯箱、标题锚点、侧栏目录、阅读进度、Astro ClientRouter 渐进切换和 KaTeX 服务端渲染 |
-| Phase 3 | 待开始 | 依赖 Phase 0 布局和脚本组织 |
+| Phase 3 | 已完成 | 工具入口下沉到 `/works/` 入口卡片，完整工具台位于 `/works/tools/`，Markdown 工具保留独立 `/markdown-tool/` 页面 |
 | Phase 4 | 待开始 | 依赖 Phase 1-3 完成 |
 | Phase 5 | 已完成 | RSS feed、sitemap 自动生成、giscus 评论区（含 code review 修订），97 tests
 
@@ -65,7 +65,9 @@
 │   │   ├── TransitionIndicator.astro
 │   │   ├── PageIntro.astro
 │   │   ├── TimerWidget.astro
-│   │   └── RandomSelector.astro
+│   │   ├── RandomSelector.astro
+│   │   ├── MarkdownToolWidget.astro
+│   │   └── ToolsSection.astro
 │   ├── layouts/
 │   │   └── BaseLayout.astro
 │   ├── lib/
@@ -79,7 +81,8 @@
 │   │   ├── index.astro
 │   │   ├── about.astro
 │   │   ├── works.astro
-│   │   ├── tools.astro
+│   │   ├── works/
+│   │   │   └── tools.astro
 │   │   ├── articles.astro
 │   │   ├── articles/[...slug].astro
 │   │   ├── updates/[...slug].astro
