@@ -145,7 +145,8 @@ async function extractDocx(arrayBuffer: ArrayBuffer): Promise<void> {
 
         const result = await window.mammoth.convertToHtml({ arrayBuffer });
         const parser = new DOMParser();
-        const docText = parser.parseFromString(result.value, 'text/html').body.textContent || '';
+        const doc = parser.parseFromString(result.value, 'text/html');
+        const docText = doc.body.innerText || '';
         fillFromText(docText);
     } catch (error) {
         console.error('[CDN Fallback] Failed to load mammoth.js:', error);
