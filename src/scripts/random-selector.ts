@@ -136,6 +136,15 @@ async function loadMammoth(): Promise<void> {
     }
 }
 
+function extractBlockText(html: string): string {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const blocks = doc.body.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, td, th, figcaption');
+    return Array.from(blocks)
+        .map((el) => el.textContent?.trim() || '')
+        .filter(Boolean)
+        .join('\n');
+}
+
 async function extractDocx(arrayBuffer: ArrayBuffer): Promise<void> {
     try {
         await loadMammoth();
@@ -144,10 +153,7 @@ async function extractDocx(arrayBuffer: ArrayBuffer): Promise<void> {
         }
 
         const result = await window.mammoth.convertToHtml({ arrayBuffer });
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(result.value, 'text/html');
-        const docText = doc.body.innerText || '';
-        fillFromText(docText);
+        fillFromText(extractBlockText(result.value));
     } catch (error) {
         console.error('[CDN Fallback] Failed to load mammoth.js:', error);
         window.alert('Word文档解析功能暂时不可用，请稍后重试或使用TXT/Markdown文件');
