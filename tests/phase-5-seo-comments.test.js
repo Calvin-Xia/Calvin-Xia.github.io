@@ -127,6 +127,24 @@ describe('Phase 5 SEO and comments', () => {
         assert.match(layoutSource, /href=['"]\/rss\.xml['"]/);
     });
 
+    test('BaseLayout includes Umami Cloud tracker with explicit host URL', () => {
+        const layoutSource = readFile('src', 'layouts', 'BaseLayout.astro');
+
+        assert.match(layoutSource, /src=['"]https:\/\/cloud\.umami\.is\/script\.js['"]/);
+        assert.match(layoutSource, /data-website-id=['"]d5b9f90c-e82b-4b57-ade7-ff6a3e5d8062['"]/);
+        assert.match(layoutSource, /data-host-url=['"]https:\/\/cloud\.umami\.is['"]/);
+    });
+
+    test('CSP allows Umami script loading and analytics POST requests', () => {
+        const headersSource = readFile('public', '_headers');
+        const csp = headersSource.match(/Content-Security-Policy:\s*(.+)/)?.[1] || '';
+        const scriptSrc = csp.match(/script-src\s+([^;]+)/)?.[1] || '';
+        const connectSrc = csp.match(/connect-src\s+([^;]+)/)?.[1] || '';
+
+        assert.match(scriptSrc, /https:\/\/cloud\.umami\.is/);
+        assert.match(connectSrc, /https:\/\/cloud\.umami\.is/);
+    });
+
     test('Footer hides sitemap link in dev mode via import.meta.env.PROD', () => {
         const footerSource = readFile('src', 'components', 'Footer.astro');
 
