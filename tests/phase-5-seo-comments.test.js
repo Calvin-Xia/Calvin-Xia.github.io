@@ -186,7 +186,7 @@ describe('Phase 5 SEO and comments', () => {
         const componentSource = readFile('src', 'components', 'GiscusComments.astro');
 
         assert.match(componentSource, /class=['"]giscus['"]/);
-        assert.match(componentSource, /data-repo=['"]Calvin-Xia\/mr\.xia\.github\.io['"]/);
+        assert.match(componentSource, /data-repo=['"]Calvin-Xia\/Calvin-Xia\.github\.io['"]/);
         assert.match(componentSource, /data-repo-id=['"]R_kgDOQimLyw['"]/);
         assert.match(componentSource, /data-category=['"]Show and tell['"]/);
         assert.match(componentSource, /data-category-id=['"]DIC_kwDOQimLy84C8XWc['"]/);
