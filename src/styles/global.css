@@ -2060,6 +2060,7 @@ textarea:focus {
     gap: 0.7rem;
     align-self: start;
     max-height: calc(100vh - 7.2rem);
+    min-height: 0;
 }
 
 .article-toc-shell[hidden] {
@@ -2086,14 +2087,26 @@ textarea:focus {
 }
 
 .article-toc {
+    display: flex;
+    max-height: calc(100vh - 8.32rem);
+    min-height: 0;
+    flex-direction: column;
     padding: 0.95rem 1rem;
-    overflow: auto;
+    overflow: hidden;
     border: 1px solid rgba(184, 107, 70, 0.13);
     border-radius: var(--radius-lg);
     background: rgba(255, 250, 245, 0.9);
     box-shadow: var(--shadow-sm);
     backdrop-filter: var(--blur-panel) saturate(145%);
     -webkit-backdrop-filter: var(--blur-panel) saturate(145%);
+}
+
+.article-toc > nav {
+    flex: 1 1 auto;
+    max-height: calc(100vh - 11.4rem);
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 .article-toc__summary {
@@ -3316,14 +3329,9 @@ textarea {
     background: linear-gradient(135deg, var(--accent-color), #73b7ab);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 767px) {
     .article-reading-layout {
         grid-template-columns: 1fr;
-    }
-
-    .giscus-comments {
-        padding-left: 1rem;
-        padding-right: 1rem;
     }
 
     .article-toc-shell {
@@ -3334,6 +3342,17 @@ textarea {
 
     .article-toc {
         max-height: min(42vh, 22rem);
+    }
+
+    .article-toc > nav {
+        max-height: min(34vh, 18rem);
+    }
+}
+
+@media (max-width: 960px) {
+    .giscus-comments {
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 
     .editor-container {

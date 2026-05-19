@@ -44,6 +44,21 @@ describe('Phase 2.5 article experience integration', () => {
         assert.match(styles, /grid-template-columns:\s*minmax\(0,\s*var\(--article-content-width\)\)\s+minmax\(var\(--article-toc-min-width\),\s*var\(--article-toc-max-width\)\)/);
     });
 
+    test('article table of contents stacks only below tablet widths', () => {
+        const styles = readProjectFile('src', 'styles', 'global.css');
+
+        assert.match(styles, /@media\s*\(max-width:\s*767px\)\s*\{[\s\S]*\.article-reading-layout\s*\{[\s\S]*grid-template-columns:\s*1fr/s);
+        assert.doesNotMatch(styles, /@media\s*\(max-width:\s*960px\)\s*\{[\s\S]{0,320}\.article-reading-layout/s);
+    });
+
+    test('article table of contents constrains the card while the list scrolls', () => {
+        const styles = readProjectFile('src', 'styles', 'global.css');
+
+        assert.match(styles, /\.article-toc-shell\s*\{[\s\S]*max-height:\s*calc\(100vh - 7\.2rem\);[\s\S]*min-height:\s*0;/);
+        assert.match(styles, /\.article-toc\s*\{[\s\S]*display:\s*flex;[\s\S]*max-height:\s*calc\(100vh - 8\.32rem\);[\s\S]*overflow:\s*hidden;/);
+        assert.match(styles, /\.article-toc > nav\s*\{[\s\S]*flex:\s*1 1 auto;[\s\S]*max-height:\s*calc\(100vh - 11\.4rem\);[\s\S]*min-height:\s*0;[\s\S]*overflow-y:\s*auto;[\s\S]*scrollbar-gutter:\s*stable;/);
+    });
+
     test('view transition animations respect reduced motion preferences', () => {
         const styles = readProjectFile('src', 'styles', 'global.css');
 

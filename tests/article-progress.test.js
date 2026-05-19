@@ -35,8 +35,8 @@ describe('article reading progress', () => {
         const { shouldCollapseTocForViewport } = await import('../src/lib/article-enhancements/reading-progress.js');
 
         assert.equal(shouldCollapseTocForViewport(390), true);
-        assert.equal(shouldCollapseTocForViewport(960), true);
-        assert.equal(shouldCollapseTocForViewport(961), false);
+        assert.equal(shouldCollapseTocForViewport(767), true);
+        assert.equal(shouldCollapseTocForViewport(768), false);
     });
 
     test('normalizes table of contents entries for rendering', async () => {
@@ -96,6 +96,48 @@ describe('article reading progress', () => {
                 boundingClientRect: { top: 64 },
             },
         ], headingOrder), 'earlier');
+    });
+
+    test('keeps the active table of contents link visible with bounded scroll adjustments', async () => {
+        const { calculateTocAutoScrollTop } = await import('../src/lib/article-enhancements/reading-progress.js');
+
+        const visibleRange = {
+            containerTop: 100,
+            containerBottom: 500,
+            padding: 12,
+        };
+
+        assert.equal(calculateTocAutoScrollTop({
+            ...visibleRange,
+            currentScrollTop: 100,
+            maxScrollTop: 1000,
+            linkTop: 80,
+            linkBottom: 110,
+        }), 68);
+
+        assert.equal(calculateTocAutoScrollTop({
+            ...visibleRange,
+            currentScrollTop: 100,
+            maxScrollTop: 1000,
+            linkTop: 500,
+            linkBottom: 530,
+        }), 142);
+
+        assert.equal(calculateTocAutoScrollTop({
+            ...visibleRange,
+            currentScrollTop: 100,
+            maxScrollTop: 1000,
+            linkTop: 180,
+            linkBottom: 220,
+        }), 100);
+
+        assert.equal(calculateTocAutoScrollTop({
+            ...visibleRange,
+            currentScrollTop: 10,
+            maxScrollTop: 1000,
+            linkTop: 40,
+            linkBottom: 70,
+        }), 0);
     });
 
     test('stores cleanup callbacks outside table of contents DOM nodes', () => {

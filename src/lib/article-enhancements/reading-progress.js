@@ -1,4 +1,5 @@
 const MIN_TOC_HEADINGS = 3;
+const TOC_ACTIVE_SCROLL_PADDING = 12;
 const tocCleanupCallbacks = new WeakMap();
 
 function clamp(value, min, max) {
@@ -15,7 +16,7 @@ export function shouldRenderToc(entries, minHeadings = MIN_TOC_HEADINGS) {
     return Array.isArray(entries) && entries.length >= minHeadings;
 }
 
-export function shouldCollapseTocForViewport(width, breakpoint = 960) {
+export function shouldCollapseTocForViewport(width, breakpoint = 767) {
     return Number(width) <= breakpoint;
 }
 
@@ -28,6 +29,26 @@ export function createTocItems(entries) {
     }));
 }
 
+export function calculateTocAutoScrollTop({
+    currentScrollTop,
+    maxScrollTop,
+    containerTop,
+    containerBottom,
+    linkTop,
+    linkBottom,
+    padding = TOC_ACTIVE_SCROLL_PADDING,
+}) {
+    let nextScrollTop = Number(currentScrollTop) || 0;
+
+    if (linkTop < containerTop + padding) {
+        nextScrollTop -= containerTop + padding - linkTop;
+    } else if (linkBottom > containerBottom - padding) {
+        nextScrollTop += linkBottom - (containerBottom - padding);
+    }
+
+    return clamp(nextScrollTop, 0, Math.max(0, maxScrollTop));
+}
+
 function setProgress(tocRoot, progress) {
     tocRoot.querySelector?.('[data-reading-progress-bar]')?.style?.setProperty('transform', `scaleX(${progress / 100})`);
 
@@ -37,12 +58,47 @@ function setProgress(tocRoot, progress) {
     }
 }
 
+function keepActiveTocLinkVisible(tocRoot, activeLink) {
+    const scrollContainer = tocRoot.querySelector?.('.article-toc > nav');
+    if (!scrollContainer || !activeLink) {
+        return;
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect?.();
+    const linkRect = activeLink.getBoundingClientRect?.();
+    if (!containerRect || !linkRect) {
+        return;
+    }
+
+    const maxScrollTop = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight);
+    const nextScrollTop = calculateTocAutoScrollTop({
+        currentScrollTop: scrollContainer.scrollTop,
+        maxScrollTop,
+        containerTop: containerRect.top,
+        containerBottom: containerRect.bottom,
+        linkTop: linkRect.top,
+        linkBottom: linkRect.bottom,
+    });
+
+    if (Math.abs(nextScrollTop - scrollContainer.scrollTop) >= 1) {
+        scrollContainer.scrollTop = nextScrollTop;
+    }
+}
+
 function setActiveTocItem(tocRoot, activeId) {
+    let activeLink = null;
+
     tocRoot.querySelectorAll?.('[data-toc-link]').forEach((link) => {
         const isActive = link.getAttribute('href') === `#${activeId}`;
         link.classList.toggle('is-active', isActive);
         link.setAttribute('aria-current', isActive ? 'location' : 'false');
+
+        if (isActive) {
+            activeLink = link;
+        }
     });
+
+    keepActiveTocLinkVisible(tocRoot, activeLink);
 }
 
 function clearTocList(list) {
