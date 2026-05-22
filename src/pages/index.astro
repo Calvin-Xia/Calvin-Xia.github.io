@@ -23,16 +23,14 @@ const homepageUpdates = getHomepageUpdates([
 ---
 
 <BaseLayout
-    title="Mr.Xia - 个人小站"
-    description="Mr.Xia的个人网站 - 展示个人作品与创意"
+    title="Calvin Xia"
+    description="Calvin Xia 的个人主页，整理文章、作品和工具。"
     currentPage="home"
 >
     <section class="hero hero-home page-intro page-intro--center">
-        <p class="hero-kicker">你好，欢迎来访</p>
-        <h1 class="page-title">欢迎来到 Mr.Xia 的小站</h1>
-        <p class="page-subtitle">
-            这里集中整理我的作品、常用工具与文章索引，方便快速浏览与持续更新。
-        </p>
+        <p class="hero-kicker">中文个人主页</p>
+        <h1 class="page-title hero-title">Calvin Xia</h1>
+        <p class="page-subtitle">文章、作品和一些长期维护的小工具。</p>
         <div class="hero-status">
             <div id="currentTime" class="current-time">加载中...</div>
         </div>
@@ -43,46 +41,33 @@ const homepageUpdates = getHomepageUpdates([
     </section>
 
     <section class="section-stack home-discovery">
-        <div class="cards-grid cards-grid--quick">
-            <div class="card quick-card">
-                <h3>个人作品</h3>
-                <p>集中查看我正在维护的项目、实验与创意实践，是了解站点内容结构最快的入口。</p>
-                <div class="action-row">
-                    <a href="/works/" class="btn" data-history="true" data-title="作品">查看作品</a>
-                </div>
-            </div>
-
-            <div class="card quick-card">
-                <h3>实用工具</h3>
-                <p>计时器、随机选择器和 Markdown 渲染工具集中放在作品体系下，适合需要马上开始操作时使用。</p>
-                <div class="action-row">
-                    <a href="/works/tools/" class="btn btn-secondary" data-history="true" data-title="工具集">使用工具</a>
-                </div>
-            </div>
-
-            <div class="card quick-card">
-                <h3>网站文章</h3>
-                <p>按关键词和标签快速定位文章内容，也可以从最近更新的文章继续阅读。</p>
-                <div class="action-row">
-                    <a href="/articles/" class="btn btn-outline" data-history="true" data-title="文章">查看文章</a>
-                </div>
-            </div>
+        <h2 class="section-heading">发现</h2>
+        <div class="list-index home-index-list">
+            <a class="index-row" href="/articles/" data-history="true" data-title="文章">
+                <span>文章</span>
+                <strong>按时间和标签浏览写作记录</strong>
+            </a>
+            <a class="index-row" href="/works/" data-history="true" data-title="作品">
+                <span>作品</span>
+                <strong>项目、实验和工具入口</strong>
+            </a>
+            <a class="index-row" href="/about/" data-history="true" data-title="关于">
+                <span>关于</span>
+                <strong>版权、隐私和联系方式</strong>
+            </a>
         </div>
     </section>
 
-    <section class="shadowbox section-stack home-search-panel">
+    <section class="surface-bordered section-stack home-search-panel">
         <div class="home-section-head">
             <div>
-                <p class="section-kicker">全站搜索</p>
-                <h2 class="section-heading">从一个入口搜索文章、作品和工具</h2>
+                <p class="section-kicker">搜索</p>
+                <h2 class="section-heading">全站索引</h2>
             </div>
             <a href="/articles/#content-search" class="btn btn-outline" data-history="true" data-title="文章">
-                搜索全站内容
+                打开搜索
             </a>
         </div>
-        <p class="section-copy">
-            文章页现在兼任内容中枢，默认展示博客文章，也支持跨栏目搜索作品和工具。
-        </p>
     </section>
 
     <section id="recent-updates" class="section-stack home-updates">
@@ -95,10 +80,10 @@ const homepageUpdates = getHomepageUpdates([
                 查看更多内容
             </a>
         </div>
-        <div id="recent-updates-list" class="cards-grid home-updates-grid" aria-live="polite">
+        <div id="recent-updates-list" class="list-index home-updates-list" aria-live="polite">
             {
                 homepageUpdates.map((item) => (
-                    <article class="card recent-update-card">
+                    <article class="recent-update-card">
                         <div class="recent-update-meta">
                             <span class={`content-type-badge content-type-badge--${item.type}`}>
                                 {CONTENT_TYPES[item.type].label}
@@ -109,44 +94,16 @@ const homepageUpdates = getHomepageUpdates([
                             <span class="recent-update-date">{item.date}</span>
                         </div>
                         <h3 class="recent-update-title">{item.title}</h3>
-                        <p class="recent-update-excerpt">{item.excerpt}</p>
-                        <div class="recent-update-actions">
-                            <a href={item.filePath} class="btn btn-outline">
-                                {CONTENT_TYPES[item.type].action}
-                            </a>
-                        </div>
+                        <a href={item.filePath} class="text-link">{CONTENT_TYPES[item.type].action}</a>
                     </article>
                 ))
             }
         </div>
     </section>
 
-    <section class="shadowbox section-stack home-summary">
-        <h3>关于本站</h3>
-        <p class="indent">
-            这里主要用来整理作品、工具入口和文章索引，整体保持简洁直达，方便日常浏览与维护。
-        </p>
-
-        <div class="card-note">
-            <p>
-                想看站点说明、使用约定和更多背景信息，可以直接进入关于页。
-            </p>
-            <div class="action-row">
-                <a href="/about/" class="btn btn-primary" data-history="true" data-title="关于">
-                    查看关于页面
-                </a>
-            </div>
-        </div>
-
-        <p class="indent">
-            项目地址：<a
-                href="https://github.com/Calvin-Xia/mr.xia.github.io"
-                target="_blank"
-                rel="noopener"
-            >GitHub Repository</a>
-            ，当前持续维护中。
-        </p>
-    </section>
+    <p class="home-repo-link">
+        <a href="https://github.com/Calvin-Xia/mr.xia.github.io" target="_blank" rel="noopener">GitHub Repository</a>
+    </p>
 </BaseLayout>
 
 <script>

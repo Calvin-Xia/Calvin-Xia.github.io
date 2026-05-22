@@ -22,8 +22,31 @@ describe('Phase 2.5 article experience integration', () => {
         assert.ok(packageJson.dependencies['rehype-katex']);
         assert.match(config, /import\s+remarkMath\s+from\s+['"]remark-math['"]/);
         assert.match(config, /import\s+rehypeKatex\s+from\s+['"]rehype-katex['"]/);
+        assert.match(config, /import\s+\{\s*remarkMarkHighlight\s*\}\s+from\s+['"]\.\/src\/lib\/remark-mark-highlight\.js['"]/);
         assert.match(config, /remarkPlugins:\s*\[[^\]]*remarkBlockquoteBreaks[^\]]*remarkMath/s);
+        assert.match(config, /remarkPlugins:\s*\[[^\]]*remarkMarkHighlight/s);
         assert.match(config, /rehypePlugins:\s*\[[^\]]*rehypeKatex/s);
+    });
+
+    test('Astro markdown applies Shiki syntax highlighting to real code fences', async () => {
+        const { createMarkdownProcessor } = await import('@astrojs/markdown-remark');
+        const { default: astroConfig } = await import('../astro.config.mjs');
+        const fence = '`'.repeat(3);
+        const source = [
+            `${fence}javascript`,
+            'function publishDraft(title) {',
+            '    return title + " is ready";',
+            '}',
+            fence,
+        ].join('\n');
+        const processor = await createMarkdownProcessor(astroConfig.markdown);
+        const result = await processor.render(source);
+
+        assert.match(result.code, /class="astro-code astro-code-themes github-light github-dark"/);
+        assert.match(result.code, /data-language="javascript"/);
+        assert.match(result.code, /--shiki-light:#D73A49/);
+        assert.match(result.code, /--shiki-dark:#F97583/);
+        assert.match(result.code, /publishDraft/);
     });
 
     test('article pages mount the TOC shell and load KaTeX CSS', () => {

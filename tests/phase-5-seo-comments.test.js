@@ -192,7 +192,13 @@ describe('Phase 5 SEO and comments', () => {
         assert.match(componentSource, /data-category-id=['"]DIC_kwDOQimLy84C8XWc['"]/);
         assert.match(componentSource, /data-mapping=['"]pathname['"]/);
         assert.match(componentSource, /data-input-position=['"]top['"]/);
-        assert.match(componentSource, /data-theme=['"]preferred_color_scheme['"]/);
+        assert.match(componentSource, /data-theme=['"]light['"]/);
+        assert.match(componentSource, /calvin-theme-change/);
+        assert.match(componentSource, /postMessage/);
+        assert.match(componentSource, /new URL\(iframe\.src\)/);
+        assert.match(componentSource, /origin !== ['"]https:\/\/giscus\.app['"]/);
+        assert.match(componentSource, /giscus-frame--loading/);
+        assert.match(componentSource, /addEventListener\(\s*['"]load['"]/);
         assert.match(componentSource, /data-lang=['"]zh-CN['"]/);
         assert.match(componentSource, /data-loading=['"]lazy['"]/);
         assert.match(componentSource, /giscus\.app\/client\.js/);
@@ -245,6 +251,16 @@ describe('Phase 5 SEO and comments', () => {
         assert.match(layoutSource, /href=['"]\/rss\.xml['"]/);
     });
 
+    test('BaseLayout initializes the Calvin Xia manual theme before render', () => {
+        const layoutSource = readFile('src', 'layouts', 'BaseLayout.astro');
+
+        assert.match(layoutSource, /calvin-xia-theme/);
+        assert.match(layoutSource, /localStorage\.getItem\(storageKey\)\s*===\s*['"]dark['"]\s*\?\s*['"]dark['"]\s*:\s*['"]light['"]/);
+        assert.match(layoutSource, /document\.documentElement\.dataset\.theme\s*=\s*theme/);
+        assert.match(layoutSource, /try\s*\{/);
+        assert.doesNotMatch(layoutSource, /prefers-color-scheme/);
+    });
+
     test('BaseLayout includes Umami Cloud tracker with explicit host URL', () => {
         const layoutSource = readFile('src', 'layouts', 'BaseLayout.astro');
 
@@ -253,14 +269,21 @@ describe('Phase 5 SEO and comments', () => {
         assert.match(layoutSource, /data-host-url=['"]https:\/\/cloud\.umami\.is['"]/);
     });
 
-    test('CSP allows Umami script loading and analytics POST requests', () => {
+    test('CSP allows external scripts, styles, fonts, and analytics requests used by the site', () => {
         const headersSource = readFile('public', '_headers');
         const csp = headersSource.match(/Content-Security-Policy:\s*(.+)/)?.[1] || '';
         const scriptSrc = csp.match(/script-src\s+([^;]+)/)?.[1] || '';
+        const styleSrc = csp.match(/style-src\s+([^;]+)/)?.[1] || '';
         const connectSrc = csp.match(/connect-src\s+([^;]+)/)?.[1] || '';
+        const fontSrc = csp.match(/font-src\s+([^;]+)/)?.[1] || '';
 
         assert.match(scriptSrc, /https:\/\/cloud\.umami\.is/);
+        assert.match(scriptSrc, /https:\/\/giscus\.app/);
+        assert.match(styleSrc, /https:\/\/fonts\.googleapis\.com/);
+        assert.match(styleSrc, /https:\/\/giscus\.app/);
         assert.match(connectSrc, /https:\/\/cloud\.umami\.is/);
+        assert.match(connectSrc, /https:\/\/giscus\.app/);
+        assert.match(fontSrc, /https:\/\/fonts\.gstatic\.com/);
     });
 
     test('Footer hides sitemap link in dev mode via import.meta.env.PROD', () => {
@@ -285,5 +308,21 @@ describe('Phase 5 SEO and comments', () => {
 
         assert.match(cssSource, /\.giscus-fallback/);
         assert.match(cssSource, /text-align:\s*center/);
+    });
+
+    test('Header initHeaderState guards against duplicate scroll listener registration', () => {
+        const header = readFile('src', 'components', 'Header.astro');
+
+        assert.match(header, /function initHeaderState\b/);
+        assert.match(header, /dataset\.headerReady/);
+    });
+
+    test('Header setTheme wraps localStorage.setItem in try-catch', () => {
+        const header = readFile('src', 'components', 'Header.astro');
+
+        const setThemeMatch = header.match(/function setTheme[\s\S]*?^\s*\}/m);
+        assert.ok(setThemeMatch, 'setTheme function should exist');
+        assert.match(setThemeMatch[0], /try\s*\{/);
+        assert.match(setThemeMatch[0], /localStorage\.setItem/);
     });
 });

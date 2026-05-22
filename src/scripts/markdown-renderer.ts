@@ -1,4 +1,4 @@
-import { marked } from 'marked';
+import { marked, type TokenizerAndRendererExtension } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/core';
 import bash from 'highlight.js/lib/languages/bash';
@@ -9,7 +9,7 @@ import markdown from 'highlight.js/lib/languages/markdown';
 import python from 'highlight.js/lib/languages/python';
 import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
-import 'highlight.js/styles/github-dark.min.css';
+import 'highlight.js/styles/github.min.css';
 import katex from 'katex';
 import renderMathInElement from 'katex/contrib/auto-render';
 import 'katex/dist/katex.min.css';
@@ -22,6 +22,7 @@ type MarkdownRendererElements = Partial<{
     loadingText: HTMLElement | null;
     weChatButton: HTMLButtonElement | null;
     weChatCopyStatus: HTMLElement | null;
+    previewScrollElement: HTMLElement | null;
 }>;
 
 type RenderMode = 'normal' | 'wechat';
@@ -40,7 +41,8 @@ declare global {
 
 const EMPTY_PREVIEW_HTML = '<p style="text-align: center; color: var(--text-secondary);">预览区域</p>';
 const EMPTY_INPUT_HTML = '<p style="text-align: center; color: var(--text-secondary);">请输入Markdown内容</p>';
-const WECHAT_BASE_STYLE = 'font-size: 15px; line-height: 1.8; color: #3f3f3f; letter-spacing: 0;';
+const WECHAT_BASE_STYLE = 'font-size: 15px; line-height: 1.8; color: #18201f; letter-spacing: 0;';
+const MARKDOWN_STORAGE_KEY = 'calvin-xia-markdown-tool-input';
 const BLOCK_TAGS = new Set([
     'ADDRESS',
     'ARTICLE',
@@ -77,8 +79,32 @@ const BLOCK_TAGS = new Set([
     'UL',
 ]);
 const VOID_TAGS = new Set(['AREA', 'BASE', 'BR', 'COL', 'EMBED', 'HR', 'IMG', 'INPUT', 'LINK', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
-const HLJS_STYLE_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css';
+const HLJS_STYLE_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css';
 const KATEX_STYLE_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.25/katex.min.css';
+const markExtension: TokenizerAndRendererExtension = {
+    name: 'mark',
+    level: 'inline',
+    start(src) {
+        return src.indexOf('==');
+    },
+    tokenizer(src) {
+        const match = /^==(?=\S)([\s\S]*?\S)==(?![=])/.exec(src);
+
+        if (!match) {
+            return undefined;
+        }
+
+        return {
+            type: 'mark',
+            raw: match[0],
+            text: match[1],
+            tokens: this.lexer.inlineTokens(match[1]),
+        };
+    },
+    renderer(token) {
+        return `<mark>${this.parser.parseInline(token.tokens ?? [])}</mark>`;
+    },
+};
 
 const sampleMarkdown = `# 春日短记
 
@@ -123,6 +149,10 @@ hljs.registerLanguage('python', python);
 hljs.registerLanguage('typescript', typescript);
 hljs.registerLanguage('xml', xml);
 
+marked.use({
+    extensions: [markExtension],
+});
+
 function readDefaultElements(): MarkdownRendererElements {
     return {
         inputElement: document.getElementById('markdown-input') as HTMLTextAreaElement | null,
@@ -132,6 +162,7 @@ function readDefaultElements(): MarkdownRendererElements {
         loadingText: document.getElementById('loading-text'),
         weChatButton: document.getElementById('wechat-toggle-btn') as HTMLButtonElement | null,
         weChatCopyStatus: document.getElementById('wechat-copy-status'),
+        previewScrollElement: document.querySelector('.markdown-preview-panel .preview-content'),
     };
 }
 
@@ -229,42 +260,42 @@ function applyWeChatStyles(root: HTMLElement): void {
         element.removeAttribute('class');
 
         if (tagName === 'h1') {
-            applyInlineStyle(element, 'font-size: 22px; line-height: 1.45; font-weight: 700; color: #111111; margin: 28px 0 14px;');
+            applyInlineStyle(element, 'font-size: 22px; line-height: 1.45; font-weight: 700; color: #18201f; margin: 28px 0 14px;');
         } else if (tagName === 'h2') {
-            applyInlineStyle(element, 'font-size: 19px; line-height: 1.5; font-weight: 700; color: #222222; margin: 24px 0 12px; border-left: 4px solid #d35d26; padding-left: 10px;');
+            applyInlineStyle(element, 'font-size: 19px; line-height: 1.5; font-weight: 700; color: #18201f; margin: 24px 0 12px; border-left: 4px solid #315d67; padding-left: 10px;');
         } else if (tagName === 'h3') {
-            applyInlineStyle(element, 'font-size: 17px; line-height: 1.55; font-weight: 700; color: #2f2f2f; margin: 20px 0 10px;');
+            applyInlineStyle(element, 'font-size: 17px; line-height: 1.55; font-weight: 700; color: #18201f; margin: 20px 0 10px;');
         } else if (tagName === 'p') {
             applyInlineStyle(element, WECHAT_BASE_STYLE + ' margin: 12px 0;');
         } else if (tagName === 'a') {
-            applyInlineStyle(element, 'color: #d35d26; text-decoration: none;');
+            applyInlineStyle(element, 'color: #315d67; text-decoration: none;');
         } else if (tagName === 'strong') {
-            applyInlineStyle(element, 'font-weight: 700; color: #2a2a2a;');
+            applyInlineStyle(element, 'font-weight: 700; color: #18201f;');
         } else if (tagName === 'em') {
-            applyInlineStyle(element, 'font-style: italic; color: #555555;');
+            applyInlineStyle(element, 'font-style: italic; color: #4e5c59;');
         } else if (tagName === 'ul' || tagName === 'ol') {
             applyInlineStyle(element, WECHAT_BASE_STYLE + ' margin: 12px 0; padding-left: 22px;');
         } else if (tagName === 'li') {
             applyInlineStyle(element, WECHAT_BASE_STYLE + ' margin: 6px 0;');
         } else if (tagName === 'blockquote') {
-            applyInlineStyle(element, 'margin: 16px 0; padding: 10px 14px; border-left: 4px solid #d35d26; background: #f7f7f7; color: #666666;');
+            applyInlineStyle(element, 'margin: 16px 0; padding: 10px 14px; border-left: 4px solid #315d67; background: #eef3f2; color: #4e5c59;');
         } else if (tagName === 'pre') {
-            applyInlineStyle(element, 'margin: 16px 0; padding: 12px; background: #f5f5f5; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.65;');
+            applyInlineStyle(element, 'margin: 16px 0; padding: 12px; background: #f1f4f3; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.65;');
         } else if (tagName === 'code') {
-            applyInlineStyle(element, 'font-family: Consolas, Monaco, monospace; background: #f5f5f5; border-radius: 4px; padding: 2px 4px; color: #c7254e;');
+            applyInlineStyle(element, 'font-family: Consolas, Monaco, monospace; background: #f1f4f3; border-radius: 4px; padding: 2px 4px; color: #1f2b29;');
         } else if (tagName === 'img') {
             applyInlineStyle(element, 'display: block; max-width: 100%; height: auto; margin: 16px auto; border-radius: 6px;');
         } else if (tagName === 'table') {
-            applyInlineStyle(element, 'width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; color: #3f3f3f;');
+            applyInlineStyle(element, 'width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; color: #18201f;');
         } else if (tagName === 'th') {
-            applyInlineStyle(element, 'border: 1px solid #dddddd; padding: 8px; background: #f7f7f7; font-weight: 700;');
+            applyInlineStyle(element, 'border: 1px solid #d8dfdd; padding: 8px; background: #eef3f2; font-weight: 700;');
         } else if (tagName === 'td') {
-            applyInlineStyle(element, 'border: 1px solid #dddddd; padding: 8px;');
+            applyInlineStyle(element, 'border: 1px solid #d8dfdd; padding: 8px;');
         } else if (tagName === 'hr') {
-            applyInlineStyle(element, 'border: none; border-top: 1px solid #dddddd; margin: 24px 0;');
+            applyInlineStyle(element, 'border: none; border-top: 1px solid #d8dfdd; margin: 24px 0;');
         } else if (tagName === 'section' || tagName === 'div') {
             applyInlineStyle(element, isCaption
-                ? 'font-size: 13px; line-height: 1.6; color: #888888; text-align: center; margin: 4px 0 16px;'
+                ? 'font-size: 13px; line-height: 1.6; color: #798783; text-align: center; margin: 4px 0 16px;'
                 : WECHAT_BASE_STYLE);
         }
     });
@@ -329,6 +360,7 @@ export const MarkdownRenderer = {
     loadingText: null as HTMLElement | null,
     weChatButton: null as HTMLButtonElement | null,
     weChatCopyStatus: null as HTMLElement | null,
+    previewScrollElement: null as HTMLElement | null,
     cleanupController: null as AbortController | null,
     isCollapsed: false,
     mode: 'normal' as RenderMode,
@@ -350,6 +382,7 @@ export const MarkdownRenderer = {
         this.loadingText = resolvedElements.loadingText ?? null;
         this.weChatButton = resolvedElements.weChatButton ?? null;
         this.weChatCopyStatus = resolvedElements.weChatCopyStatus ?? null;
+        this.previewScrollElement = resolvedElements.previewScrollElement ?? null;
 
         if (!this.inputElement || !this.outputElement) {
             return;
@@ -362,6 +395,17 @@ export const MarkdownRenderer = {
 
         this.cleanupController = new AbortController();
         const { signal } = this.cleanupController;
+
+        this.restoreInput();
+        this.bindScrollSync(signal);
+
+        this.inputElement.addEventListener(
+            'input',
+            () => {
+                this.persistInput();
+            },
+            { signal },
+        );
 
         this.inputElement.addEventListener(
             'keydown',
@@ -395,6 +439,70 @@ export const MarkdownRenderer = {
         }
 
         this.setWeChatCopyStatus('富文本剪贴板待复制');
+    },
+
+    persistInput() {
+        if (!this.inputElement) {
+            return;
+        }
+
+        try {
+            localStorage.setItem(MARKDOWN_STORAGE_KEY, this.inputElement.value);
+        } catch {
+            // Storage can be unavailable in private or restricted contexts.
+        }
+    },
+
+    restoreInput() {
+        if (!this.inputElement || this.inputElement.value.trim()) {
+            return;
+        }
+
+        try {
+            const saved = localStorage.getItem(MARKDOWN_STORAGE_KEY);
+            if (saved) {
+                this.inputElement.value = saved;
+                this.render();
+            }
+        } catch {
+            // Ignore storage failures; the editor remains fully usable.
+        }
+    },
+
+    clearPersistedInput() {
+        try {
+            localStorage.removeItem(MARKDOWN_STORAGE_KEY);
+        } catch {
+            // Ignore storage failures.
+        }
+    },
+
+    bindScrollSync(signal: AbortSignal) {
+        if (!this.inputElement || !this.previewScrollElement) {
+            return;
+        }
+
+        let isSyncing = false;
+        const syncPreview = () => {
+            if (isSyncing || !this.inputElement || !this.previewScrollElement) {
+                return;
+            }
+
+            const maxInputScroll = this.inputElement.scrollHeight - this.inputElement.clientHeight;
+            const maxPreviewScroll = this.previewScrollElement.scrollHeight - this.previewScrollElement.clientHeight;
+            if (maxInputScroll <= 0 || maxPreviewScroll <= 0) {
+                return;
+            }
+
+            isSyncing = true;
+            const ratio = this.inputElement.scrollTop / maxInputScroll;
+            this.previewScrollElement.scrollTop = maxPreviewScroll * ratio;
+            requestAnimationFrame(() => {
+                isSyncing = false;
+            });
+        };
+
+        this.inputElement.addEventListener('scroll', syncPreview, { signal, passive: true });
     },
 
     render() {
@@ -724,6 +832,7 @@ export const MarkdownRenderer = {
 
         if (window.confirm('确定要清空输入内容吗？')) {
             this.inputElement.value = '';
+            this.clearPersistedInput();
             this.outputElement.innerHTML = EMPTY_PREVIEW_HTML;
             this.fullContent = '';
             this.collapsedContent = '';
@@ -743,6 +852,7 @@ export const MarkdownRenderer = {
         }
 
         this.inputElement.value = sampleMarkdown;
+        this.persistInput();
         this.render();
     },
 
@@ -756,6 +866,14 @@ export const MarkdownRenderer = {
     <link rel="stylesheet" href="${HLJS_STYLE_CDN}">
     <link rel="stylesheet" href="${KATEX_STYLE_CDN}">
     <style>
+        :root {
+            --bg: #f7f7f4;
+            --surface: #ffffff;
+            --border: #d8dfdd;
+            --text: #18201f;
+            --text-tertiary: #798783;
+        }
+
         body {
             margin: 0 auto;
             max-width: 900px;
@@ -763,21 +881,21 @@ export const MarkdownRenderer = {
             padding: 3rem 1.25rem;
             font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
             line-height: 1.7;
-            color: #374151;
-            background: linear-gradient(135deg, #fed7aa 0%, #fecdd3 50%, #a5f3fc 100%);
+            color: var(--text);
+            background: var(--bg);
         }
         .markdown-content {
             padding: 1.6rem;
-            border-radius: 0.75rem;
-            background: rgba(255, 255, 255, 0.78);
-            box-shadow: 0 18px 42px rgba(88, 58, 43, 0.12);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
         }
         .markdown-content img {
             max-width: 100%;
             height: auto;
         }
         .image-caption {
-            color: #6b7280;
+            color: var(--text-tertiary);
             font-size: 0.88rem;
             text-align: center;
         }

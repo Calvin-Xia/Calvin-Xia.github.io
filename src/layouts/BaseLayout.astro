@@ -15,8 +15,8 @@ interface Props {
 }
 
 const {
-    title = 'Mr.Xia - 个人小站',
-    description = 'Mr.Xia的个人网站 - 展示个人作品与创意',
+    title = 'Calvin Xia',
+    description = 'Calvin Xia 的个人主页，整理文章、作品和工具。',
     currentPage = '',
 } = Astro.props;
 
@@ -33,10 +33,20 @@ const enableLocalCdnProxy = import.meta.env.DEV;
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
         <meta name="description" content={description} />
-        <meta name="keywords" content="Mr.Xia, 个人网站, 作品集" />
-        <meta name="author" content="Mr.Xia" />
-        <link rel="alternate" type="application/rss+xml" title="Mr.Xia RSS" href="/rss.xml" />
+        <meta name="keywords" content="Calvin Xia, 个人主页, 文章, 作品" />
+        <meta name="author" content="Calvin Xia" />
+        <link rel="alternate" type="application/rss+xml" title="Calvin Xia RSS" href="/rss.xml" />
         <title>{title}</title>
+        <script is:inline>
+            (() => {
+                const storageKey = 'calvin-xia-theme';
+                let theme = 'light';
+                try {
+                    theme = localStorage.getItem(storageKey) === 'dark' ? 'dark' : 'light';
+                } catch {}
+                document.documentElement.dataset.theme = theme;
+            })();
+        </script>
         <script defer src="https://cloud.umami.is/script.js" data-website-id="d5b9f90c-e82b-4b57-ade7-ff6a3e5d8062" data-host-url="https://cloud.umami.is"></script>
         <ClientRouter fallback="swap" />
     </head>

@@ -6,6 +6,7 @@ import sitemap from '@astrojs/sitemap';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import { remarkBlockquoteBreaks } from './src/lib/remark-blockquote-breaks.js';
+import { remarkMarkHighlight } from './src/lib/remark-mark-highlight.js';
 import { serializeSitemapItem, shouldIncludeSitemapPage } from './src/lib/site-seo.js';
 
 const defaultSiteUrl = 'https://calvin-xia.cn';
@@ -50,7 +51,14 @@ export default defineConfig({
         }),
     ],
     markdown: {
-        remarkPlugins: [remarkBlockquoteBreaks, remarkMath],
+        shikiConfig: {
+            themes: {
+                light: 'github-light',
+                dark: 'github-dark',
+            },
+            defaultColor: false,
+        },
+        remarkPlugins: [remarkBlockquoteBreaks, remarkMarkHighlight, remarkMath],
         rehypePlugins: [rehypeKatex],
     },
     vite: {

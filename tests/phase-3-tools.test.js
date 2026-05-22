@@ -26,12 +26,16 @@ async function readExistingFile(...segments) {
 }
 
 describe('Phase 3 tool migration', () => {
-    test('Header navigation no longer exposes a top-level tools item', () => {
+    test('Header navigation follows the visual reform primary navigation', () => {
         const header = readFile('src', 'components', 'Header.astro');
 
         assert.doesNotMatch(header, /label:\s*['"]工具['"]/);
         assert.doesNotMatch(header, /href:\s*['"]\/tools\/['"]/);
-        for (const label of ['首页', '作品', '文章', '关于']) {
+        assert.doesNotMatch(header, /label:\s*['"]首页['"]/);
+        assert.match(header, /Calvin Xia/);
+        assert.match(header, /href=["']\/["']/);
+        assert.match(header, /data-theme-toggle/);
+        for (const label of ['文章', '作品', '关于']) {
             assert.match(header, new RegExp(`label:\\s*['"]${label}['"]`));
         }
     });
@@ -42,7 +46,6 @@ describe('Phase 3 tool migration', () => {
         const combined = `${index}\n${works}`;
 
         assert.doesNotMatch(combined, /href=["']\/tools\/["']/);
-        assert.match(index, /href=["']\/works\/tools\/["']/);
         assert.match(works, /href=["']\/works\/tools\/["']/);
     });
 
@@ -144,7 +147,7 @@ describe('Phase 3 tool migration', () => {
             assert.match(section, new RegExp(label));
         }
         assert.match(section, /class=["']tools-shell["']/);
-        assert.match(section, /class=["'][^"']*tools-quick-stats/);
+        assert.doesNotMatch(section, /tools-quick-stats/);
         assert.match(section, /role=["']tablist["']/);
         assert.match(section, /ArrowLeft/);
         assert.match(section, /ArrowRight/);
@@ -155,9 +158,11 @@ describe('Phase 3 tool migration', () => {
     test('markdown-renderer.ts uses npm packages and exposes the required rendering modes', async () => {
         const source = await readExistingFile('src', 'scripts', 'markdown-renderer.ts');
 
-        assert.match(source, /import\s+\{\s*marked\s*\}\s+from\s+['"]marked['"]/);
+        assert.match(source, /import\s+\{[^}]*\bmarked\b[^}]*\}\s+from\s+['"]marked['"]/);
         assert.match(source, /import\s+hljs\s+from\s+['"]highlight\.js\/lib\/core['"]/);
         assert.match(source, /hljs\.registerLanguage/);
+        assert.match(source, /marked\.use\(\s*\{\s*extensions:/s);
+        assert.match(source, /name:\s*['"]mark['"]/);
         assert.match(source, /import\s+katex\s+from\s+['"]katex['"]/);
         assert.match(source, /from\s+['"]katex\/contrib\/auto-render['"]/);
         for (const fn of [
@@ -184,8 +189,20 @@ describe('Phase 3 tool migration', () => {
         assert.match(source, /['"]text\/plain['"]/);
         assert.match(source, /font-size:\s*15px/);
         assert.match(source, /line-height:\s*1\.8/);
-        assert.match(source, /color:\s*#3f3f3f/);
+        assert.match(source, /color:\s*#18201f/);
+        assert.match(source, /MARKDOWN_STORAGE_KEY/);
+        assert.match(source, /bindScrollSync/);
+        assert.match(source, /github\.min\.css/);
+        assert.doesNotMatch(source, /github-dark\.min\.css/);
         assert.match(source, /window\.MarkdownRenderer\s*=/);
+    });
+
+    test('markdown-renderer restoreInput triggers render after restoring persisted content', () => {
+        const source = readFile('src', 'scripts', 'markdown-renderer.ts');
+
+        const restoreMatch = source.match(/restoreInput\(\) \{[\s\S]*?\n    \},/);
+        assert.ok(restoreMatch, 'restoreInput method should exist');
+        assert.match(restoreMatch[0], /this\.render\(\)/);
     });
 
     test('MarkdownToolWidget renders the editor, preview, toolbar, and isolated styles', async () => {

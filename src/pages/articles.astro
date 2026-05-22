@@ -32,17 +32,19 @@ const payload = {
 };
 ---
 
-<BaseLayout title="文章与全站搜索 - Mr.Xia" description="浏览 Mr.Xia 的文章，并搜索作品与工具。" currentPage="articles">
-    <PageIntro
-        kicker="内容中枢"
-        title="文章与全站搜索"
-        subtitle="默认展示博客文章，也可以跨栏目搜索作品和工具。"
-        compact
-    />
+<BaseLayout title="文章 - Calvin Xia" description="浏览 Calvin Xia 的文章，并搜索作品与工具。" currentPage="articles">
+    <div class="article-index-hero">
+        <PageIntro
+            kicker="内容中枢"
+            title="文章与全站搜索"
+            subtitle="默认展示博客文章，也可以跨栏目搜索作品和工具。"
+            compact
+        />
 
-    <nav class="articles-toolbar" aria-label="文章视图">
-        <a href="/articles/archive/" class="btn btn-outline">文章归档</a>
-    </nav>
+        <nav class="articles-toolbar" aria-label="文章视图">
+            <a href="/articles/archive/" class="btn btn-outline">文章归档</a>
+        </nav>
+    </div>
 
     <section id="content-search" class="section-stack articles-search-section" aria-label="全站搜索">
         <div class="search-container">

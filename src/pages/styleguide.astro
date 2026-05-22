@@ -3,23 +3,23 @@ import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="样式指南 - Mr.Xia" description="Mr.Xia 网站样式指南">
-    <PageIntro title="样式指南" subtitle="本页面展示网站的设计元素和规范" compact />
+<BaseLayout title="样式指南 - Calvin Xia" description="Calvin Xia 网站样式指南">
+    <PageIntro title="样式指南" subtitle="内部维护页" compact />
 
     <section class="section-stack">
         <h2>色彩系统</h2>
         <div class="styleguide-grid">
             <div class="token-card token-card--primary">
                 <div>主色</div>
-                <small>#d35d26</small>
+                <small>#315d67</small>
             </div>
             <div class="token-card token-card--secondary">
-                <div>辅色</div>
-                <small>#c86681</small>
+                <div>背景</div>
+                <small>#f7f7f4</small>
             </div>
             <div class="token-card token-card--accent">
-                <div>强调色</div>
-                <small>#2f8f83</small>
+                <div>边框</div>
+                <small>#d8dfdd</small>
             </div>
         </div>
     </section>
@@ -50,12 +50,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h2>卡片样式</h2>
         <div class="card">
             <h3>普通卡片</h3>
-            <p>这是一个标准的卡片组件，包含标题和正文，悬停时会有平滑的阴影变化效果。</p>
+            <p>单层边框容器。</p>
         </div>
 
         <div class="shadowbox">
             <h3>阴影盒</h3>
-            <p>这是一个带有特殊装饰效果的阴影盒组件，顶部有渐变动画效果。</p>
+            <p>用于需要轻微浮层的状态。</p>
         </div>
     </section>
 

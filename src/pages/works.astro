@@ -3,23 +3,15 @@ import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Mr.Xia - 个人作品" description="Mr.Xia的个人作品展示" currentPage="works">
+<BaseLayout title="作品 - Calvin Xia" description="Calvin Xia 的个人作品归档" currentPage="works">
     <PageIntro
         kicker="项目归档"
         title="个人作品"
-        subtitle="这里收录我正在维护与持续更新的项目、实验与创意实践。"
+        subtitle="项目、实验和工具入口。"
     />
 
     <section class="section-stack project-list">
-        <div class="shadowbox status-panel project-status-panel">
-            <p class="section-kicker">持续维护</p>
-            <h2 class="section-heading">作品陆续更新中...</h2>
-            <p class="section-copy">
-                当前优先展示仍在维护或可直接访问的项目，后续会继续补充更多实验与归档内容。
-            </p>
-        </div>
-
-        <div id="work-fingerprint-app" class="card project-card project-card--featured">
+        <div id="work-fingerprint-app" class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
                     <p class="card-kicker">Android 应用</p>
@@ -35,9 +27,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <span class="project-tag">FusionApp 2.0</span>
                         <span class="project-tag">持续更新</span>
                     </div>
-                    <p class="project-side-note">
-                        面向本地安装与版本回顾，适合快速下载、回看迭代与验证当前功能状态。
-                    </p>
                     <div class="action-row project-card-actions">
                         <a
                             href="/storage/指纹验证-myapp.zhiwenyanzheng-2.0.0beta-48.apk"
@@ -55,7 +44,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </div>
         </div>
 
-        <div id="work-favorites-collection" class="card project-card">
+        <div id="work-favorites-collection" class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
                     <p class="card-kicker">收藏与导航</p>
@@ -71,9 +60,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <span class="project-tag">动态版</span>
                         <span class="project-tag">Next.js</span>
                     </div>
-                    <p class="project-side-note">
-                        适合对比轻量部署与完整应用架构，也便于继续扩展收藏、标签与登录能力。
-                    </p>
                     <div class="action-row project-card-actions">
                         <a
                             href="https://github.com/Calvin-Xia/listmyfavorites.github.io/"
@@ -96,7 +82,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </div>
         </div>
 
-        <div id="work-class1-map" class="card project-card">
+        <div id="work-class1-map" class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
                     <p class="card-kicker">班级地图</p>
@@ -112,9 +98,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <span class="project-tag">地图展示</span>
                         <span class="project-tag">纪念项目</span>
                     </div>
-                    <p class="project-side-note">
-                        更偏向纪念性与浏览体验，适合直接访问，也方便继续维护班级去向信息。
-                    </p>
                     <div class="action-row project-card-actions">
                         <a
                             href="https://github.com/Calvin-Xia/class1forever.github.io/"
@@ -137,7 +120,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </div>
         </div>
 
-        <div id="work-button-block-designer" class="card project-card">
+        <div id="work-button-block-designer" class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
                     <p class="card-kicker">设计工具</p>
@@ -153,9 +136,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <span class="project-tag">设计工具</span>
                         <span class="project-tag">在线体验</span>
                     </div>
-                    <p class="project-side-note">
-                        更适合快速试样式、搭原型与验证按钮层次，侧重输出效率与可视反馈。
-                    </p>
                     <div class="action-row project-card-actions">
                         <a
                             href="https://github.com/Calvin-Xia/VibeUIgenerator/"
@@ -180,14 +160,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </section>
 
     <section class="section-stack">
-        <div class="card project-card project-card--featured">
+        <div class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
                     <p class="card-kicker">工具集</p>
                     <h3>在线工具集</h3>
-                    <p>
-                        计时器、随机选择器和 Markdown 渲染工具已整理到作品页下的独立工具路由，避免挤占作品列表。
-                    </p>
+                    <p>计时器、随机选择器和 Markdown 渲染工具。</p>
                     <p class="project-meta">包含：在线计时器、随机选择器、Markdown 渲染工具</p>
                 </div>
                 <aside class="project-card-side" aria-label="工具集摘要与操作">
@@ -196,9 +174,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <span class="project-tag">随机抽取</span>
                         <span class="project-tag">Markdown</span>
                     </div>
-                    <p class="project-side-note">
-                        作为作品体系下的子页面维护，保留完整交互，同时让作品页保持轻量。
-                    </p>
                     <div class="action-row project-card-actions">
                         <a href="/works/tools/" class="btn" data-history="true" data-title="工具集">
                             打开工具集

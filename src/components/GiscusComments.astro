@@ -14,11 +14,81 @@
         data-reactions-enabled="1"
         data-emit-metadata="0"
         data-input-position="top"
-        data-theme="preferred_color_scheme"
+        data-theme="light"
         data-lang="zh-CN"
         data-loading="lazy"
         crossorigin="anonymous"
         async>
+</script>
+
+<script is:inline>
+    (() => {
+        function getGiscusTheme() {
+            return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+        }
+
+        function ensureGiscusFrameReadyListener(iframe) {
+            if (iframe.dataset.giscusReadyListener === 'true') {
+                return;
+            }
+
+            iframe.dataset.giscusReadyListener = 'true';
+            iframe.addEventListener(
+                'load',
+                () => {
+                    iframe.dataset.giscusReady = 'true';
+                    updateGiscusTheme();
+                },
+                { once: true },
+            );
+        }
+
+        function updateGiscusTheme() {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe || !iframe.contentWindow) {
+                return;
+            }
+
+            try {
+                const { origin } = new URL(iframe.src);
+                if (origin !== 'https://giscus.app') {
+                    return;
+                }
+            } catch {
+                return;
+            }
+
+            ensureGiscusFrameReadyListener(iframe);
+
+            if (iframe.classList.contains('giscus-frame--loading') && iframe.dataset.giscusReady !== 'true') {
+                return;
+            }
+
+            iframe.contentWindow.postMessage(
+                {
+                    giscus: {
+                        setConfig: {
+                            theme: getGiscusTheme(),
+                        },
+                    },
+                },
+                'https://giscus.app',
+            );
+        }
+
+        window.addEventListener('calvin-theme-change', updateGiscusTheme);
+        document.addEventListener('astro:page-load', updateGiscusTheme);
+
+        let syncAttempts = 0;
+        const maxSyncAttempts = 12;
+        const syncTimer = setInterval(() => {
+            updateGiscusTheme();
+            syncAttempts++;
+            if (document.querySelector('iframe.giscus-frame') || syncAttempts >= maxSyncAttempts) {
+                clearInterval(syncTimer);
+            }
+        }, 500);
+    })();
 </script>
 
 <noscript>

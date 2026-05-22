@@ -6,26 +6,25 @@ interface Props {
 const { currentPage = '' } = Astro.props;
 
 const navItems = [
-    { label: '首页', href: '/', page: 'home' },
-    { label: '作品', href: '/works/', page: 'works' },
     { label: '文章', href: '/articles/', page: 'articles' },
+    { label: '作品', href: '/works/', page: 'works' },
     { label: '关于', href: '/about/', page: 'about' },
 ];
 ---
 
-<header>
-    <nav aria-label="主导航">
-        <div class="logo">Mr.Xia</div>
-        <ul class="nav-links" role="menubar">
+<header class="site-header">
+    <nav class="site-header-inner" aria-label="主导航">
+        <a class="site-logo" href="/" data-history="true" data-title="首页">Calvin Xia</a>
+        <ul class="site-nav nav-links" role="list">
             {
                 navItems.map((item) => (
-                    <li role="none">
+                    <li>
                         <a
+                            class="nav-link"
                             href={item.href}
                             data-history="true"
                             data-title={item.label}
                             aria-current={currentPage === item.page ? 'page' : undefined}
-                            role="menuitem"
                         >
                             {item.label}
                         </a>
@@ -33,5 +32,128 @@ const navItems = [
                 ))
             }
         </ul>
+        <button
+            class="theme-toggle"
+            type="button"
+            data-theme-toggle
+            aria-pressed="false"
+            aria-label="切换到深色主题"
+        >
+            <svg
+                class="theme-toggle__icon theme-toggle__icon--moon"
+                data-icon="moon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <path d="M20.98 11.17A8.5 8.5 0 1 1 12.83 3.02 6.5 6.5 0 0 0 20.98 11.17Z"></path>
+            </svg>
+            <svg
+                class="theme-toggle__icon theme-toggle__icon--sun"
+                data-icon="sun"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+        </button>
     </nav>
 </header>
+
+<script>
+    const THEME_STORAGE_KEY = 'calvin-xia-theme';
+
+    function initThemeToggle() {
+        const root = document.documentElement;
+        const buttons = document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]');
+
+        function setTheme(theme: string) {
+            const nextTheme = theme === 'dark' ? 'dark' : 'light';
+            root.dataset.theme = nextTheme;
+            try {
+                localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+            } catch {}
+            buttons.forEach((button) => {
+                button.setAttribute('aria-pressed', String(nextTheme === 'dark'));
+                button.setAttribute('aria-label', nextTheme === 'dark' ? '切换到浅色主题' : '切换到深色主题');
+            });
+            window.dispatchEvent(new CustomEvent('calvin-theme-change', { detail: { theme: nextTheme } }));
+        }
+
+        buttons.forEach((button) => {
+            if (button.dataset.themeReady === 'true') {
+                return;
+            }
+
+            button.dataset.themeReady = 'true';
+            button.addEventListener('click', () => {
+                setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+            });
+        });
+
+        setTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
+    }
+
+    function initHeaderState() {
+        if (document.documentElement.dataset.headerReady === 'true') {
+            return;
+        }
+
+        document.documentElement.dataset.headerReady = 'true';
+
+        const header = document.querySelector('.site-header');
+        if (!header) {
+            return;
+        }
+
+        let ticking = false;
+        const update = () => {
+            header.classList.toggle('is-scrolled', window.scrollY > 24);
+            ticking = false;
+        };
+
+        window.addEventListener(
+            'scroll',
+            () => {
+                if (ticking) {
+                    return;
+                }
+                ticking = true;
+                requestAnimationFrame(update);
+            },
+            { passive: true },
+        );
+
+        update();
+    }
+
+    function initSiteHeader() {
+        initThemeToggle();
+        initHeaderState();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSiteHeader, { once: true });
+    } else {
+        initSiteHeader();
+    }
+
+    document.addEventListener('astro:page-load', initSiteHeader);
+</script>
