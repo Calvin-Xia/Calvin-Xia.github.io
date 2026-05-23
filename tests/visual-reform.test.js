@@ -9,6 +9,17 @@ function readSource(...segments) {
     return readFileSync(path.join(rootDir, ...segments), 'utf8');
 }
 
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getRuleBlock(source, selector) {
+    const match = source.match(new RegExp(`${escapeRegExp(selector)}\\s*\\{([^}]*)\\}`));
+
+    assert.ok(match, `${selector} rule should exist`);
+    return match[1];
+}
+
 describe('frontend visual reform source contract', () => {
     test('global styles expose the Calvin Xia design tokens', () => {
         const styles = readSource('src', 'styles', 'global.css');
@@ -42,8 +53,16 @@ describe('frontend visual reform source contract', () => {
         assert.match(home, /id=["']currentTime["']/);
         assert.match(home, /recent-updates/);
         assert.match(home, /content-search/);
-        assert.match(styles, /\.home-search-panel\s*\{[\s\S]*width:\s*min\(100%,\s*var\(--site-max-width\)\)/);
-        assert.match(styles, /\.home-search-panel\s*\{[\s\S]*padding:\s*clamp\(1\.25rem,\s*3vw,\s*2rem\)/);
+
+        const searchPanelRule = getRuleBlock(styles, '.home-search-panel');
+        const searchPanelHeadRule = getRuleBlock(styles, '.home-search-panel .home-section-head');
+
+        assert.match(searchPanelRule, /width:\s*min\(100%,\s*860px\)/);
+        assert.match(searchPanelRule, /padding:\s*clamp\(1\.25rem,\s*3vw,\s*2rem\)/);
+        assert.match(searchPanelHeadRule, /align-items:\s*center/);
+        assert.match(searchPanelHeadRule, /justify-content:\s*space-between/);
+        assert.doesNotMatch(searchPanelHeadRule, /flex-direction:\s*column/);
+        assert.doesNotMatch(searchPanelHeadRule, /text-align:\s*center/);
     });
 
     test('visual shell avoids global header blur and uses library-style vector theme icons', () => {
@@ -58,6 +77,14 @@ describe('frontend visual reform source contract', () => {
         assert.doesNotMatch(styles, /\.site-header,\s*header\s*\{/);
         assert.doesNotMatch(styles, /\.site-header-inner,\s*header nav\s*\{/);
         assert.doesNotMatch(styles, /\.theme-toggle__icon\s*\{[\s\S]{0,180}box-shadow:\s*inset/);
+    });
+
+    test('mobile layout keeps article navigation and header controls reachable', () => {
+        const styles = readSource('src', 'styles', 'global.css');
+
+        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.site-header-inner\s*\{[\s\S]*grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)\s+auto/);
+        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.site-nav,\s*\n\s*\.nav-links\s*\{[\s\S]*grid-column:\s*auto/);
+        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-toc-shell\s*\{[\s\S]*order:\s*-1/);
     });
 
     test('new-post stays a local helper and does not persist secrets or drafts', () => {

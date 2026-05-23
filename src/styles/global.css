@@ -951,8 +951,13 @@ select:disabled {
 }
 
 .home-search-panel {
-    width: min(100%, var(--site-max-width));
+    width: min(100%, 860px);
     padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.home-search-panel .home-section-head {
+    align-items: center;
+    justify-content: space-between;
 }
 
 .home-section-head {
@@ -2326,16 +2331,25 @@ html[data-astro-transition='back']::view-transition-old(site-main) {
     }
 
     .site-header-inner {
-        grid-template-columns: 1fr auto;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 0.5rem;
         min-height: 56px;
     }
 
     .site-nav,
     .nav-links {
-        grid-column: 1 / -1;
-        justify-content: flex-start;
+        grid-column: auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        justify-content: center;
         overflow-x: auto;
         scrollbar-width: none;
+    }
+
+    .nav-link,
+    .nav-links a {
+        padding-inline: 0.65rem;
+        font-size: 0.88rem;
     }
 
     .site-nav::-webkit-scrollbar,
@@ -2406,6 +2420,7 @@ html[data-astro-transition='back']::view-transition-old(site-main) {
     }
 
     .article-toc-shell {
+        order: -1;
         position: static;
         max-height: none;
     }
