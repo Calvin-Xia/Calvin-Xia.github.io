@@ -1429,6 +1429,27 @@ select:disabled {
     justify-content: center;
 }
 
+.license-section {
+    display: flex;
+    justify-content: center;
+    margin-block: 1.5rem;
+}
+
+.license-list {
+    margin-block: 0.75rem;
+    padding-inline-start: 1.5rem;
+    list-style: disc;
+}
+
+.license-list li {
+    margin-block-end: 0.5rem;
+    line-height: 1.6;
+}
+
+.license-list li::marker {
+    color: var(--accent);
+}
+
 .article-index-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;

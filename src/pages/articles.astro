@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import LicenseBadge from '../components/LicenseBadge.astro';
 import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import {
@@ -134,6 +135,10 @@ const payload = {
             ))}
         </div>
     </section>
+
+    <div class="license-section">
+        <LicenseBadge />
+    </div>
 
     <div class="page-return">
         <a href="/" class="btn btn-secondary" data-history="true" data-title="首页">

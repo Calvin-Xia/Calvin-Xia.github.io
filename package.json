@@ -1,8 +1,9 @@
 {
-    "name": "mr-xia-github-io",
+    "name": "calvin-xia-github-io",
     "type": "module",
     "version": "0.0.1",
     "private": true,
+    "license": "MIT",
     "engines": {
         "node": ">=22.12.0"
     },

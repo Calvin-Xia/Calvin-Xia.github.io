@@ -193,6 +193,20 @@ git diff --check
 - `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 
+## 许可证
+
+本项目采用双重许可结构：
+
+| 组件 | 许可证 | 范围 |
+|------|--------|------|
+| 源代码 | [MIT License](./LICENSE) | `src/`、`scripts/`、`tools/`、`tests/`、配置文件 |
+| 博客文章 | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans) | `src/content/blog/*.md` |
+
+- **代码**：可自由使用、修改、分发，包括商业用途
+- **博客文章**：可分享和改编，但须署名、非商业使用、相同方式共享
+
+详见 [LICENSE](./LICENSE) 文件。
+
 ## 相关说明文档
 
 - [QUICKSTART.md](./QUICKSTART.md)
