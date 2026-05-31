@@ -4,31 +4,21 @@ import LicenseBadge from '../components/LicenseBadge.astro';
 import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import {
-    CONTENT_TYPES,
     blogEntryToItem,
     compareContentItems,
-    dataEntryToItem,
     getUniqueValues,
     isFreshDate,
 } from '../lib/content';
 
 const blogEntries = await getCollection('blog', ({ data }) => data.status !== 'draft');
-const workEntries = await getCollection('works', ({ data }) => data.status !== 'draft');
-const toolEntries = await getCollection('tools', ({ data }) => data.status !== 'draft');
 
 const articles = blogEntries.map(blogEntryToItem).sort(compareContentItems);
-const works = workEntries.map((entry) => dataEntryToItem('work', entry));
-const tools = toolEntries.map((entry) => dataEntryToItem('tool', entry));
 const searchableTypes = ['article', 'work', 'tool'];
-const searchItems = [...articles, ...works, ...tools]
-    .filter((item) => searchableTypes.includes(item.type))
-    .sort(compareContentItems);
 const categories = getUniqueValues(articles.map((item) => item.category));
 const tags = getUniqueValues(articles.flatMap((item) => item.tags));
 
 const payload = {
     articles,
-    searchItems,
     searchableTypes,
 };
 ---
@@ -149,17 +139,20 @@ const payload = {
 
 <script id="content-search-data" type="application/json" set:html={JSON.stringify(payload)}></script>
 <script>
-    import { CONTENT_TYPES, compareContentItems, isFreshDate } from '../lib/shared-content.js';
+    import { loadSearchIndex, search as searchContent } from '../lib/search-client.ts';
+    import { CONTENT_TYPES, isFreshDate } from '../lib/shared-content.js';
 
     (() => {
         const payloadElement = document.getElementById('content-search-data');
-        const payload = JSON.parse(payloadElement?.textContent || '{"articles":[],"searchItems":[],"searchableTypes":[]}');
+        const payload = JSON.parse(payloadElement?.textContent || '{"articles":[],"searchableTypes":[]}');
         const searchableTypes = new Set(payload.searchableTypes || []);
         const state = {
             currentCategory: 'all',
             currentTag: 'all',
             searchQuery: '',
             isSearchMode: false,
+            searchRequestId: 0,
+            suggestionRequestId: 0,
             debounceTimer: null,
             selectedSuggestionIndex: -1,
             suggestionItems: [],
@@ -175,7 +168,6 @@ const payload = {
         const categoryContainer = document.getElementById('category-filters');
         const tagContainer = document.getElementById('tag-filters');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const searchableItems = payload.searchItems.filter((item) => searchableTypes.has(item.type));
 
         function escapeRegExp(value) {
             return String(value).replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
@@ -214,36 +206,12 @@ const payload = {
             return fragment;
         }
 
-        function rankItems(items, query) {
-            const keywords = query
-                .toLowerCase()
-                .split(/\s+/)
-                .map((keyword) => keyword.trim())
-                .filter(Boolean);
-
-            return items
-                .map((item) => ({ item, score: calculateScore(item, keywords) }))
-                .filter((result) => result.score > 0)
-                .sort((left, right) => right.score - left.score || compareContentItems(left.item, right.item))
-                .map((result) => result.item);
-        }
-
-        function calculateScore(item, keywords) {
-            const title = item.title.toLowerCase();
-            const excerpt = item.excerpt.toLowerCase();
-            const category = item.category.toLowerCase();
-            const tags = item.tags.join(' ').toLowerCase();
-            const typeLabel = (CONTENT_TYPES[item.type]?.label || '').toLowerCase();
-
-            return keywords.reduce((score, keyword) => {
-                let nextScore = score;
-                if (title.includes(keyword)) nextScore += 6;
-                if (tags.includes(keyword)) nextScore += 4;
-                if (excerpt.includes(keyword)) nextScore += 3;
-                if (category.includes(keyword)) nextScore += 2;
-                if (typeLabel.includes(keyword)) nextScore += 1;
-                return nextScore;
-            }, 0);
+        async function getSearchResults(query, options = {}) {
+            const index = await loadSearchIndex();
+            return searchContent(index, query, {
+                types: Array.from(searchableTypes),
+                ...options,
+            });
         }
 
         function setSearchStatus(message) {
@@ -476,6 +444,7 @@ const payload = {
         }
 
         function restoreArticleView() {
+            state.searchRequestId += 1;
             state.isSearchMode = false;
             state.searchQuery = '';
             setFilterVisibility(true);
@@ -484,25 +453,46 @@ const payload = {
             showSkeletonThen(renderArticleList);
         }
 
-        function performSearch({ updateUrl = true } = {}) {
+        async function performSearch({ updateUrl = true } = {}) {
             const query = searchInput.value.trim();
             clearTimeout(state.debounceTimer);
             hideSuggestions();
             state.searchQuery = query;
+            const requestId = ++state.searchRequestId;
 
             if (!query) {
                 restoreArticleView();
                 return;
             }
 
-            const results = rankItems(searchableItems, query);
             state.isSearchMode = true;
             setFilterVisibility(false);
-            setSearchStatus(`搜索 “${query}” 共匹配到 ${results.length} 条内容`);
+            setSearchStatus('正在搜索...');
 
             if (updateUrl) {
                 updateUrlFromState();
             }
+
+            let results = [];
+
+            try {
+                results = await getSearchResults(query);
+            } catch (error) {
+                if (requestId !== state.searchRequestId) {
+                    return;
+                }
+
+                console.warn('Unable to load search index.', error);
+                setSearchStatus('搜索暂时不可用');
+                renderNoResults();
+                return;
+            }
+
+            if (requestId !== state.searchRequestId) {
+                return;
+            }
+
+            setSearchStatus(`搜索 “${query}” 共匹配到 ${results.length} 条内容`);
 
             showSkeletonThen(() => {
                 if (!results.length) {
@@ -514,8 +504,24 @@ const payload = {
             });
         }
 
-        function showSuggestions(query) {
-            const suggestions = rankItems(searchableItems, query).slice(0, 6);
+        async function showSuggestions(query) {
+            const requestId = ++state.suggestionRequestId;
+            let suggestions = [];
+
+            try {
+                suggestions = await getSearchResults(query, { limit: 6 });
+            } catch (error) {
+                if (requestId === state.suggestionRequestId) {
+                    console.warn('Unable to load search suggestions.', error);
+                    hideSuggestions();
+                }
+                return;
+            }
+
+            if (requestId !== state.suggestionRequestId) {
+                return;
+            }
+
             suggestionsContainer.innerHTML = '';
             state.suggestionItems = [];
 
@@ -553,6 +559,7 @@ const payload = {
         }
 
         function hideSuggestions() {
+            state.suggestionRequestId += 1;
             suggestionsContainer.classList.remove('active');
             suggestionsContainer.innerHTML = '';
             state.suggestionItems = [];
@@ -611,7 +618,7 @@ const payload = {
             searchInput.value = query;
 
             if (query) {
-                performSearch({ updateUrl: false });
+                void performSearch({ updateUrl: false });
                 return;
             }
 
@@ -638,14 +645,16 @@ const payload = {
                     return;
                 }
 
-                state.debounceTimer = window.setTimeout(() => showSuggestions(query), 180);
+                state.debounceTimer = window.setTimeout(() => {
+                    void showSuggestions(query);
+                }, 180);
             });
 
             searchInput.addEventListener('keydown', (event) => {
                 if (!state.suggestionItems.length || !suggestionsContainer.classList.contains('active')) {
                     if (event.key === 'Enter') {
                         event.preventDefault();
-                        performSearch();
+                        void performSearch();
                     }
                     return;
                 }
@@ -663,13 +672,15 @@ const payload = {
                     state.suggestionItems[state.selectedSuggestionIndex].click();
                 } else if (event.key === 'Enter') {
                     event.preventDefault();
-                    performSearch();
+                    void performSearch();
                 } else if (event.key === 'Escape') {
                     hideSuggestions();
                 }
             });
 
-            searchBtn.addEventListener('click', performSearch);
+            searchBtn.addEventListener('click', () => {
+                void performSearch();
+            });
 
             document.addEventListener('click', (event) => {
                 if (!searchInput.contains(event.target) && !suggestionsContainer.contains(event.target)) {

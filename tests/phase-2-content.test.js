@@ -162,13 +162,20 @@ describe('Phase 2 content collections', () => {
         });
     });
 
-    test('article search scope is serialized in the payload instead of hardcoded in the client script', async () => {
+    test('article search uses the lazy MiniSearch index instead of embedding searchable items', async () => {
         const pagePath = await assertFileExists('src', 'pages', 'articles.astro');
         const page = readFileSync(pagePath, 'utf8');
 
         assert.match(page, /const\s+searchableTypes\s*=\s*\[/);
         assert.match(page, /searchableTypes,/);
         assert.match(page, /new Set\(payload\.searchableTypes/);
+        assert.match(page, /from\s+['"]\.\.\/lib\/search-client\.ts['"]/);
+        assert.match(page, /loadSearchIndex\(/);
+        assert.match(page, /searchContent\(/);
+        assert.doesNotMatch(page, /searchItems,/);
+        assert.doesNotMatch(page, /payload\.searchItems/);
+        assert.doesNotMatch(page, /function\s+rankItems/);
+        assert.doesNotMatch(page, /function\s+calculateScore/);
         assert.doesNotMatch(page, /searchExcludedTypes/);
         assert.doesNotMatch(page, /new Set\(\['update-log'\]\)/);
     });
