@@ -1,0 +1,45 @@
+{
+    "nav": {
+        "articles": "文章",
+        "works": "作品",
+        "about": "关于"
+    },
+    "header": {
+        "themeToggle": "切换主题",
+        "langToggle": "EN"
+    },
+    "footer": {
+        "copyright": "© 2026 Calvin Xia. 保留所有权利。",
+        "poweredBy": "基于 Astro 构建"
+    },
+    "articles": {
+        "searchPlaceholder": "搜索文章、作品、工具...",
+        "allCategories": "全部分类",
+        "allTags": "全部标签",
+        "noResults": "未找到匹配内容",
+        "readMore": "阅读更多",
+        "views": "次阅读"
+    },
+    "works": {
+        "title": "作品",
+        "visit": "访问",
+        "download": "下载",
+        "source": "源码"
+    },
+    "tools": {
+        "title": "工具集",
+        "timer": "计时器",
+        "random": "随机抽取",
+        "markdown": "Markdown"
+    },
+    "about": {
+        "title": "关于",
+        "copyright": "版权声明",
+        "privacy": "隐私政策",
+        "disclaimer": "免责声明"
+    },
+    "error": {
+        "notFound": "页面未找到",
+        "backHome": "返回首页"
+    }
+}

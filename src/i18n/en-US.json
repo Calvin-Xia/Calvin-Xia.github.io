@@ -1,0 +1,45 @@
+{
+    "nav": {
+        "articles": "Articles",
+        "works": "Works",
+        "about": "About"
+    },
+    "header": {
+        "themeToggle": "Toggle theme",
+        "langToggle": "中"
+    },
+    "footer": {
+        "copyright": "© 2026 Calvin Xia. All rights reserved.",
+        "poweredBy": "Built with Astro"
+    },
+    "articles": {
+        "searchPlaceholder": "Search articles, works, tools...",
+        "allCategories": "All Categories",
+        "allTags": "All Tags",
+        "noResults": "No matching content found",
+        "readMore": "Read More",
+        "views": "views"
+    },
+    "works": {
+        "title": "Works",
+        "visit": "Visit",
+        "download": "Download",
+        "source": "Source"
+    },
+    "tools": {
+        "title": "Tools",
+        "timer": "Timer",
+        "random": "Random",
+        "markdown": "Markdown"
+    },
+    "about": {
+        "title": "About",
+        "copyright": "Copyright",
+        "privacy": "Privacy Policy",
+        "disclaimer": "Disclaimer"
+    },
+    "error": {
+        "notFound": "Page Not Found",
+        "backHome": "Back to Home"
+    }
+}
