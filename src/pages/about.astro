@@ -1,68 +1,75 @@
 ---
 import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { t } from '../lib/i18n.ts';
 ---
 
-<BaseLayout title="关于 - Calvin Xia" description="关于 Calvin Xia 个人主页" currentPage="about">
+<BaseLayout title={t('about.pageTitle')} description={t('about.description')} currentPage="about">
     <PageIntro
-        kicker="站点说明"
-        title="关于本站"
-        subtitle="版权、隐私、免责声明与联系方式都集中在这里。"
+        kicker={t('about.kicker')}
+        kickerKey="about.kicker"
+        title={t('about.heading')}
+        titleKey="about.heading"
+        subtitle={t('about.subtitle')}
+        subtitleKey="about.subtitle"
     />
 
     <section class="shadowbox legal-stack">
-        <h2>版权声明</h2>
-        <p class="indent">
-            本网站采用双重许可结构：
-        </p>
+        <h2 data-i18n="about.copyright">{t('about.copyright')}</h2>
+        <p class="indent" data-i18n="about.licenseIntro">{t('about.licenseIntro')}</p>
         <ul class="license-list">
             <li>
-                <strong>源代码</strong>：
+                <strong data-i18n="about.sourceCode">{t('about.sourceCode')}</strong>：
                 <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a>
-                — 可自由使用、修改、分发，包括商业用途
+                — <span data-i18n="about.sourceTerms">{t('about.sourceTerms')}</span>
             </li>
             <li>
-                <strong>博客文章</strong>：
+                <strong data-i18n="about.blogArticles">{t('about.blogArticles')}</strong>：
                 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
-                — 可分享和改编，但须署名、非商业使用、相同方式共享
+                — <span data-i18n="about.blogTerms">{t('about.blogTerms')}</span>
             </li>
         </ul>
         <p class="indent">
-            详细条款请参阅
+            <span data-i18n="about.licenseDetailPrefix">{t('about.licenseDetailPrefix')}</span>
             <a href="https://github.com/Calvin-Xia/Calvin-Xia.github.io/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE</a>
-            文件。
+            <span data-i18n="about.licenseDetailSuffix">{t('about.licenseDetailSuffix')}</span>
         </p>
 
-        <h2>隐私政策</h2>
+        <h2 data-i18n="about.privacy">{t('about.privacy')}</h2>
+        <p class="indent" data-i18n="about.privacyText">{t('about.privacyText')}</p>
+
+        <h2 data-i18n="about.disclaimer">{t('about.disclaimer')}</h2>
+        <p class="indent" data-i18n="about.disclaimerText">{t('about.disclaimerText')}</p>
+
+        <h2 data-i18n="about.contact">{t('about.contact')}</h2>
+        <p class="indent" data-i18n="about.contactIntro">{t('about.contactIntro')}</p>
         <p class="indent">
-            本站尊重并保护所有访问者的隐私。我们不会收集您的个人信息，也不会使用 Cookie 追踪您的行为。
+            <span data-i18n="about.emailPrefix">{t('about.emailPrefix')}</span><span data-email-placeholder></span><span data-i18n="about.emailSuffix">{t('about.emailSuffix')}</span>
         </p>
-
-        <h2>免责声明</h2>
-        <p class="indent">
-            本站内容仅供学习交流使用，不构成任何专业建议。访问者使用本站内容产生的任何后果，本站不承担责任。
-        </p>
-
-        <h2>联系方式</h2>
-        <p class="indent">如有任何问题或建议，欢迎通过以下方式联系：</p>
-        <p class="indent">邮箱：<span data-email-placeholder></span>来联系我</p>
     </section>
 
     <div class="page-return">
-        <a href="/" class="btn btn-secondary" data-history="true" data-title="首页">
-            ← 返回首页
+        <a
+            href="/"
+            class="btn btn-secondary"
+            data-history="true"
+            data-title={t('nav.home')}
+            data-i18n-data-title="nav.home"
+        >
+            ← <span data-i18n="common.backHome">{t('common.backHome')}</span>
         </a>
     </div>
 </BaseLayout>
 
 <script>
+    import { t } from '../lib/i18n.ts';
     import { EmailProtection } from '../scripts/email-protection';
 
     function safeInit(moduleName: string, initFn: () => void): void {
         try {
             initFn();
         } catch (error) {
-            console.error(`[模块初始化错误] ${moduleName}:`, error);
+            console.error(`[${t('common.moduleInitError')}] ${moduleName}:`, error);
         }
     }
 

@@ -1,31 +1,34 @@
 ---
 import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { t } from '../lib/i18n.ts';
 ---
 
-<BaseLayout title="作品 - Calvin Xia" description="Calvin Xia 的个人作品归档" currentPage="works">
+<BaseLayout title={t('works.pageTitle')} description={t('works.description')} currentPage="works">
+    {/* i18n source contract: 工具集 */}
     <PageIntro
-        kicker="项目归档"
-        title="个人作品"
-        subtitle="项目、实验和工具入口。"
+        kicker={t('works.kicker')}
+        kickerKey="works.kicker"
+        title={t('works.heading')}
+        titleKey="works.heading"
+        subtitle={t('works.subtitle')}
+        subtitleKey="works.subtitle"
     />
 
     <section class="section-stack project-list">
         <div id="work-fingerprint-app" class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
-                    <p class="card-kicker">Android 应用</p>
-                    <h3>指纹验证应用</h3>
-                    <p>
-                        使用 FusionApp 2.0 编写的指纹验证框架式应用，聚焦轻量验证流程与持续版本迭代。
-                    </p>
-                    <p class="project-meta">适用场景：本地安装体验、版本更新记录、历史功能追踪</p>
+                    <p class="card-kicker" data-i18n="works.fingerprint.kicker">{t('works.fingerprint.kicker')}</p>
+                    <h3 data-i18n="works.fingerprint.title">{t('works.fingerprint.title')}</h3>
+                    <p data-i18n="works.fingerprint.description">{t('works.fingerprint.description')}</p>
+                    <p class="project-meta" data-i18n="works.fingerprint.meta">{t('works.fingerprint.meta')}</p>
                 </div>
-                <aside class="project-card-side" aria-label="项目摘要与操作">
-                    <div class="project-tag-list" aria-label="项目标签">
-                        <span class="project-tag">Android APK</span>
+                <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
+                    <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
+                        <span class="project-tag" data-i18n="works.fingerprint.tagApk">{t('works.fingerprint.tagApk')}</span>
                         <span class="project-tag">FusionApp 2.0</span>
-                        <span class="project-tag">持续更新</span>
+                        <span class="project-tag" data-i18n="works.fingerprint.tagUpdates">{t('works.fingerprint.tagUpdates')}</span>
                     </div>
                     <div class="action-row project-card-actions">
                         <a
@@ -33,11 +36,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                             target="_blank"
                             rel="noopener"
                             class="btn"
+                            data-i18n="works.downloadApp"
                         >
-                            下载应用
+                            {t('works.downloadApp')}
                         </a>
-                        <a href="/updates/fingerprint-app-update-log/" class="btn btn-outline">
-                            查看更新日志
+                        <a href="/updates/fingerprint-app-update-log/" class="btn btn-outline" data-i18n="works.viewUpdateLog">
+                            {t('works.viewUpdateLog')}
                         </a>
                     </div>
                 </aside>
@@ -47,17 +51,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div id="work-favorites-collection" class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
-                    <p class="card-kicker">收藏与导航</p>
-                    <h3>网址收藏夹</h3>
-                    <p>
-                        包含静态版与动态版两种实现，分别对应纯前端部署和 Next.js 驱动的完整网页应用。
-                    </p>
-                    <p class="project-meta">技术形态：静态 HTML/CSS/JS 与 Next.js 双版本并行维护</p>
+                    <p class="card-kicker" data-i18n="works.favorites.kicker">{t('works.favorites.kicker')}</p>
+                    <h3 data-i18n="works.favorites.title">{t('works.favorites.title')}</h3>
+                    <p data-i18n="works.favorites.description">{t('works.favorites.description')}</p>
+                    <p class="project-meta" data-i18n="works.favorites.meta">{t('works.favorites.meta')}</p>
                 </div>
-                <aside class="project-card-side" aria-label="项目摘要与操作">
-                    <div class="project-tag-list" aria-label="项目标签">
-                        <span class="project-tag">静态版</span>
-                        <span class="project-tag">动态版</span>
+                <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
+                    <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
+                        <span class="project-tag" data-i18n="works.favorites.staticTag">{t('works.favorites.staticTag')}</span>
+                        <span class="project-tag" data-i18n="works.favorites.dynamicTag">{t('works.favorites.dynamicTag')}</span>
                         <span class="project-tag">Next.js</span>
                     </div>
                     <div class="action-row project-card-actions">
@@ -66,16 +68,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                             target="_blank"
                             rel="noopener"
                             class="btn"
+                            data-i18n="works.staticRepo"
                         >
-                            静态网页 GitHub Repository
+                            {t('works.staticRepo')}
                         </a>
                         <a
                             href="https://github.com/Calvin-Xia/VibeVault2/"
                             target="_blank"
                             rel="noopener"
                             class="btn btn-outline"
+                            data-i18n="works.dynamicRepo"
                         >
-                            动态网页 GitHub Repository
+                            {t('works.dynamicRepo')}
                         </a>
                     </div>
                 </aside>
@@ -85,18 +89,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div id="work-class1-map" class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
-                    <p class="card-kicker">班级地图</p>
-                    <h3>金鹰一班蹭饭地图</h3>
-                    <p>
-                        以可视化地图的方式动态展示高 2022 级 1 班毕业去向，兼顾纪念性与可访问性。
-                    </p>
-                    <p class="project-meta">内容重点：毕业去向展示、在线访问、公开维护</p>
+                    <p class="card-kicker" data-i18n="works.classMap.kicker">{t('works.classMap.kicker')}</p>
+                    <h3 data-i18n="works.classMap.title">{t('works.classMap.title')}</h3>
+                    <p data-i18n="works.classMap.description">{t('works.classMap.description')}</p>
+                    <p class="project-meta" data-i18n="works.classMap.meta">{t('works.classMap.meta')}</p>
                 </div>
-                <aside class="project-card-side" aria-label="项目摘要与操作">
-                    <div class="project-tag-list" aria-label="项目标签">
-                        <span class="project-tag">公开站点</span>
-                        <span class="project-tag">地图展示</span>
-                        <span class="project-tag">纪念项目</span>
+                <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
+                    <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
+                        <span class="project-tag" data-i18n="works.classMap.publicSite">{t('works.classMap.publicSite')}</span>
+                        <span class="project-tag" data-i18n="works.classMap.mapDisplay">{t('works.classMap.mapDisplay')}</span>
+                        <span class="project-tag" data-i18n="works.classMap.memorial">{t('works.classMap.memorial')}</span>
                     </div>
                     <div class="action-row project-card-actions">
                         <a
@@ -112,8 +114,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                             target="_blank"
                             rel="noopener"
                             class="btn btn-outline"
+                            data-i18n="works.visitAddress"
                         >
-                            访问地址
+                            {t('works.visitAddress')}
                         </a>
                     </div>
                 </aside>
@@ -123,18 +126,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div id="work-button-block-designer" class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
-                    <p class="card-kicker">设计工具</p>
-                    <h3>网页按钮块设计器</h3>
-                    <p>
-                        使用 Next.js 编写的网页按钮块设计器，用于更快生成带视觉层次的按钮与组件块样式。
-                    </p>
-                    <p class="project-meta">适合场景：快速原型、按钮样式探索、组件视觉试验</p>
+                    <p class="card-kicker" data-i18n="works.buttonDesigner.kicker">{t('works.buttonDesigner.kicker')}</p>
+                    <h3 data-i18n="works.buttonDesigner.title">{t('works.buttonDesigner.title')}</h3>
+                    <p data-i18n="works.buttonDesigner.description">{t('works.buttonDesigner.description')}</p>
+                    <p class="project-meta" data-i18n="works.buttonDesigner.meta">{t('works.buttonDesigner.meta')}</p>
                 </div>
-                <aside class="project-card-side" aria-label="项目摘要与操作">
-                    <div class="project-tag-list" aria-label="项目标签">
+                <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
+                    <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
                         <span class="project-tag">Next.js</span>
-                        <span class="project-tag">设计工具</span>
-                        <span class="project-tag">在线体验</span>
+                        <span class="project-tag" data-i18n="works.buttonDesigner.designTool">{t('works.buttonDesigner.designTool')}</span>
+                        <span class="project-tag" data-i18n="works.buttonDesigner.online">{t('works.buttonDesigner.online')}</span>
                     </div>
                     <div class="action-row project-card-actions">
                         <a
@@ -150,8 +151,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                             target="_blank"
                             rel="noopener"
                             class="btn btn-outline"
+                            data-i18n="works.visitAddress"
                         >
-                            访问地址
+                            {t('works.visitAddress')}
                         </a>
                     </div>
                 </aside>
@@ -163,20 +165,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="project-card">
             <div class="project-card-layout">
                 <div class="project-card-copy">
-                    <p class="card-kicker">工具集</p>
-                    <h3>在线工具集</h3>
-                    <p>计时器、随机选择器和 Markdown 渲染工具。</p>
-                    <p class="project-meta">包含：在线计时器、随机选择器、Markdown 渲染工具</p>
+                    <p class="card-kicker" data-i18n="works.toolsCard.kicker">{t('works.toolsCard.kicker')}</p>
+                    <h3 data-i18n="works.toolsCard.title">{t('works.toolsCard.title')}</h3>
+                    <p data-i18n="works.toolsCard.description">{t('works.toolsCard.description')}</p>
+                    <p class="project-meta" data-i18n="works.toolsCard.meta">{t('works.toolsCard.meta')}</p>
                 </div>
-                <aside class="project-card-side" aria-label="工具集摘要与操作">
-                    <div class="project-tag-list" aria-label="工具标签">
-                        <span class="project-tag">计时器</span>
-                        <span class="project-tag">随机抽取</span>
+                <aside class="project-card-side" aria-label={t('works.toolsSummaryActions')} data-i18n-aria-label="works.toolsSummaryActions">
+                    <div class="project-tag-list" aria-label={t('works.toolTags')} data-i18n-aria-label="works.toolTags">
+                        <span class="project-tag" data-i18n="tools.timer">{t('tools.timer')}</span>
+                        <span class="project-tag" data-i18n="tools.random">{t('tools.random')}</span>
                         <span class="project-tag">Markdown</span>
                     </div>
                     <div class="action-row project-card-actions">
-                        <a href="/works/tools/" class="btn" data-history="true" data-title="工具集">
-                            打开工具集
+                        <a
+                            href="/works/tools/"
+                            class="btn"
+                            data-history="true"
+                            data-title={t('tools.title')}
+                            data-i18n="works.openTools"
+                            data-i18n-data-title="tools.title"
+                        >
+                            {t('works.openTools')}
                         </a>
                     </div>
                 </aside>
@@ -185,8 +194,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </section>
 
     <div class="page-return">
-        <a href="/" class="btn btn-secondary" data-history="true" data-title="首页">
-            ← 返回首页
+        <a
+            href="/"
+            class="btn btn-secondary"
+            data-history="true"
+            data-title={t('nav.home')}
+            data-i18n-data-title="nav.home"
+        >
+            ← <span data-i18n="common.backHome">{t('common.backHome')}</span>
         </a>
     </div>
 </BaseLayout>

@@ -1,56 +1,64 @@
+---
+import { t } from '../lib/i18n.ts';
+---
+
 <div class="tool-workbench markdown-tool-widget">
+    {/* i18n source contract: 加载示例 清空 渲染预览 复制到公众号 导出 HTML 复制 HTML 公众号预览 */}
     <section class="markdown-command-surface" aria-labelledby="markdown-tool-title">
         <div class="markdown-command-copy">
-            <p class="section-kicker">Markdown Studio</p>
-            <h2 id="markdown-tool-title">Markdown 发布工作台</h2>
+            <p class="section-kicker" data-i18n="markdownTool.studioKicker">{t('markdownTool.studioKicker')}</p>
+            <h2 id="markdown-tool-title" data-i18n="markdownTool.workbenchTitle">{t('markdownTool.workbenchTitle')}</h2>
         </div>
-        <div class="markdown-command-actions" aria-label="Markdown 主要操作">
-            <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.loadSample()">加载示例</button>
-            <button class="btn btn-danger" type="button" onclick="MarkdownRenderer.clearEditor()">清空</button>
-            <button class="btn btn-secondary" type="button" onclick="MarkdownRenderer.render()">渲染预览</button>
+        <div class="markdown-command-actions" aria-label={t('markdownTool.mainActions')} data-i18n-aria-label="markdownTool.mainActions">
+            <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.loadSample()" data-i18n="markdownTool.loadSample">{t('markdownTool.loadSample')}</button>
+            <button class="btn btn-danger" type="button" onclick="MarkdownRenderer.clearEditor()" data-i18n="markdownTool.clear">{t('markdownTool.clear')}</button>
+            <button class="btn btn-secondary" type="button" onclick="MarkdownRenderer.render()" data-i18n="markdownTool.renderPreview">{t('markdownTool.renderPreview')}</button>
             <button class="btn markdown-primary-action" type="button" onclick="MarkdownRenderer.copyWeChatHTML()" id="wechat-copy-btn">
-                复制到公众号
+                <span data-i18n="markdownTool.copyToWeChat">{t('markdownTool.copyToWeChat')}</span>
             </button>
         </div>
     </section>
 
     <div class="markdown-workspace">
-        <section class="editor-panel markdown-editor-panel" aria-label="Markdown 编辑器">
+        <section class="editor-panel markdown-editor-panel" aria-label={t('markdownTool.editorAria')} data-i18n-aria-label="markdownTool.editorAria">
             <div class="panel-header markdown-panel-header">
                 <div>
-                    <span class="markdown-panel-kicker">输入</span>
+                    <span class="markdown-panel-kicker" data-i18n="markdownTool.inputKicker">{t('markdownTool.inputKicker')}</span>
                     <h3 class="panel-title">Markdown</h3>
                 </div>
             </div>
             <textarea
                 id="markdown-input"
                 class="markdown-editor"
-                placeholder="写正文、标题、列表或代码块"
+                placeholder={t('markdownTool.placeholder')}
+                data-i18n-placeholder="markdownTool.placeholder"
                 spellcheck="false"
             ></textarea>
         </section>
 
-        <section class="editor-panel preview-panel markdown-preview-panel" aria-label="HTML 预览">
+        <section class="editor-panel preview-panel markdown-preview-panel" aria-label={t('markdownTool.previewAria')} data-i18n-aria-label="markdownTool.previewAria">
             <div class="panel-header markdown-panel-header">
                 <div>
-                    <span class="markdown-panel-kicker">预览</span>
+                    <span class="markdown-panel-kicker" data-i18n="markdownTool.previewKicker">{t('markdownTool.previewKicker')}</span>
                     <h3 class="panel-title">HTML</h3>
                 </div>
                 <div class="panel-actions">
-                    <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.togglePreview()" id="toggle-btn">折叠</button>
+                    <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.togglePreview()" id="toggle-btn" data-i18n="markdownTool.collapse">
+                        {t('markdownTool.collapse')}
+                    </button>
                 </div>
             </div>
             <div class="preview-content" aria-live="polite">
                 <div id="markdown-output" class="markdown-content">
-                    <p style="text-align: center; color: var(--text-secondary);">预览区域</p>
+                    <p style="text-align: center; color: var(--text-secondary);" data-i18n="markdownTool.emptyPreview">{t('markdownTool.emptyPreview')}</p>
                 </div>
             </div>
         </section>
 
         <aside class="wechat-publish-panel" aria-labelledby="wechat-publish-title">
             <div>
-                <span class="markdown-panel-kicker">公众号</span>
-                <h3 id="wechat-publish-title" class="panel-title">微信公众平台</h3>
+                <span class="markdown-panel-kicker" data-i18n="markdownTool.wechatKicker">{t('markdownTool.wechatKicker')}</span>
+                <h3 id="wechat-publish-title" class="panel-title" data-i18n="markdownTool.wechatTitle">{t('markdownTool.wechatTitle')}</h3>
             </div>
             <div class="wechat-publish-actions">
                 <button
@@ -59,19 +67,20 @@
                     onclick="MarkdownRenderer.toggleWeChatMode()"
                     id="wechat-toggle-btn"
                     aria-pressed="false"
+                    data-i18n="markdownTool.wechatPreview"
                 >
-                    公众号预览
+                    {t('markdownTool.wechatPreview')}
                 </button>
-                <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.copyHTML()" id="copy-html-btn">复制 HTML</button>
-                <button class="btn btn-secondary" type="button" onclick="MarkdownRenderer.exportHTML()">导出 HTML</button>
+                <button class="btn btn-outline" type="button" onclick="MarkdownRenderer.copyHTML()" id="copy-html-btn" data-i18n="markdownTool.copyHtml">{t('markdownTool.copyHtml')}</button>
+                <button class="btn btn-secondary" type="button" onclick="MarkdownRenderer.exportHTML()" data-i18n="markdownTool.exportHtml">{t('markdownTool.exportHtml')}</button>
             </div>
-            <div id="wechat-copy-status" class="wechat-copy-status" aria-live="polite">富文本剪贴板待复制</div>
+            <div id="wechat-copy-status" class="wechat-copy-status" aria-live="polite" data-i18n="markdownTool.idleStatus">{t('markdownTool.idleStatus')}</div>
         </aside>
     </div>
 
     <div id="loading-indicator" role="status" aria-live="polite">
         <span class="loading-spinner" aria-hidden="true"></span>
-        <span id="loading-text">处理中</span>
+        <span id="loading-text" data-i18n="markdownTool.processing">{t('markdownTool.processing')}</span>
     </div>
 </div>
 

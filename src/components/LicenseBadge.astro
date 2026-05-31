@@ -4,6 +4,7 @@
  * Displays CC BY-NC-SA 4.0 license badge for blog articles.
  * Links to the official Creative Commons license deed.
  */
+import { t } from '../lib/i18n.ts';
 ---
 
 <a
@@ -11,7 +12,8 @@
     target="_blank"
     rel="noopener noreferrer"
     class="license-badge"
-    aria-label="本文采用 CC BY-NC-SA 4.0 许可协议"
+    aria-label={t('license.articleAria')}
+    data-i18n-aria-label="license.articleAria"
 >
     <span class="license-badge__icon" aria-hidden="true">CC</span>
     <span class="license-badge__text">BY-NC-SA 4.0</span>

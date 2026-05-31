@@ -8,9 +8,9 @@ interface Props {
 const { currentPage = '' } = Astro.props;
 
 const navItems = [
-    { key: 'nav.articles', href: '/articles/', page: 'articles' },
-    { key: 'nav.works', href: '/works/', page: 'works' },
-    { key: 'nav.about', href: '/about/', page: 'about' },
+    { label: '文章', key: 'nav.articles', href: '/articles/', page: 'articles' },
+    { label: '作品', key: 'nav.works', href: '/works/', page: 'works' },
+    { label: '关于', key: 'nav.about', href: '/about/', page: 'about' },
 ];
 ---
 

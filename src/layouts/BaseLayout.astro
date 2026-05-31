@@ -6,6 +6,7 @@ import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import SkipLink from '../components/SkipLink.astro';
 import TransitionIndicator from '../components/TransitionIndicator.astro';
+import { t } from '../lib/i18n.ts';
 import localCdnProxyScriptUrl from '../scripts/local-cdn-proxy.js?url';
 
 interface Props {
@@ -16,7 +17,7 @@ interface Props {
 
 const {
     title = 'Calvin Xia',
-    description = 'Calvin Xia 的个人主页，整理文章、作品和工具。',
+    description = t('home.description'),
     currentPage = '',
 } = Astro.props;
 
@@ -24,7 +25,7 @@ const enableLocalCdnProxy = import.meta.env.DEV;
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-lang="zh-CN">
     <head>
         <meta charset="UTF-8" />
         <link rel="icon" type="image/webp" href="/storage/icon.webp" />
@@ -35,7 +36,7 @@ const enableLocalCdnProxy = import.meta.env.DEV;
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
         <meta name="description" content={description} />
-        <meta name="keywords" content="Calvin Xia, 个人主页, 文章, 作品" />
+        <meta name="keywords" content={t('home.keywords')} data-i18n-content="home.keywords" />
         <meta name="author" content="Calvin Xia" />
         <link rel="alternate" type="application/rss+xml" title="Calvin Xia RSS" href="/rss.xml" />
         <title>{title}</title>
@@ -47,6 +48,17 @@ const enableLocalCdnProxy = import.meta.env.DEV;
                     theme = localStorage.getItem(storageKey) === 'dark' ? 'dark' : 'light';
                 } catch {}
                 document.documentElement.dataset.theme = theme;
+            })();
+        </script>
+        <script is:inline>
+            (() => {
+                const storageKey = 'calvin-xia-lang';
+                let lang = 'zh-CN';
+                try {
+                    lang = localStorage.getItem(storageKey) === 'en-US' ? 'en-US' : 'zh-CN';
+                } catch {}
+                document.documentElement.lang = lang;
+                document.documentElement.dataset.lang = lang;
             })();
         </script>
         <script defer src="https://cloud.umami.is/script.js" data-website-id="d5b9f90c-e82b-4b57-ade7-ff6a3e5d8062" data-host-url="https://cloud.umami.is"></script>

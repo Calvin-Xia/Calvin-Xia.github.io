@@ -1,3 +1,5 @@
+import { t } from '../i18n.ts';
+
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
 const SCALE_STEP = 0.25;
@@ -202,12 +204,12 @@ export function createLightboxController({ documentRef = document } = {}) {
         const figure = documentRef.createElement('figure');
         const image = documentRef.createElement('img');
         const caption = documentRef.createElement('figcaption');
-        const previousButton = createButton(documentRef, 'article-lightbox__button--previous', '上一张图片', '<');
-        const nextButton = createButton(documentRef, 'article-lightbox__button--next', '下一张图片', '>');
-        const zoomOutButton = createButton(documentRef, 'article-lightbox__button--zoom-out', '缩小图片', '-');
-        const resetButton = createButton(documentRef, 'article-lightbox__button--reset', '重置缩放', '1x');
-        const zoomInButton = createButton(documentRef, 'article-lightbox__button--zoom-in', '放大图片', '+');
-        const closeButton = createButton(documentRef, 'article-lightbox__button--close', '关闭图片预览', 'x');
+        const previousButton = createButton(documentRef, 'article-lightbox__button--previous', t('articleEnhancements.lightboxPrevious'), '<');
+        const nextButton = createButton(documentRef, 'article-lightbox__button--next', t('articleEnhancements.lightboxNext'), '>');
+        const zoomOutButton = createButton(documentRef, 'article-lightbox__button--zoom-out', t('articleEnhancements.lightboxZoomOut'), '-');
+        const resetButton = createButton(documentRef, 'article-lightbox__button--reset', t('articleEnhancements.lightboxReset'), '1x');
+        const zoomInButton = createButton(documentRef, 'article-lightbox__button--zoom-in', t('articleEnhancements.lightboxZoomIn'), '+');
+        const closeButton = createButton(documentRef, 'article-lightbox__button--close', t('articleEnhancements.lightboxClose'), 'x');
 
         dialog.classList.add('article-lightbox');
         dialog.setAttribute('aria-modal', 'true');

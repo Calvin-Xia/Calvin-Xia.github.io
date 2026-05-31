@@ -5,9 +5,10 @@ interface Props {
     width?: number;
     height?: number;
     class?: string;
+    [key: string]: unknown;
 }
 
-const { src, alt, width, height, class: className } = Astro.props;
+const { src, alt, width, height, class: className, ...attrs } = Astro.props;
 const webpSrc = src.replace(/\.png$/, '.webp');
 ---
 
@@ -21,5 +22,6 @@ const webpSrc = src.replace(/\.png$/, '.webp');
         class={className}
         loading="lazy"
         decoding="async"
+        {...attrs}
     />
 </picture>

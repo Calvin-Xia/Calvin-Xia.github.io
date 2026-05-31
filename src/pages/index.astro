@@ -2,12 +2,12 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import {
-    CONTENT_TYPES,
     blogEntryToItem,
     dataEntryToItem,
     getHomepageUpdates,
     isFreshDate,
 } from '../lib/content';
+import { t } from '../lib/i18n.ts';
 
 const blogEntries = await getCollection('blog', ({ data }) => data.status !== 'draft');
 const workEntries = await getCollection('works', ({ data }) => data.status !== 'draft');
@@ -20,40 +20,69 @@ const homepageUpdates = getHomepageUpdates([
     ...updateEntries.map((entry) => dataEntryToItem('update-log', entry)),
     ...toolEntries.map((entry) => dataEntryToItem('tool', entry)),
 ]);
+
+const contentTypeKeys = {
+    article: 'contentTypes.article',
+    work: 'contentTypes.work',
+    tool: 'contentTypes.tool',
+    'update-log': 'contentTypes.update-log',
+};
+
+function contentTypeKey(type, field) {
+    return `${contentTypeKeys[type] ?? 'contentTypes.article'}.${field}`;
+}
 ---
 
 <BaseLayout
     title="Calvin Xia"
-    description="Calvin Xia 的个人主页，整理文章、作品和工具。"
+    description={t('home.description')}
     currentPage="home"
 >
     <section class="hero hero-home page-intro page-intro--center">
-        <p class="hero-kicker">中文个人主页</p>
+        <p class="hero-kicker" data-i18n="home.kicker">{t('home.kicker')}</p>
         <h1 class="page-title hero-title">Calvin Xia</h1>
-        <p class="page-subtitle">文章、作品和一些长期维护的小工具。</p>
+        <p class="page-subtitle" data-i18n="home.subtitle">{t('home.subtitle')}</p>
         <div class="hero-status">
-            <div id="currentTime" class="current-time">加载中...</div>
+            <div id="currentTime" class="current-time" data-i18n="home.currentTimeLoading">{t('home.currentTimeLoading')}</div>
         </div>
         <div class="action-row hero-actions">
-            <a href="/works/" class="btn" data-history="true" data-title="作品">查看作品</a>
-            <a href="/about/" class="btn btn-secondary" data-history="true" data-title="关于">关于本站</a>
+            <a
+                href="/works/"
+                class="btn"
+                data-history="true"
+                data-title={t('nav.works')}
+                data-i18n="home.viewWorks"
+                data-i18n-data-title="nav.works"
+            >
+                {t('home.viewWorks')}
+            </a>
+            <a
+                href="/about/"
+                class="btn btn-secondary"
+                data-history="true"
+                data-title={t('nav.about')}
+                data-i18n="home.aboutSite"
+                data-i18n-data-title="nav.about"
+            >
+                {t('home.aboutSite')}
+            </a>
         </div>
     </section>
 
     <section class="section-stack home-discovery">
-        <h2 class="section-heading">发现</h2>
+        <h2 class="section-heading" data-i18n="home.discovery">{t('home.discovery')}</h2>
         <div class="list-index home-index-list">
-            <a class="index-row" href="/articles/" data-history="true" data-title="文章">
-                <span>文章</span>
-                <strong>按时间和标签浏览写作记录</strong>
+            <a class="index-row" href="/articles/" data-history="true" data-title={t('nav.articles')} data-i18n-data-title="nav.articles">
+                <span data-i18n="nav.articles">{t('nav.articles')}</span>
+                <strong data-i18n="home.articlesDescription">{t('home.articlesDescription')}</strong>
             </a>
-            <a class="index-row" href="/works/" data-history="true" data-title="作品">
-                <span>作品</span>
-                <strong>项目、实验和工具入口</strong>
+            <a class="index-row" href="/works/" data-history="true" data-title={t('nav.works')} data-i18n-data-title="nav.works">
+                <span data-i18n="nav.works">{t('nav.works')}</span>
+                <strong data-i18n="home.worksDescription">{t('home.worksDescription')}</strong>
             </a>
-            <a class="index-row" href="/about/" data-history="true" data-title="关于">
-                <span>关于</span>
-                <strong>版权、隐私和联系方式</strong>
+            <a class="index-row" href="/about/" data-history="true" data-title={t('nav.about')} data-i18n-data-title="nav.about">
+                <span data-i18n="nav.about">{t('nav.about')}</span>
+                <strong data-i18n="home.aboutDescription">{t('home.aboutDescription')}</strong>
             </a>
         </div>
     </section>
@@ -61,11 +90,18 @@ const homepageUpdates = getHomepageUpdates([
     <section class="surface-bordered section-stack home-search-panel">
         <div class="home-section-head">
             <div>
-                <p class="section-kicker">搜索</p>
-                <h2 class="section-heading">全站索引</h2>
+                <p class="section-kicker" data-i18n="home.searchKicker">{t('home.searchKicker')}</p>
+                <h2 class="section-heading" data-i18n="home.searchTitle">{t('home.searchTitle')}</h2>
             </div>
-            <a href="/articles/#content-search" class="btn btn-outline" data-history="true" data-title="文章">
-                打开搜索
+            <a
+                href="/articles/#content-search"
+                class="btn btn-outline"
+                data-history="true"
+                data-title={t('nav.articles')}
+                data-i18n="home.openSearch"
+                data-i18n-data-title="nav.articles"
+            >
+                {t('home.openSearch')}
             </a>
         </div>
     </section>
@@ -73,11 +109,18 @@ const homepageUpdates = getHomepageUpdates([
     <section id="recent-updates" class="section-stack home-updates">
         <div class="home-section-head">
             <div>
-                <p class="section-kicker">最近更新</p>
-                <h2 class="section-heading">最新整理的内容</h2>
+                <p class="section-kicker" data-i18n="home.recentKicker">{t('home.recentKicker')}</p>
+                <h2 class="section-heading" data-i18n="home.recentTitle">{t('home.recentTitle')}</h2>
             </div>
-            <a href="/articles/#content-search" class="btn btn-secondary" data-history="true" data-title="文章">
-                查看更多内容
+            <a
+                href="/articles/#content-search"
+                class="btn btn-secondary"
+                data-history="true"
+                data-title={t('nav.articles')}
+                data-i18n="home.viewMore"
+                data-i18n-data-title="nav.articles"
+            >
+                {t('home.viewMore')}
             </a>
         </div>
         <div id="recent-updates-list" class="list-index home-updates-list" aria-live="polite">
@@ -86,15 +129,19 @@ const homepageUpdates = getHomepageUpdates([
                     <article class="recent-update-card">
                         <div class="recent-update-meta">
                             <span class={`content-type-badge content-type-badge--${item.type}`}>
-                                {CONTENT_TYPES[item.type].label}
+                                <span data-i18n={contentTypeKey(item.type, 'label')}>
+                                    {t(contentTypeKey(item.type, 'label'))}
+                                </span>
                             </span>
                             {isFreshDate(item.date) && (
-                                <span class="content-type-badge content-type-badge--new">NEW</span>
+                                <span class="content-type-badge content-type-badge--new" data-i18n="common.new">{t('common.new')}</span>
                             )}
                             <span class="recent-update-date">{item.date}</span>
                         </div>
                         <h3 class="recent-update-title">{item.title}</h3>
-                        <a href={item.filePath} class="text-link">{CONTENT_TYPES[item.type].action}</a>
+                        <a href={item.filePath} class="text-link" data-i18n={contentTypeKey(item.type, 'action')}>
+                            {t(contentTypeKey(item.type, 'action'))}
+                        </a>
                     </article>
                 ))
             }
@@ -108,13 +155,14 @@ const homepageUpdates = getHomepageUpdates([
 
 <script>
     import { initButtonRipples, PageAnimations } from '../scripts/page-animations';
+    import { t } from '../lib/i18n.ts';
     import { TimeDisplay } from '../scripts/time-display';
 
     function safeInit(moduleName: string, initFn: () => void): void {
         try {
             initFn();
         } catch (error) {
-            console.error(`[模块初始化错误] ${moduleName}:`, error);
+            console.error(`[${t('common.moduleInitError')}] ${moduleName}:`, error);
         }
     }
 

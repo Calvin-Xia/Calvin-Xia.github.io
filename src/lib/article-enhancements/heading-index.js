@@ -1,3 +1,5 @@
+import { t } from '../i18n.ts';
+
 const HEADING_SELECTOR = 'h2,h3,h4';
 const HEADING_ANCHOR_CLASS = 'heading-anchor';
 
@@ -57,8 +59,8 @@ function appendHeadingAnchor(heading, documentRef, text) {
     const anchor = documentRef.createElement('a');
     anchor.classList.add(HEADING_ANCHOR_CLASS);
     anchor.setAttribute('href', `#${heading.id}`);
-    anchor.setAttribute('aria-label', `定位到标题：${text}`);
-    anchor.setAttribute('title', '复制并定位到此标题');
+    anchor.setAttribute('aria-label', t('articleEnhancements.headingAnchorAria', { text }));
+    anchor.setAttribute('title', t('articleEnhancements.headingAnchorTitle'));
     anchor.textContent = '#';
     heading.appendChild(anchor);
 }

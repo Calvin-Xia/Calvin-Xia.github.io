@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getUniqueValues } from '../lib/content';
+import { t } from '../lib/i18n.ts';
 
 const blogEntries = await getCollection('blog');
 const categories = getUniqueValues(blogEntries.map((entry) => entry.data.category));
@@ -12,11 +13,14 @@ const newPostApiBase = isNewPostEnabled ? 'http://localhost:4322' : '';
 const NewPostForm = isNewPostEnabled ? (await import('../components/NewPostForm.astro')).default : null;
 ---
 
-<BaseLayout title="新建文章 - Calvin Xia" description="通过本地 API 创建新的博客 Markdown 文件。" currentPage="articles">
+<BaseLayout title={t('newPost.pageTitle')} description={t('newPost.description')} currentPage="articles">
     <PageIntro
-        kicker="本地创作"
-        title="新建文章"
-        subtitle="本地开发辅助入口。"
+        kicker={t('newPost.kicker')}
+        kickerKey="newPost.kicker"
+        title={t('newPost.title')}
+        titleKey="newPost.title"
+        subtitle={t('newPost.subtitle')}
+        subtitleKey="newPost.subtitle"
         compact
     />
 
@@ -27,7 +31,7 @@ const NewPostForm = isNewPostEnabled ? (await import('../components/NewPostForm.
             <section class="new-post-workbench">
                 <div class="card new-post-form">
                     <p class="form-status form-status--pending" role="status">
-                        新建文章工具仅在本地开发环境可用。
+                        <span data-i18n="newPost.devOnly">{t('newPost.devOnly')}</span>
                     </p>
                 </div>
             </section>

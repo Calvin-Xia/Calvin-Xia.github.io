@@ -1,11 +1,21 @@
+---
+import { t } from '../lib/i18n.ts';
+---
+
 <div class="card timer-container">
     <div class="timer-setup">
-        <h3 class="tool-heading">设置计时时间</h3>
+        <h3 class="tool-heading" data-i18n="timer.heading">{t('timer.heading')}</h3>
         <div class="time-inputs">
             <div class="time-input-group">
-                <label for="hours">小时</label>
+                <label for="hours" data-i18n="timer.hours">{t('timer.hours')}</label>
                 <div class="time-input-wrapper">
-                    <button class="time-btn time-decrease" type="button" onclick="changeTime('hours', -1)" aria-label="减少小时">-</button>
+                    <button
+                        class="time-btn time-decrease"
+                        type="button"
+                        onclick="changeTime('hours', -1)"
+                        aria-label={t('timer.decreaseHours')}
+                        data-i18n-aria-label="timer.decreaseHours"
+                    >-</button>
                     <input
                         type="number"
                         id="hours"
@@ -14,17 +24,30 @@
                         max="99"
                         value="0"
                         class="time-input"
-                        aria-label="小时"
+                        aria-label={t('timer.hours')}
+                        data-i18n-aria-label="timer.hours"
                         aria-describedby="timer-instructions"
                     />
-                    <button class="time-btn time-increase" type="button" onclick="changeTime('hours', 1)" aria-label="增加小时">+</button>
+                    <button
+                        class="time-btn time-increase"
+                        type="button"
+                        onclick="changeTime('hours', 1)"
+                        aria-label={t('timer.increaseHours')}
+                        data-i18n-aria-label="timer.increaseHours"
+                    >+</button>
                 </div>
             </div>
             <span class="time-separator">:</span>
             <div class="time-input-group">
-                <label for="minutes">分钟</label>
+                <label for="minutes" data-i18n="timer.minutes">{t('timer.minutes')}</label>
                 <div class="time-input-wrapper">
-                    <button class="time-btn time-decrease" type="button" onclick="changeTime('minutes', -1)" aria-label="减少分钟">-</button>
+                    <button
+                        class="time-btn time-decrease"
+                        type="button"
+                        onclick="changeTime('minutes', -1)"
+                        aria-label={t('timer.decreaseMinutes')}
+                        data-i18n-aria-label="timer.decreaseMinutes"
+                    >-</button>
                     <input
                         type="number"
                         id="minutes"
@@ -33,17 +56,30 @@
                         max="59"
                         value="0"
                         class="time-input"
-                        aria-label="分钟"
+                        aria-label={t('timer.minutes')}
+                        data-i18n-aria-label="timer.minutes"
                         aria-describedby="timer-instructions"
                     />
-                    <button class="time-btn time-increase" type="button" onclick="changeTime('minutes', 1)" aria-label="增加分钟">+</button>
+                    <button
+                        class="time-btn time-increase"
+                        type="button"
+                        onclick="changeTime('minutes', 1)"
+                        aria-label={t('timer.increaseMinutes')}
+                        data-i18n-aria-label="timer.increaseMinutes"
+                    >+</button>
                 </div>
             </div>
             <span class="time-separator">:</span>
             <div class="time-input-group">
-                <label for="seconds">秒数</label>
+                <label for="seconds" data-i18n="timer.seconds">{t('timer.seconds')}</label>
                 <div class="time-input-wrapper">
-                    <button class="time-btn time-decrease" type="button" onclick="changeTime('seconds', -1)" aria-label="减少秒数">-</button>
+                    <button
+                        class="time-btn time-decrease"
+                        type="button"
+                        onclick="changeTime('seconds', -1)"
+                        aria-label={t('timer.decreaseSeconds')}
+                        data-i18n-aria-label="timer.decreaseSeconds"
+                    >-</button>
                     <input
                         type="number"
                         id="seconds"
@@ -52,19 +88,26 @@
                         max="59"
                         value="0"
                         class="time-input"
-                        aria-label="秒数"
+                        aria-label={t('timer.seconds')}
+                        data-i18n-aria-label="timer.seconds"
                         aria-describedby="timer-instructions"
                     />
-                    <button class="time-btn time-increase" type="button" onclick="changeTime('seconds', 1)" aria-label="增加秒数">+</button>
+                    <button
+                        class="time-btn time-increase"
+                        type="button"
+                        onclick="changeTime('seconds', 1)"
+                        aria-label={t('timer.increaseSeconds')}
+                        data-i18n-aria-label="timer.increaseSeconds"
+                    >+</button>
                 </div>
             </div>
         </div>
-        <button id="set-time" class="btn btn-outline" type="button">设置时间</button>
+        <button id="set-time" class="btn btn-outline" type="button" data-i18n="timer.setTime">{t('timer.setTime')}</button>
     </div>
 
     <div id="timer-display">00:00:00</div>
 
-    <div class="timer-progress" aria-label="计时进度">
+    <div class="timer-progress" aria-label={t('timer.progressAria')} data-i18n-aria-label="timer.progressAria">
         <div class="progress-bar-container">
             <div id="progress-bar" class="progress-bar"></div>
         </div>
@@ -74,15 +117,13 @@
     </div>
 
     <div class="timer-controls">
-        <button id="start" class="btn" type="button">开始</button>
-        <button id="pause" class="btn btn-secondary" type="button">暂停</button>
-        <button id="reset" class="btn btn-outline" type="button">重置</button>
+        <button id="start" class="btn" type="button" data-i18n="timer.start">{t('timer.start')}</button>
+        <button id="pause" class="btn btn-secondary" type="button" data-i18n="timer.pause">{t('timer.pause')}</button>
+        <button id="reset" class="btn btn-outline" type="button" data-i18n="timer.reset">{t('timer.reset')}</button>
     </div>
 
     <div class="timer-info">
-        <p id="timer-instructions" class="text-small">
-            设置后开始，可暂停或重置。
-        </p>
+        <p id="timer-instructions" class="text-small" data-i18n="timer.instructions">{t('timer.instructions')}</p>
     </div>
 </div>
 

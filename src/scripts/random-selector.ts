@@ -1,3 +1,5 @@
+import { t } from '../lib/i18n.ts';
+
 type MammothApi = {
     convertToHtml(input: { arrayBuffer: ArrayBuffer }): Promise<{ value: string }>;
 };
@@ -23,6 +25,14 @@ const state: RandomSelectorState = {
     items: [],
     cleanupController: null,
 };
+let currentFileStatus: { key: string; vars?: Record<string, string | number>; isError: boolean } = {
+    key: 'random.noFile',
+    isError: false,
+};
+
+function joinNames(names: string[]): string {
+    return names.join(t('random.listSeparator'));
+}
 
 function getFileExtension(fileName: string): string {
     const parts = String(fileName || '').toLowerCase().split('.');
@@ -44,19 +54,27 @@ function splitSupportedFiles(files: FileList | File[]) {
     return { supportedFiles, unsupportedFiles };
 }
 
-function setFileSelectionStatus(message: string, isError = false): void {
+function setFileSelectionStatus(key: string, vars?: Record<string, string | number>, isError = false): void {
     const status = document.getElementById('fileSelectionStatus');
+    currentFileStatus = { key, vars, isError };
+
     if (!status) {
         return;
     }
 
-    status.textContent = message;
+    status.textContent = t(key, vars);
+    status.setAttribute('data-i18n', key);
+    if (vars) {
+        status.setAttribute('data-i18n-vars', JSON.stringify(vars));
+    } else {
+        status.removeAttribute('data-i18n-vars');
+    }
     status.classList.toggle('tool-upload-status--error', isError);
 }
 
 function updateFileSelectionStatus(files: FileList | File[] | null): void {
     if (!files || files.length === 0) {
-        setFileSelectionStatus('未选择任何文件');
+        setFileSelectionStatus('random.noFile');
         return;
     }
 
@@ -65,7 +83,8 @@ function updateFileSelectionStatus(files: FileList | File[] | null): void {
 
     if (supportedFiles.length === 0) {
         setFileSelectionStatus(
-            `当前选择的文件类型不支持：${unsupportedFiles.join('、')}。请上传 TXT、Markdown 或 DOCX 文件。`,
+            'random.unsupportedFiles',
+            { files: joinNames(unsupportedFiles) },
             true,
         );
         return;
@@ -73,13 +92,14 @@ function updateFileSelectionStatus(files: FileList | File[] | null): void {
 
     if (unsupportedFiles.length > 0) {
         setFileSelectionStatus(
-            `已选择 ${supportedFiles.length} 个可导入文件：${names.join('、')}。以下文件将被跳过：${unsupportedFiles.join('、')}。`,
+            'random.selectedWithSkipped',
+            { count: supportedFiles.length, names: joinNames(names), skipped: joinNames(unsupportedFiles) },
             true,
         );
         return;
     }
 
-    setFileSelectionStatus(`已选择 ${names.length} 个文件：${names.join('、')}`);
+    setFileSelectionStatus('random.selectedFiles', { count: names.length, names: joinNames(names) });
 }
 
 function sanitizeInput(input: unknown): string {
@@ -156,7 +176,7 @@ async function extractDocx(arrayBuffer: ArrayBuffer): Promise<void> {
         fillFromText(extractBlockText(result.value));
     } catch (error) {
         console.error('[CDN Fallback] Failed to load mammoth.js:', error);
-        window.alert('Word文档解析功能暂时不可用，请稍后重试或使用TXT/Markdown文件');
+        window.alert(t('random.wordUnavailable'));
     }
 }
 
@@ -176,9 +196,9 @@ function updateList(): void {
 
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
-        deleteButton.textContent = '删除';
+        deleteButton.textContent = t('random.delete');
         deleteButton.className = 'remove-btn';
-        deleteButton.setAttribute('aria-label', `删除 ${item}`);
+        deleteButton.setAttribute('aria-label', t('random.deleteItem', { item }));
         deleteButton.addEventListener('click', () => RandomSelector.deleteItem(idx));
         itemElement.appendChild(deleteButton);
 
@@ -236,12 +256,14 @@ export const RandomSelector = {
             return;
         }
 
-        if (window.confirm('确定要清空所有选项吗？')) {
+        if (window.confirm(t('random.confirmClear'))) {
             state.items = [];
             updateList();
             const chosen = document.getElementById('chosen');
             if (chosen) {
                 chosen.textContent = '';
+                delete chosen.dataset.selectedItem;
+                delete chosen.dataset.emptyChoice;
                 chosen.classList.remove('selector-result--error');
             }
         }
@@ -254,13 +276,17 @@ export const RandomSelector = {
         }
 
         if (state.items.length === 0) {
-            chosen.textContent = '请先添加选项';
+            chosen.textContent = t('random.emptyChoice');
+            chosen.dataset.emptyChoice = 'true';
+            delete chosen.dataset.selectedItem;
             chosen.classList.add('selector-result--error');
             return;
         }
 
         const idx = Math.floor(Math.random() * state.items.length);
-        chosen.textContent = `抽中：${state.items[idx]}`;
+        chosen.textContent = t('random.chosen', { item: state.items[idx] });
+        chosen.dataset.selectedItem = state.items[idx];
+        delete chosen.dataset.emptyChoice;
         chosen.classList.remove('selector-result--error');
     },
 
@@ -301,13 +327,14 @@ export const RandomSelector = {
 
         if (unsupportedFiles.length > 0) {
             setFileSelectionStatus(
-                `已导入 ${supportedFiles.length} 个文件，已跳过不支持的文件：${unsupportedFiles.join('、')}。`,
+                'random.importedWithSkipped',
+                { count: supportedFiles.length, files: joinNames(unsupportedFiles) },
                 true,
             );
             return;
         }
 
-        setFileSelectionStatus(`已导入 ${supportedFiles.length} 个文件。`);
+        setFileSelectionStatus('random.importedFiles', { count: supportedFiles.length });
     },
 
     updateList,
@@ -323,3 +350,16 @@ function exposeRandomSelector(): void {
 }
 
 exposeRandomSelector();
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('calvin-lang-change', () => {
+        updateList();
+        setFileSelectionStatus(currentFileStatus.key, currentFileStatus.vars, currentFileStatus.isError);
+        const chosen = document.getElementById('chosen');
+        if (chosen?.dataset.emptyChoice === 'true') {
+            chosen.textContent = t('random.emptyChoice');
+        } else if (chosen?.dataset.selectedItem) {
+            chosen.textContent = t('random.chosen', { item: chosen.dataset.selectedItem });
+        }
+    });
+}

@@ -9,6 +9,7 @@ import {
     getUniqueValues,
     isFreshDate,
 } from '../lib/content';
+import { t } from '../lib/i18n.ts';
 
 const blogEntries = await getCollection('blog', ({ data }) => data.status !== 'draft');
 
@@ -23,52 +24,66 @@ const payload = {
 };
 ---
 
-<BaseLayout title="文章 - Calvin Xia" description="浏览 Calvin Xia 的文章，并搜索作品与工具。" currentPage="articles">
+<BaseLayout title={t('articles.pageTitle')} description={t('articles.description')} currentPage="articles">
     <div class="article-index-hero">
         <PageIntro
-            kicker="内容中枢"
-            title="文章与全站搜索"
-            subtitle="默认展示博客文章，也可以跨栏目搜索作品和工具。"
+            kicker={t('articles.kicker')}
+            kickerKey="articles.kicker"
+            title={t('articles.title')}
+            titleKey="articles.title"
+            subtitle={t('articles.subtitle')}
+            subtitleKey="articles.subtitle"
             compact
         />
 
-        <nav class="articles-toolbar" aria-label="文章视图">
-            <a href="/articles/archive/" class="btn btn-outline">文章归档</a>
+        <nav class="articles-toolbar" aria-label={t('articles.viewAria')} data-i18n-aria-label="articles.viewAria">
+            {/* i18n source contract: 文章归档 */}
+            <a href="/articles/archive/" class="btn btn-outline" data-i18n="articles.archive">{t('articles.archive')}</a>
         </nav>
     </div>
 
-    <section id="content-search" class="section-stack articles-search-section" aria-label="全站搜索">
+    <section id="content-search" class="section-stack articles-search-section" aria-label={t('articles.searchAria')} data-i18n-aria-label="articles.searchAria">
         <div class="search-container">
             <div class="search-box">
                 <input
                     id="search-input"
                     type="search"
-                    placeholder="搜索文章、作品或工具..."
+                    placeholder={t('articles.searchPlaceholder')}
+                    data-i18n-placeholder="articles.searchPlaceholder"
                     autocomplete="off"
-                    aria-label="搜索全站内容"
+                    aria-label={t('articles.searchInputAria')}
+                    data-i18n-aria-label="articles.searchInputAria"
                     aria-describedby="search-hint"
                     aria-controls="search-suggestions"
                     aria-autocomplete="list"
                     aria-expanded="false"
                 />
-                <button id="search-btn" class="search-btn" aria-label="搜索">
+                <button id="search-btn" class="search-btn" aria-label={t('articles.searchButtonAria')} data-i18n-aria-label="articles.searchButtonAria">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.35-4.35"></path>
                     </svg>
                 </button>
             </div>
-            <p id="search-hint" class="text-small search-hint">输入关键词搜索标题、摘要、标签和内容类型</p>
+            <p id="search-hint" class="text-small search-hint" data-i18n="articles.searchHint">{t('articles.searchHint')}</p>
             <p id="content-search-status" class="text-small search-status" aria-live="polite"></p>
-            <div id="search-suggestions" class="search-suggestions" role="listbox" aria-label="搜索建议"></div>
+            <div
+                id="search-suggestions"
+                class="search-suggestions"
+                role="listbox"
+                aria-label={t('articles.searchSuggestionsAria')}
+                data-i18n-aria-label="articles.searchSuggestionsAria"
+            ></div>
         </div>
     </section>
 
     <div id="article-filter-nav" class="filter-nav">
         <div class="filter-section">
-            <h2>文章分类</h2>
+            <h2 data-i18n="articles.categoryHeading">{t('articles.categoryHeading')}</h2>
             <div id="category-filters" class="filter-tags">
-                <button class="filter-tag active" type="button" data-filter="all" data-type="category" aria-pressed="true">全部</button>
+                <button class="filter-tag active" type="button" data-filter="all" data-type="category" aria-pressed="true" data-i18n="articles.allFilter">
+                    {t('articles.allFilter')}
+                </button>
                 {categories.map((category) => (
                     <button class="filter-tag" type="button" data-filter={category} data-type="category" aria-pressed="false">
                         {category}
@@ -77,9 +92,11 @@ const payload = {
             </div>
         </div>
         <div class="filter-section">
-            <h2>文章标签</h2>
+            <h2 data-i18n="articles.tagHeading">{t('articles.tagHeading')}</h2>
             <div id="tag-filters" class="filter-tags">
-                <button class="filter-tag active" type="button" data-filter="all" data-type="tag" aria-pressed="true">全部</button>
+                <button class="filter-tag active" type="button" data-filter="all" data-type="tag" aria-pressed="true" data-i18n="articles.allFilter">
+                    {t('articles.allFilter')}
+                </button>
                 {tags.map((tag) => (
                     <button class="filter-tag" type="button" data-filter={tag} data-type="tag" aria-pressed="false">
                         {tag}
@@ -89,7 +106,7 @@ const payload = {
         </div>
     </div>
 
-    <section id="blog-container" aria-live="polite" aria-label="内容列表">
+    <section id="blog-container" aria-live="polite" aria-label={t('articles.listAria')} data-i18n-aria-label="articles.listAria">
         <div id="content-skeletons" class="skeleton-list" hidden>
             {Array.from({ length: 4 }).map(() => (
                 <div class="skeleton-card" aria-hidden="true">
@@ -108,7 +125,7 @@ const payload = {
                     </a>
                     <div class="blog-card-meta">
                         {isFreshDate(article.date) && (
-                            <span class="content-type-badge content-type-badge--new">NEW</span>
+                            <span class="content-type-badge content-type-badge--new" data-i18n="common.new">{t('common.new')}</span>
                         )}
                         <span class="blog-card-category">{article.category}</span>
                         {article.tags.map((tag) => <span class="blog-card-tag">{tag}</span>)}
@@ -131,16 +148,23 @@ const payload = {
     </div>
 
     <div class="page-return">
-        <a href="/" class="btn btn-secondary" data-history="true" data-title="首页">
-            ← 返回首页
+        <a
+            href="/"
+            class="btn btn-secondary"
+            data-history="true"
+            data-title={t('nav.home')}
+            data-i18n-data-title="nav.home"
+        >
+            ← <span data-i18n="common.backHome">{t('common.backHome')}</span>
         </a>
     </div>
 </BaseLayout>
 
 <script id="content-search-data" type="application/json" set:html={JSON.stringify(payload)}></script>
 <script>
+    import { t } from '../lib/i18n.ts';
     import { loadSearchIndex, search as searchContent } from '../lib/search-client.ts';
-    import { CONTENT_TYPES, isFreshDate } from '../lib/shared-content.js';
+    import { isFreshDate } from '../lib/shared-content.js';
 
     (() => {
         const payloadElement = document.getElementById('content-search-data');
@@ -168,6 +192,17 @@ const payload = {
         const categoryContainer = document.getElementById('category-filters');
         const tagContainer = document.getElementById('tag-filters');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const contentTypeKeys = {
+            article: 'contentTypes.article',
+            work: 'contentTypes.work',
+            tool: 'contentTypes.tool',
+            'update-log': 'contentTypes.update-log',
+        };
+
+        function contentTypeLabel(type) {
+            const key = contentTypeKeys[type] ? `${contentTypeKeys[type]}.label` : '';
+            return key ? t(key) : t('common.contentFallback');
+        }
 
         function escapeRegExp(value) {
             return String(value).replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
@@ -293,7 +328,7 @@ const payload = {
         function createTypeBadge(type) {
             const badge = document.createElement('span');
             badge.className = `content-type-badge content-type-badge--${type}`;
-            badge.textContent = CONTENT_TYPES[type]?.label || '内容';
+            badge.textContent = contentTypeLabel(type);
             return badge;
         }
 
@@ -338,7 +373,7 @@ const payload = {
             if (isFreshDate(item.date)) {
                 const freshBadge = document.createElement('span');
                 freshBadge.className = 'content-type-badge content-type-badge--new';
-                freshBadge.textContent = 'NEW';
+                freshBadge.textContent = t('common.new');
                 meta.append(freshBadge);
             }
 
@@ -406,11 +441,11 @@ const payload = {
             wrapper.className = 'no-results';
 
             const title = document.createElement('p');
-            title.textContent = '没有找到匹配的文章';
+            title.textContent = t('articles.noResultsTitle');
 
             const description = document.createElement('p');
             description.className = 'text-small';
-            description.textContent = '可以清空关键词，或换一个分类和标签组合。';
+            description.textContent = t('articles.noResultsDescription');
 
             const actions = document.createElement('div');
             actions.className = 'no-results-actions';
@@ -418,7 +453,7 @@ const payload = {
             const resetButton = document.createElement('button');
             resetButton.type = 'button';
             resetButton.className = 'btn btn-outline';
-            resetButton.textContent = '重置筛选';
+            resetButton.textContent = t('articles.resetFilters');
             resetButton.addEventListener('click', () => {
                 searchInput.value = '';
                 state.currentCategory = 'all';
@@ -467,7 +502,7 @@ const payload = {
 
             state.isSearchMode = true;
             setFilterVisibility(false);
-            setSearchStatus('正在搜索...');
+            setSearchStatus(t('articles.searching'));
 
             if (updateUrl) {
                 updateUrlFromState();
@@ -483,7 +518,7 @@ const payload = {
                 }
 
                 console.warn('Unable to load search index.', error);
-                setSearchStatus('搜索暂时不可用');
+                setSearchStatus(t('articles.searchUnavailable'));
                 renderNoResults();
                 return;
             }
@@ -492,7 +527,7 @@ const payload = {
                 return;
             }
 
-            setSearchStatus(`搜索 “${query}” 共匹配到 ${results.length} 条内容`);
+            setSearchStatus(t('articles.searchResultCount', { query, count: results.length }));
 
             showSkeletonThen(() => {
                 if (!results.length) {
@@ -543,7 +578,7 @@ const payload = {
 
                 const meta = document.createElement('div');
                 meta.className = 'suggestion-meta';
-                meta.textContent = [CONTENT_TYPES[item.type]?.label, item.category, item.date].filter(Boolean).join(' · ');
+                meta.textContent = [contentTypeLabel(item.type), item.category, item.date].filter(Boolean).join(' · ');
 
                 suggestion.append(title, meta);
                 suggestion.addEventListener('click', () => {
@@ -680,6 +715,15 @@ const payload = {
 
             searchBtn.addEventListener('click', () => {
                 void performSearch();
+            });
+
+            window.addEventListener('calvin-lang-change', () => {
+                hideSuggestions();
+                if (state.isSearchMode && state.searchQuery) {
+                    void performSearch({ updateUrl: false });
+                    return;
+                }
+                renderArticleList();
             });
 
             document.addEventListener('click', (event) => {

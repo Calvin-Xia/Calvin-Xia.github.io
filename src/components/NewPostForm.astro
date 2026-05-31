@@ -5,6 +5,8 @@ interface Props {
     apiBase: string;
 }
 
+import { t } from '../lib/i18n.ts';
+
 const { categories, today, apiBase } = Astro.props;
 ---
 
@@ -12,47 +14,47 @@ const { categories, today, apiBase } = Astro.props;
     <form id="new-post-form" class="card new-post-form" data-api-base={apiBase}>
         <div class="form-grid form-grid--two">
             <label class="form-field">
-                <span>标题</span>
+                <span data-i18n="newPost.titleLabel">{t('newPost.titleLabel')}</span>
                 <input id="post-title" name="title" type="text" required />
             </label>
             <label class="form-field">
-                <span>日期</span>
+                <span data-i18n="newPost.dateLabel">{t('newPost.dateLabel')}</span>
                 <input id="post-date" name="date" type="date" value={today} required />
             </label>
         </div>
 
         <div class="form-grid form-grid--two">
             <label class="form-field">
-                <span>分类</span>
+                <span data-i18n="newPost.categoryLabel">{t('newPost.categoryLabel')}</span>
                 <select id="post-category" name="category">
                     {categories.map((category) => <option value={category}>{category}</option>)}
                 </select>
             </label>
             <label class="form-field">
-                <span>标签</span>
-                <input id="post-tags" name="tags" type="text" placeholder="生活总结, Astro" />
+                <span data-i18n="newPost.tagsLabel">{t('newPost.tagsLabel')}</span>
+                <input id="post-tags" name="tags" type="text" placeholder={t('newPost.tagsPlaceholder')} data-i18n-placeholder="newPost.tagsPlaceholder" />
             </label>
         </div>
 
         <label class="form-field">
-            <span>摘要</span>
+            <span data-i18n="newPost.excerptLabel">{t('newPost.excerptLabel')}</span>
             <textarea id="post-excerpt" name="excerpt" rows="3"></textarea>
         </label>
 
         <label class="form-field">
-            <span>密钥</span>
+            <span data-i18n="newPost.secretLabel">{t('newPost.secretLabel')}</span>
             <input id="post-secret" name="secret" type="password" autocomplete="current-password" required />
         </label>
 
         <div class="editor-container new-post-editor">
             <label class="editor-panel form-field">
-                <span class="panel-title">Markdown 正文</span>
+                <span class="panel-title" data-i18n="newPost.markdownBody">{t('newPost.markdownBody')}</span>
                 <textarea id="post-body" name="body" rows="18"></textarea>
             </label>
 
             <div class="editor-panel preview-panel">
                 <div class="panel-header">
-                    <span class="panel-title">实时预览</span>
+                    <span class="panel-title" data-i18n="newPost.preview">{t('newPost.preview')}</span>
                 </div>
                 <div class="preview-content">
                     <div id="post-preview" class="markdown-content"></div>
@@ -61,8 +63,8 @@ const { categories, today, apiBase } = Astro.props;
         </div>
 
         <div class="action-row new-post-actions">
-            <button type="submit" class="btn">创建文章</button>
-            <button type="reset" class="btn btn-outline">清空</button>
+            <button type="submit" class="btn" data-i18n="newPost.create">{t('newPost.create')}</button>
+            <button type="reset" class="btn btn-outline" data-i18n="newPost.clear">{t('newPost.clear')}</button>
         </div>
 
         <div id="new-post-status" class="form-status" role="status" aria-live="polite"></div>
@@ -70,6 +72,8 @@ const { categories, today, apiBase } = Astro.props;
 </section>
 
 <script>
+    import { t } from '../lib/i18n.ts';
+
     const form = document.getElementById('new-post-form') as HTMLFormElement | null;
     const titleInput = document.getElementById('post-title') as HTMLInputElement | null;
     const dateInput = document.getElementById('post-date') as HTMLInputElement | null;
@@ -145,19 +149,19 @@ const { categories, today, apiBase } = Astro.props;
     function validateForm(): boolean {
         if (!titleInput?.value.trim()) {
             titleInput?.focus();
-            setStatus('标题不能为空', 'error');
+            setStatus(t('newPost.titleRequired'), 'error');
             return false;
         }
 
         if (!dateInput?.value.trim()) {
             dateInput?.focus();
-            setStatus('日期不能为空', 'error');
+            setStatus(t('newPost.dateRequired'), 'error');
             return false;
         }
 
         if (!secretInput?.value.trim()) {
             secretInput?.focus();
-            setStatus('密钥不能为空', 'error');
+            setStatus(t('newPost.secretRequired'), 'error');
             return false;
         }
 
@@ -171,7 +175,7 @@ const { categories, today, apiBase } = Astro.props;
             return;
         }
 
-        setStatus('正在创建文章...', 'pending');
+        setStatus(t('newPost.creating'), 'pending');
 
         try {
             const apiBase = form?.dataset.apiBase || '';
@@ -188,17 +192,17 @@ const { categories, today, apiBase } = Astro.props;
             if (!response.ok) {
                 const detail = result.errors
                     ? Object.values(result.errors).join('；')
-                    : result.error || '提交失败';
+                    : result.error || t('newPost.submitFailed');
                 setStatus(detail, 'error');
                 return;
             }
 
             setStatus(
-                `已创建 ${result.filePath} <a href="${result.articleUrl}" class="form-status-link">预览文章</a>`,
+                `${t('newPost.created', { filePath: result.filePath })}<a href="${result.articleUrl}" class="form-status-link">${t('newPost.previewArticle')}</a>`,
                 'success',
             );
         } catch (error) {
-            const message = error instanceof Error ? error.message : '提交失败';
+            const message = error instanceof Error ? error.message : t('newPost.submitFailed');
             setStatus(message, 'error');
         }
     }

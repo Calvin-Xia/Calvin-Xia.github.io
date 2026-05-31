@@ -1,32 +1,40 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { t } from '../lib/i18n.ts';
 ---
 
-<BaseLayout title="404 - Calvin Xia" description="页面未找到">
+<BaseLayout title="404 - Calvin Xia" description={t('error.description')}>
     <div class="error-page">
         <div class="error-code">404</div>
 
-        <h1 class="error-title">页面未找到</h1>
+        <h1 class="error-title" data-i18n="error.notFound">{t('error.notFound')}</h1>
 
         <div class="error-panel">
-            <p>页面不存在或已移动。</p>
+            <p data-i18n="error.message">{t('error.message')}</p>
             <ul class="error-list">
-                <li>URL 地址输入错误</li>
-                <li>页面已被删除或移动</li>
+                <li data-i18n="error.wrongUrl">{t('error.wrongUrl')}</li>
+                <li data-i18n="error.removed">{t('error.removed')}</li>
             </ul>
         </div>
 
         <div class="action-row action-row--center page-return">
-            <a href="/" class="btn" data-history="true" data-title="首页">
-                返回首页
+            <a
+                href="/"
+                class="btn"
+                data-history="true"
+                data-title={t('nav.home')}
+                data-i18n="error.backHome"
+                data-i18n-data-title="nav.home"
+            >
+                {t('error.backHome')}
             </a>
-            <button type="button" onclick="history.back()" class="btn btn-outline">
-                返回上一页
+            <button type="button" onclick="history.back()" class="btn btn-outline" data-i18n="error.backPrevious">
+                {t('error.backPrevious')}
             </button>
         </div>
 
         <p class="text-small">
-            如果问题持续存在，请<a href="mailto:personalpagefeedback@calvin-xia.com">联系我</a>
+            <span data-i18n="error.contactPrefix">{t('error.contactPrefix')}</span><a href="mailto:personalpagefeedback@calvin-xia.com" data-i18n="error.contact">{t('error.contact')}</a>
         </p>
     </div>
 </BaseLayout>

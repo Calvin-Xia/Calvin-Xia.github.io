@@ -1,3 +1,5 @@
+import { getCurrentLang, t } from '../lib/i18n.ts';
+
 const VIEW_COUNTER_SELECTOR = '[data-view-counter][data-slug]';
 
 export function formatViewCount(views) {
@@ -7,7 +9,8 @@ export function formatViewCount(views) {
         return '';
     }
 
-    return `${Math.round(normalizedViews).toLocaleString('zh-CN')} 次阅读`;
+    const viewsText = Math.round(normalizedViews).toLocaleString(getCurrentLang());
+    return t('viewCounter.views', { views: viewsText });
 }
 
 function setCounterText(counter, views) {
@@ -19,6 +22,7 @@ function setCounterText(counter, views) {
     }
 
     counter.textContent = text;
+    counter.dataset.views = String(views);
     counter.classList.remove('view-count--pending');
     counter.classList.add('view-count--ready');
 }
@@ -71,3 +75,12 @@ function startViewCounters() {
 
 startViewCounters();
 document.addEventListener('astro:page-load', () => initViewCounters(document));
+if (typeof window !== 'undefined') {
+    window.addEventListener('calvin-lang-change', () => {
+        document.querySelectorAll?.(VIEW_COUNTER_SELECTOR).forEach((counter) => {
+            if (counter.dataset.views) {
+                setCounterText(counter, counter.dataset.views);
+            }
+        });
+    });
+}

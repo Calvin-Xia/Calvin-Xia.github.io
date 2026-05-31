@@ -1,83 +1,90 @@
 ---
 import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { t } from '../lib/i18n.ts';
 ---
 
-<BaseLayout title="样式指南 - Calvin Xia" description="Calvin Xia 网站样式指南">
-    <PageIntro title="样式指南" subtitle="内部维护页" compact />
+<BaseLayout title={t('styleguide.pageTitle')} description={t('styleguide.description')}>
+    <PageIntro
+        title={t('styleguide.title')}
+        titleKey="styleguide.title"
+        subtitle={t('styleguide.subtitle')}
+        subtitleKey="styleguide.subtitle"
+        compact
+    />
 
     <section class="section-stack">
-        <h2>色彩系统</h2>
+        <h2 data-i18n="styleguide.colors">{t('styleguide.colors')}</h2>
         <div class="styleguide-grid">
             <div class="token-card token-card--primary">
-                <div>主色</div>
+                <div data-i18n="styleguide.primary">{t('styleguide.primary')}</div>
                 <small>#315d67</small>
             </div>
             <div class="token-card token-card--secondary">
-                <div>背景</div>
+                <div data-i18n="styleguide.background">{t('styleguide.background')}</div>
                 <small>#f7f7f4</small>
             </div>
             <div class="token-card token-card--accent">
-                <div>边框</div>
+                <div data-i18n="styleguide.border">{t('styleguide.border')}</div>
                 <small>#d8dfdd</small>
             </div>
         </div>
     </section>
 
     <section class="section-stack">
-        <h2>排版系统</h2>
+        <h2 data-i18n="styleguide.typography">{t('styleguide.typography')}</h2>
         <div class="card">
-            <h1>这是一级标题 H1</h1>
-            <h2>这是二级标题 H2</h2>
-            <h3>这是三级标题 H3</h3>
-            <p>这是一段正文。使用系统默认字体，行高确保良好的可读性。</p>
-            <p class="text-small">这是小号文本，用于次要信息展示。</p>
+            <h1 data-i18n="styleguide.h1">{t('styleguide.h1')}</h1>
+            <h2 data-i18n="styleguide.h2">{t('styleguide.h2')}</h2>
+            <h3 data-i18n="styleguide.h3">{t('styleguide.h3')}</h3>
+            <p data-i18n="styleguide.body">{t('styleguide.body')}</p>
+            <p class="text-small" data-i18n="styleguide.small">{t('styleguide.small')}</p>
         </div>
     </section>
 
     <section class="section-stack">
-        <h2>按钮样式</h2>
+        <h2 data-i18n="styleguide.buttons">{t('styleguide.buttons')}</h2>
         <div class="card">
             <div class="action-row">
-                <button class="btn">主要按钮</button>
-                <button class="btn btn-secondary">次要按钮</button>
-                <button class="btn btn-outline">轮廓按钮</button>
+                <button class="btn" data-i18n="styleguide.primaryButton">{t('styleguide.primaryButton')}</button>
+                <button class="btn btn-secondary" data-i18n="styleguide.secondaryButton">{t('styleguide.secondaryButton')}</button>
+                <button class="btn btn-outline" data-i18n="styleguide.outlineButton">{t('styleguide.outlineButton')}</button>
             </div>
         </div>
     </section>
 
     <section class="section-stack">
-        <h2>卡片样式</h2>
+        <h2 data-i18n="styleguide.cards">{t('styleguide.cards')}</h2>
         <div class="card">
-            <h3>普通卡片</h3>
-            <p>单层边框容器。</p>
+            <h3 data-i18n="styleguide.normalCard">{t('styleguide.normalCard')}</h3>
+            <p data-i18n="styleguide.normalCardText">{t('styleguide.normalCardText')}</p>
         </div>
 
         <div class="shadowbox">
-            <h3>阴影盒</h3>
-            <p>用于需要轻微浮层的状态。</p>
+            <h3 data-i18n="styleguide.shadowbox">{t('styleguide.shadowbox')}</h3>
+            <p data-i18n="styleguide.shadowboxText">{t('styleguide.shadowboxText')}</p>
         </div>
     </section>
 
     <section class="section-stack">
-        <h2>时间组件</h2>
+        <h2 data-i18n="styleguide.time">{t('styleguide.time')}</h2>
         <div class="card">
-            <h3>时间显示</h3>
-            <div id="currentTime" class="current-time">加载中...</div>
+            <h3 data-i18n="styleguide.timeDisplay">{t('styleguide.timeDisplay')}</h3>
+            <div id="currentTime" class="current-time" data-i18n="home.currentTimeLoading">{t('home.currentTimeLoading')}</div>
         </div>
     </section>
 
     <section class="section-stack">
-        <h2>链接样式</h2>
+        <h2 data-i18n="styleguide.links">{t('styleguide.links')}</h2>
         <div class="card">
             <p>
-                这是一个 <a href="#">标准链接</a>，带有悬停效果。
+                <span data-i18n="styleguide.linkPrefix">{t('styleguide.linkPrefix')}</span><a href="#" data-i18n="styleguide.standardLink">{t('styleguide.standardLink')}</a><span data-i18n="styleguide.linkSuffix">{t('styleguide.linkSuffix')}</span>
             </p>
         </div>
     </section>
 
     <section class="section-stack">
-        <h2>间距系统</h2>
+        <h2 data-i18n="styleguide.spacing">{t('styleguide.spacing')}</h2>
         <div class="section-stack">
             <div class="card-note">xs - 0.5rem</div>
             <div class="card-note">sm - 1rem</div>
@@ -88,21 +95,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </section>
 
     <div class="page-return">
-        <a href="/" class="btn btn-secondary" data-history="true" data-title="首页">
-            返回首页
+        <a
+            href="/"
+            class="btn btn-secondary"
+            data-history="true"
+            data-title={t('nav.home')}
+            data-i18n="common.backHome"
+            data-i18n-data-title="nav.home"
+        >
+            {t('common.backHome')}
         </a>
     </div>
 </BaseLayout>
 
 <script>
     import { initButtonRipples, PageAnimations } from '../scripts/page-animations';
+    import { t } from '../lib/i18n.ts';
     import { TimeDisplay } from '../scripts/time-display';
 
     function safeInit(moduleName: string, initFn: () => void): void {
         try {
             initFn();
         } catch (error) {
-            console.error(`[模块初始化错误] ${moduleName}:`, error);
+            console.error(`[${t('common.moduleInitError')}] ${moduleName}:`, error);
         }
     }
 
