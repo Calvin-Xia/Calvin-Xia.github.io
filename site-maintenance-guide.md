@@ -161,7 +161,7 @@ npm run test:coverage
 
 ### giscus 评论区（Phase 5）
 
-无需主动维护。giscus 依赖 GitHub Discussions，评论数据存储在 `Calvin-Xia/mr.xia.github.io` 仓库的 Discussions 中。如需调整配置（主题、语言等），修改 `src/components/GiscusComments.astro` 中的 `data-*` 属性。
+无需主动维护。giscus 依赖 GitHub Discussions，评论数据存储在 `Calvin-Xia/Calvin-Xia.github.io` 仓库的 Discussions 中。如需调整配置（主题、语言等），修改 `src/components/GiscusComments.astro` 中的 `data-*` 属性。
 
 ### 字数字阅读时间（Phase 6）
 

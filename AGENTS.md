@@ -10,7 +10,7 @@ Astro v6 static personal site (blog, works, tools, updates). Cloudflare Worker p
 ## STRUCTURE
 
 ```
-mr.xia.github.io/
+Calvin-Xia.github.io/
 ├── src/
 │   ├── components/       # Shared Astro components (13 files)
 │   ├── content/          # blog/ works/ tools/ updates/ collections
