@@ -23,6 +23,7 @@ tmp/
 temp/
 .npm-cache/
 prd/
+prd-*/
 
 # Astro / Node
 .astro/
