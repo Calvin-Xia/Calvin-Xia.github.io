@@ -73,7 +73,7 @@ const enableLocalCdnProxy = import.meta.env.DEV;
                 }
 
                 toolsServiceWorkerRegistrationStarted = true;
-                navigator.serviceWorker.register('/sw-tools.js').catch(() => {
+                navigator.serviceWorker.register('/sw-tools.js', { scope: '/works/tools/' }).catch(() => {
                     toolsServiceWorkerRegistrationStarted = false;
                 });
             }

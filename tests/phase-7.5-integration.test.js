@@ -55,13 +55,13 @@ describe('Phase 7.5 Integration', () => {
         assert.match(layout, /rel="manifest"/);
         assert.match(layout, /serviceWorker' in navigator/);
         assert.match(layout, /window\.location\.pathname\.startsWith\('\/works\/tools\/'\)/);
-        assert.match(layout, /register\('\/sw-tools\.js'\)/);
+        assert.match(layout, /register\('\/sw-tools\.js',\s*\{\s*scope:\s*'\/works\/tools\/'\s*\}\)/);
         assert.match(layout, /\.catch\(\(\) =>/);
     });
 
     it('BaseLayout schedules Service Worker registration without nesting load handlers', () => {
         const layout = readProjectFile('src', 'layouts', 'BaseLayout.astro');
-        assert.match(layout, /function registerToolsServiceWorker\(\)[\s\S]*navigator\.serviceWorker\.register\('\/sw-tools\.js'\)/);
+        assert.match(layout, /function registerToolsServiceWorker\(\)[\s\S]*navigator\.serviceWorker\.register\('\/sw-tools\.js',\s*\{\s*scope:\s*'\/works\/tools\/'\s*\}\)/);
         assert.match(layout, /function scheduleToolsServiceWorkerRegistration\(\)/);
         assert.doesNotMatch(
             layout,
