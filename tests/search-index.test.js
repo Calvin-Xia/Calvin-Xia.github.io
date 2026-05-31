@@ -30,7 +30,7 @@ describe('buildSearchIndex', () => {
                 category: '技术',
                 tags: ['AI', '反思'],
                 date: '2026-04-11',
-                url: '/articles/20260411-ai-reliance/',
+                filePath: '/articles/20260411-ai-reliance/',
                 typeLabel: '文章',
             },
         ];
@@ -42,6 +42,7 @@ describe('buildSearchIndex', () => {
         assert.equal(results.length, 1);
         assert.equal(results[0].id, '20260411-ai-reliance');
         assert.equal(results[0].title, 'AI 依赖性反思');
+        assert.equal(results[0].filePath, '/articles/20260411-ai-reliance/');
         assert.deepEqual(results[0].tags, ['AI', '反思']);
     });
 });
