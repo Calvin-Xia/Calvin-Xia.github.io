@@ -1,0 +1,22 @@
+{
+    "name": "Calvin Xia 工具集",
+    "short_name": "工具集",
+    "description": "计时器、随机抽取、Markdown 工具",
+    "start_url": "/works/tools/",
+    "scope": "/works/tools/",
+    "display": "standalone",
+    "theme_color": "#1a1a2e",
+    "background_color": "#ffffff",
+    "icons": [
+        {
+            "src": "/storage/icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/storage/icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

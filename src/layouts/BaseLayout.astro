@@ -27,7 +27,9 @@ const enableLocalCdnProxy = import.meta.env.DEV;
 <html lang="zh-CN">
     <head>
         <meta charset="UTF-8" />
+        <link rel="icon" type="image/webp" href="/storage/icon.webp" />
         <link rel="icon" type="image/png" href="/storage/icon.png" />
+        <link rel="manifest" href="/manifest.json" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="referrer" content="strict-origin-when-cross-origin" />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
@@ -62,6 +64,32 @@ const enableLocalCdnProxy = import.meta.env.DEV;
         <script>
             import '../scripts/article-runtime.js';
             import '../scripts/view-counter.js';
+
+            let toolsServiceWorkerRegistrationStarted = false;
+
+            function registerToolsServiceWorker() {
+                if (toolsServiceWorkerRegistrationStarted) {
+                    return;
+                }
+
+                toolsServiceWorkerRegistrationStarted = true;
+                navigator.serviceWorker.register('/sw-tools.js').catch(() => {
+                    toolsServiceWorkerRegistrationStarted = false;
+                });
+            }
+
+            function scheduleToolsServiceWorkerRegistration() {
+                if ('serviceWorker' in navigator && window.location.pathname.startsWith('/works/tools/')) {
+                    if (document.readyState === 'complete') {
+                        registerToolsServiceWorker();
+                    } else {
+                        window.addEventListener('load', registerToolsServiceWorker, { once: true });
+                    }
+                }
+            }
+
+            scheduleToolsServiceWorkerRegistration();
+            document.addEventListener('astro:page-load', scheduleToolsServiceWorkerRegistration);
         </script>
         {enableLocalCdnProxy && <script type="module" src={localCdnProxyScriptUrl}></script>}
     </body>
