@@ -3,3 +3,4 @@
 # Do not commit the real value.
 
 UMAMI_API_KEY=your-umami-api-key
+HEALTH_CHECK_TOKEN=your-health-check-token

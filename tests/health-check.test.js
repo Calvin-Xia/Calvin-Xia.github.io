@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { checkHealth } from '../src/lib/health-check.js';
+import worker from '../src/worker.ts';
 
 describe('checkHealth', () => {
     test('returns healthy status when Umami is reachable', async () => {
@@ -48,5 +49,78 @@ describe('checkHealth', () => {
         });
 
         assert.equal(result.dependencies.umami.latency, 42);
+    });
+});
+
+describe('Worker /api/health route', () => {
+    test('returns a public health response without dependency details', async (t) => {
+        t.mock.method(globalThis, 'fetch', async () => ({ ok: true, status: 200 }));
+
+        const response = await worker.fetch(new Request('https://calvin-xia.cn/api/health'), {
+            UMAMI_API_KEY: 'test-key',
+            WORKER_VERSION: '1.2.3',
+            HEALTH_CHECK_TOKEN: 'health-secret',
+        });
+        const body = await response.json();
+
+        assert.equal(response.status, 200);
+        assert.equal(body.status, 'healthy');
+        assert.equal(typeof body.timestamp, 'string');
+        assert.equal(body.version, undefined);
+        assert.equal(body.dependencies, undefined);
+        assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    });
+
+    test('returns detailed health response with a valid bearer token', async (t) => {
+        t.mock.method(globalThis, 'fetch', async () => ({ ok: true, status: 200 }));
+
+        const response = await worker.fetch(
+            new Request('https://calvin-xia.cn/api/health', {
+                headers: { Authorization: 'Bearer health-secret' },
+            }),
+            {
+                UMAMI_API_KEY: 'test-key',
+                WORKER_VERSION: '1.2.3',
+                HEALTH_CHECK_TOKEN: 'health-secret',
+            },
+        );
+        const body = await response.json();
+
+        assert.equal(response.status, 200);
+        assert.equal(body.version, '1.2.3');
+        assert.equal(body.dependencies.umami.status, 'healthy');
+        assert.equal(typeof body.dependencies.umami.latency, 'number');
+    });
+
+    test('supports caller-configured health response caching', async (t) => {
+        t.mock.method(globalThis, 'fetch', async () => ({ ok: true, status: 200 }));
+
+        const response = await worker.fetch(new Request('https://calvin-xia.cn/api/health?cache=30'), {
+            UMAMI_API_KEY: 'test-key',
+            WORKER_VERSION: '1.2.3',
+        });
+
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get('Cache-Control'), 'public, max-age=30');
+    });
+
+    test('keeps degraded health checks available with HTTP 200', async (t) => {
+        t.mock.method(globalThis, 'fetch', async () => { throw new Error('Network error'); });
+
+        const response = await worker.fetch(
+            new Request('https://calvin-xia.cn/api/health', {
+                headers: { Authorization: 'Bearer health-secret' },
+            }),
+            {
+                UMAMI_API_KEY: 'test-key',
+                WORKER_VERSION: '1.2.3',
+                HEALTH_CHECK_TOKEN: 'health-secret',
+            },
+        );
+        const body = await response.json();
+
+        assert.equal(response.status, 200);
+        assert.equal(body.status, 'degraded');
+        assert.equal(body.dependencies.umami.status, 'degraded');
     });
 });
