@@ -1,12 +1,17 @@
 {
     "nav": {
+        "main": "Main navigation",
+        "home": "Home",
         "articles": "Articles",
         "works": "Works",
         "about": "About"
     },
     "header": {
         "themeToggle": "Toggle theme",
-        "langToggle": "中"
+        "themeToDark": "Switch to dark theme",
+        "themeToLight": "Switch to light theme",
+        "langToggle": "中",
+        "langToggleAria": "Switch to Chinese UI"
     },
     "footer": {
         "copyright": "© 2026 Calvin Xia. All rights reserved.",

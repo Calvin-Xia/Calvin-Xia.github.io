@@ -1,12 +1,17 @@
 {
     "nav": {
+        "main": "主导航",
+        "home": "首页",
         "articles": "文章",
         "works": "作品",
         "about": "关于"
     },
     "header": {
         "themeToggle": "切换主题",
-        "langToggle": "EN"
+        "themeToDark": "切换到深色主题",
+        "themeToLight": "切换到浅色主题",
+        "langToggle": "EN",
+        "langToggleAria": "切换到英文界面"
     },
     "footer": {
         "copyright": "© 2026 Calvin Xia. 保留所有权利。",
