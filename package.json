@@ -25,6 +25,7 @@
         "highlight.js": "^11.11.1",
         "katex": "^0.16.25",
         "marked": "^17.0.1",
+        "minisearch": "^6.3.0",
         "rehype-katex": "^7.0.1",
         "remark-math": "^6.0.0",
         "wrangler": "^4.87.0"
