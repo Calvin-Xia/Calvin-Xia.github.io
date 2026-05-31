@@ -18,7 +18,8 @@
         "allTags": "All Tags",
         "noResults": "No matching content found",
         "readMore": "Read More",
-        "views": "views"
+        "views": "views",
+        "searchResultCount": "Search \"{query}\" matched {count} items"
     },
     "works": {
         "title": "Works",

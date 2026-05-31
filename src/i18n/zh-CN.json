@@ -18,7 +18,8 @@
         "allTags": "全部标签",
         "noResults": "未找到匹配内容",
         "readMore": "阅读更多",
-        "views": "次阅读"
+        "views": "次阅读",
+        "searchResultCount": "搜索“{query}”共匹配到 {count} 条内容"
     },
     "works": {
         "title": "作品",
