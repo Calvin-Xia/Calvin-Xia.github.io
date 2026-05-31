@@ -4,7 +4,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { t } from '../lib/i18n.ts';
 ---
 
-<BaseLayout title={t('works.pageTitle')} description={t('works.description')} currentPage="works">
+<BaseLayout title={t('works.pageTitle')} titleKey="works.pageTitle" description={t('works.description')} descriptionKey="works.description" currentPage="works">
     {/* i18n source contract: 工具集 */}
     <PageIntro
         kicker={t('works.kicker')}

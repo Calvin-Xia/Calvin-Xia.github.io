@@ -9,7 +9,7 @@ const blogEntries = await getCollection('blog', ({ data }) => data.status !== 'd
 const archiveGroups = createArchiveGroups(blogEntries);
 ---
 
-<BaseLayout title={t('archive.pageTitle')} description={t('archive.description')} currentPage="articles">
+<BaseLayout title={t('archive.pageTitle')} titleKey="archive.pageTitle" description={t('archive.description')} descriptionKey="archive.description" currentPage="articles">
     <PageIntro
         kicker={t('archive.kicker')}
         kickerKey="archive.kicker"

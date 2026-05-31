@@ -13,7 +13,7 @@ const newPostApiBase = isNewPostEnabled ? 'http://localhost:4322' : '';
 const NewPostForm = isNewPostEnabled ? (await import('../components/NewPostForm.astro')).default : null;
 ---
 
-<BaseLayout title={t('newPost.pageTitle')} description={t('newPost.description')} currentPage="articles">
+<BaseLayout title={t('newPost.pageTitle')} titleKey="newPost.pageTitle" description={t('newPost.description')} descriptionKey="newPost.description" currentPage="articles">
     <PageIntro
         kicker={t('newPost.kicker')}
         kickerKey="newPost.kicker"

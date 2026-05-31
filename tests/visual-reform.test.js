@@ -82,8 +82,9 @@ describe('frontend visual reform source contract', () => {
     test('mobile layout keeps article navigation and header controls reachable', () => {
         const styles = readSource('src', 'styles', 'global.css');
 
-        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.site-header-inner\s*\{[\s\S]*grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)\s+auto/);
-        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.site-nav,\s*\n\s*\.nav-links\s*\{[\s\S]*grid-column:\s*auto/);
+        assert.match(styles, /\.site-logo,\s*\n\.logo\s*\{[\s\S]*min-height:\s*44px/);
+        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.site-header-inner\s*\{[\s\S]*grid-template-areas:\s*"brand actions"\s*"nav nav"/);
+        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.site-nav,\s*\n\s*\.nav-links\s*\{[\s\S]*grid-area:\s*nav/);
         assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-toc-shell\s*\{[\s\S]*order:\s*-1/);
     });
 

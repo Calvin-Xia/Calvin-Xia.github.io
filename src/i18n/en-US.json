@@ -17,9 +17,9 @@
         "services": "Site services",
         "copyright": "© 2026 Calvin Xia. All rights reserved.",
         "poweredBy": "Built with Astro",
-        "recordIconAlt": "Public security record",
-        "icp": "Chongqing ICP No. 2026000319",
-        "policeRecord": "Chongqing public security record No. 50010102001439"
+        "recordIconAlt": "公安备案",
+        "icp": "渝ICP备2026000319号",
+        "policeRecord": "渝公网安备50010102001439号"
     },
     "common": {
         "backHome": "Back to Home",

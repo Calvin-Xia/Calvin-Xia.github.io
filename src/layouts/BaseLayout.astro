@@ -11,13 +11,17 @@ import localCdnProxyScriptUrl from '../scripts/local-cdn-proxy.js?url';
 
 interface Props {
     title?: string;
+    titleKey?: string;
     description?: string;
+    descriptionKey?: string;
     currentPage?: string;
 }
 
 const {
     title = 'Calvin Xia',
+    titleKey,
     description = t('home.description'),
+    descriptionKey,
     currentPage = '',
 } = Astro.props;
 
@@ -35,11 +39,11 @@ const enableLocalCdnProxy = import.meta.env.DEV;
         <meta name="referrer" content="strict-origin-when-cross-origin" />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
-        <meta name="description" content={description} />
+        <meta name="description" content={description} data-i18n-content={descriptionKey} />
         <meta name="keywords" content={t('home.keywords')} data-i18n-content="home.keywords" />
         <meta name="author" content="Calvin Xia" />
         <link rel="alternate" type="application/rss+xml" title="Calvin Xia RSS" href="/rss.xml" />
-        <title>{title}</title>
+        <title data-i18n={titleKey}>{title}</title>
         <script is:inline>
             (() => {
                 const storageKey = 'calvin-xia-theme';

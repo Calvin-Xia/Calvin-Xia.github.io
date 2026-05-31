@@ -23,8 +23,8 @@ import { t } from '../lib/i18n.ts';
             <span data-i18n="footer.poweredBy">{t('footer.poweredBy')}</span>
         </p>
         <p class="footer-text">
-            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" data-i18n="footer.icp">
-                {t('footer.icp')}
+            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">
+                渝ICP备2026000319号
             </a>
             <br />
             <a
@@ -36,12 +36,11 @@ import { t } from '../lib/i18n.ts';
                 <OptimizedIcon
                     class="record-icon"
                     src="/storage/Beian.png"
-                    alt={t('footer.recordIconAlt')}
+                    alt="公安备案"
                     width={36}
                     height={40}
-                    data-i18n-alt="footer.recordIconAlt"
                 />
-                <span data-i18n="footer.policeRecord">{t('footer.policeRecord')}</span>
+                <span>渝公网安备50010102001439号</span>
             </a>
         </p>
     </div>
