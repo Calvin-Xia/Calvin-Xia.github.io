@@ -37,3 +37,64 @@ describe('SecurityLogger', () => {
         assert.ok(alertTriggered);
     });
 });
+
+async function importFreshWorker(label) {
+    const workerUrl = new URL('../src/worker.ts', import.meta.url);
+    workerUrl.searchParams.set('case', label);
+    const module = await import(workerUrl.href);
+
+    return module.default;
+}
+
+describe('Worker security monitoring', () => {
+    it('should log failed API responses and high error rate alerts', async (t) => {
+        const worker = await importFreshWorker('security-alert');
+        const warnings = [];
+        t.mock.method(console, 'warn', (...args) => warnings.push(args));
+        t.mock.method(globalThis, 'fetch', async () => ({ ok: true, status: 200 }));
+
+        const env = {
+            UMAMI_API_KEY: 'test-key',
+            HEALTH_CHECK_TOKEN: 'health-secret',
+        };
+
+        for (let i = 0; i < 8; i++) {
+            await worker.fetch(new Request('https://calvin-xia.cn/api/health'), env);
+        }
+        await worker.fetch(new Request('https://calvin-xia.cn/api/health', {
+            headers: { Authorization: 'Bearer invalid' },
+        }), env);
+        await worker.fetch(new Request('https://calvin-xia.cn/api/health', {
+            headers: { Authorization: 'Bearer invalid' },
+        }), env);
+
+        const failedRequestLog = warnings.find(([message]) => message === 'Security Request Error:');
+        const alertLog = warnings.find(([message]) => message === 'Security Alert:');
+
+        assert.ok(failedRequestLog);
+        assert.equal(JSON.parse(failedRequestLog[1]).status, 401);
+        assert.ok(alertLog);
+        assert.ok(JSON.parse(alertLog[1]).errorRate > 0.1);
+    });
+
+    it('should log API call stats every 100 API requests', async (t) => {
+        const worker = await importFreshWorker('api-call-stats');
+        const statsLogs = [];
+        t.mock.method(console, 'log', (...args) => statsLogs.push(args));
+        t.mock.method(globalThis, 'fetch', async () => ({ ok: true, status: 200 }));
+
+        const env = {
+            UMAMI_API_KEY: 'test-key',
+            HEALTH_CHECK_TOKEN: 'health-secret',
+        };
+
+        for (let i = 0; i < 100; i++) {
+            await worker.fetch(new Request('https://calvin-xia.cn/api/health'), env);
+        }
+
+        const statsLog = statsLogs.find(([message]) => message === 'API Call Stats:');
+
+        assert.ok(statsLog);
+        assert.equal(JSON.parse(statsLog[1]).totalCalls, 100);
+    });
+});
