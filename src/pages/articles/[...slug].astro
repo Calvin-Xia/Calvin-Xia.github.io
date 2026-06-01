@@ -6,6 +6,7 @@ import GiscusComments from '../../components/GiscusComments.astro';
 import LicenseBadge from '../../components/LicenseBadge.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { isFreshDate } from '../../lib/content';
+import { t } from '../../lib/i18n.ts';
 import { computeReadingStats } from '../../lib/word-count.js';
 
 export async function getStaticPaths() {
@@ -26,8 +27,14 @@ const readTimeDisplay = post.data.readTime || readingStats.readTimeDisplay;
 <BaseLayout title={`${post.data.title} - Calvin Xia`} description={post.data.excerpt} currentPage="articles">
     <article class="article-detail section-stack">
         <div class="page-return article-return">
-            <a href="/articles/" class="btn btn-secondary" data-history="true" data-title="文章">
-                ← 返回文章列表
+            <a
+                href="/articles/"
+                class="btn btn-secondary"
+                data-history="true"
+                data-title={t('nav.articles')}
+                data-i18n-data-title="nav.articles"
+            >
+                ← <span data-i18n="common.backArticles">{t('common.backArticles')}</span>
             </a>
         </div>
 
@@ -37,21 +44,21 @@ const readTimeDisplay = post.data.readTime || readingStats.readTimeDisplay;
             <p class="page-subtitle">{post.data.excerpt}</p>
             <div class="blog-card-meta article-meta">
                 {isFreshDate(post.data.date) && (
-                    <span class="content-type-badge content-type-badge--new">NEW</span>
+                    <span class="content-type-badge content-type-badge--new" data-i18n="common.new">{t('common.new')}</span>
                 )}
                 <span class="blog-card-category">{post.data.category}</span>
                 {post.data.tags.map((tag) => <span class="blog-card-tag">{tag}</span>)}
                 <span class="blog-card-date article-date">{post.data.date}</span>
                 <span class="blog-card-date article-date">{readingStats.wordCountDisplay}</span>
                 <span class="blog-card-date article-date">{readTimeDisplay}</span>
-                <span class="view-count view-count--pending" data-view-counter data-slug={post.id} aria-live="polite">
-                    阅读量加载中
+                <span class="view-count view-count--pending" data-view-counter data-slug={post.id} aria-live="polite" data-i18n="articleDetail.viewsLoading">
+                    {t('articleDetail.viewsLoading')}
                 </span>
             </div>
         </header>
 
         <div class="article-reading-layout">
-            <section class="markdown-container" aria-label="文章正文">
+            <section class="markdown-container" aria-label={t('articleDetail.bodyAria')} data-i18n-aria-label="articleDetail.bodyAria">
                 <div class="markdown-content">
                     <Content />
                 </div>

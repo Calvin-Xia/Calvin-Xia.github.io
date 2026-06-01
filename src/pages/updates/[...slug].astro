@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import PageIntro from '../../components/PageIntro.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { t } from '../../lib/i18n.ts';
 
 export async function getStaticPaths() {
     const updates = await getCollection('updates', ({ data }) => data.status !== 'draft');
@@ -36,17 +37,29 @@ const calloutItemClasses: Record<string, string> = {
             center
         />
 
-        <section class="update-log" aria-label="版本时间线">
+        <section class="update-log" aria-label={t('updates.timelineAria')} data-i18n-aria-label="updates.timelineAria">
             <div class="page-return">
-                <a href="/works/" class="btn btn-secondary back-link" data-history="true" data-title="作品">
-                    ← 返回作品页
+                <a
+                    href="/works/"
+                    class="btn btn-secondary back-link"
+                    data-history="true"
+                    data-title={t('nav.works')}
+                    data-i18n-data-title="nav.works"
+                >
+                    ← <span data-i18n="common.backWorks">{t('common.backWorks')}</span>
                 </a>
             </div>
             {update.data.timeline.map((version) => (
                 <div class="version-section">
                     <div class="version-header">
                         <div class="version-number">{version.version}</div>
-                        <div class="update-date">更新时间：{version.updatedAt}</div>
+                        <div
+                            class="update-date"
+                            data-i18n="updates.updatedAt"
+                            data-i18n-vars={JSON.stringify({ date: version.updatedAt })}
+                        >
+                            {t('updates.updatedAt', { date: version.updatedAt })}
+                        </div>
                     </div>
                     <div class="update-content">
                         {version.items.map((item) => (

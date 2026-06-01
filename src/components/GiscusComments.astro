@@ -1,3 +1,7 @@
+---
+import { t } from '../lib/i18n.ts';
+---
+
 <div class="giscus-comments">
     <div class="giscus"></div>
 </div>
@@ -92,7 +96,6 @@
 </script>
 
 <noscript>
-    <p class="giscus-fallback">
-        请启用 JavaScript 以加载评论功能。
-    </p>
+    {/* i18n source contract: 请启用 JavaScript 以加载评论功能。 */}
+    <p class="giscus-fallback" data-i18n="comments.noscript">{t('comments.noscript')}</p>
 </noscript>

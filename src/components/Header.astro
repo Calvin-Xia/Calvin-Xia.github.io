@@ -1,4 +1,6 @@
 ---
+import { t } from '../lib/i18n.ts';
+
 interface Props {
     currentPage?: string;
 }
@@ -6,15 +8,23 @@ interface Props {
 const { currentPage = '' } = Astro.props;
 
 const navItems = [
-    { label: '文章', href: '/articles/', page: 'articles' },
-    { label: '作品', href: '/works/', page: 'works' },
-    { label: '关于', href: '/about/', page: 'about' },
+    { label: '文章', key: 'nav.articles', href: '/articles/', page: 'articles' },
+    { label: '作品', key: 'nav.works', href: '/works/', page: 'works' },
+    { label: '关于', key: 'nav.about', href: '/about/', page: 'about' },
 ];
 ---
 
 <header class="site-header">
-    <nav class="site-header-inner" aria-label="主导航">
-        <a class="site-logo" href="/" data-history="true" data-title="首页">Calvin Xia</a>
+    <nav class="site-header-inner" aria-label={t('nav.main')} data-i18n-aria-label="nav.main">
+        <a
+            class="site-logo"
+            href="/"
+            data-history="true"
+            data-title={t('nav.home')}
+            data-i18n-data-title="nav.home"
+        >
+            Calvin Xia
+        </a>
         <ul class="site-nav nav-links" role="list">
             {
                 navItems.map((item) => (
@@ -23,61 +33,78 @@ const navItems = [
                             class="nav-link"
                             href={item.href}
                             data-history="true"
-                            data-title={item.label}
+                            data-title={t(item.key)}
+                            data-i18n={item.key}
+                            data-i18n-data-title={item.key}
                             aria-current={currentPage === item.page ? 'page' : undefined}
                         >
-                            {item.label}
+                            {t(item.key)}
                         </a>
                     </li>
                 ))
             }
         </ul>
-        <button
-            class="theme-toggle"
-            type="button"
-            data-theme-toggle
-            aria-pressed="false"
-            aria-label="切换到深色主题"
-        >
-            <svg
-                class="theme-toggle__icon theme-toggle__icon--moon"
-                data-icon="moon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
+        <div class="site-header-actions">
+            <button
+                class="lang-toggle"
+                type="button"
+                data-lang-toggle
+                data-i18n="header.langToggle"
+                data-i18n-aria-label="header.langToggleAria"
+                aria-label={t('header.langToggleAria')}
             >
-                <path d="M20.98 11.17A8.5 8.5 0 1 1 12.83 3.02 6.5 6.5 0 0 0 20.98 11.17Z"></path>
-            </svg>
-            <svg
-                class="theme-toggle__icon theme-toggle__icon--sun"
-                data-icon="sun"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
+                {t('header.langToggle')}
+            </button>
+            <button
+                class="theme-toggle"
+                type="button"
+                data-theme-toggle
+                data-i18n-aria-label="header.themeToDark"
+                aria-pressed="false"
+                aria-label={t('header.themeToDark')}
             >
-                <circle cx="12" cy="12" r="4"></circle>
-                <path d="M12 2v2"></path>
-                <path d="M12 20v2"></path>
-                <path d="m4.93 4.93 1.41 1.41"></path>
-                <path d="m17.66 17.66 1.41 1.41"></path>
-                <path d="M2 12h2"></path>
-                <path d="M20 12h2"></path>
-                <path d="m6.34 17.66-1.41 1.41"></path>
-                <path d="m19.07 4.93-1.41 1.41"></path>
-            </svg>
-        </button>
+                <svg
+                    class="theme-toggle__icon theme-toggle__icon--moon"
+                    data-icon="moon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M20.98 11.17A8.5 8.5 0 1 1 12.83 3.02 6.5 6.5 0 0 0 20.98 11.17Z"></path>
+                </svg>
+                <svg
+                    class="theme-toggle__icon theme-toggle__icon--sun"
+                    data-icon="sun"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m6.34 17.66-1.41 1.41"></path>
+                    <path d="m19.07 4.93-1.41 1.41"></path>
+                </svg>
+            </button>
+        </div>
     </nav>
 </header>
 
 <script>
+    import { initI18n, t } from '../lib/i18n.ts';
+
     const THEME_STORAGE_KEY = 'calvin-xia-theme';
 
     function initThemeToggle() {
@@ -91,8 +118,10 @@ const navItems = [
                 localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
             } catch {}
             buttons.forEach((button) => {
+                const labelKey = nextTheme === 'dark' ? 'header.themeToLight' : 'header.themeToDark';
+                button.setAttribute('data-i18n-aria-label', labelKey);
                 button.setAttribute('aria-pressed', String(nextTheme === 'dark'));
-                button.setAttribute('aria-label', nextTheme === 'dark' ? '切换到浅色主题' : '切换到深色主题');
+                button.setAttribute('aria-label', t(labelKey));
             });
             window.dispatchEvent(new CustomEvent('calvin-theme-change', { detail: { theme: nextTheme } }));
         }
@@ -147,6 +176,7 @@ const navItems = [
     function initSiteHeader() {
         initThemeToggle();
         initHeaderState();
+        initI18n();
     }
 
     if (document.readyState === 'loading') {

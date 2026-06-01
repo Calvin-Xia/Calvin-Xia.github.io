@@ -1,3 +1,5 @@
+import { t } from './i18n.ts';
+
 const HAN_CHARACTER_PATTERN = /\p{Script=Han}/gu;
 const ENGLISH_WORD_PATTERN = /[A-Za-z0-9]+(?:\([A-Za-z0-9]+\)|[-'_’][A-Za-z0-9]+)*/g;
 const ENGLISH_LETTER_PATTERN = /[A-Za-z]/;
@@ -65,24 +67,24 @@ export function countWords(text = '') {
 
 export function formatReadTime(minutes = 0) {
     if (!Number.isFinite(minutes) || minutes < 1) {
-        return '< 1 分钟';
+        return t('wordCount.lessThanMinute');
     }
 
     const roundedMinutes = Math.ceil(minutes);
 
     if (roundedMinutes < 60) {
-        return `${roundedMinutes} 分钟`;
+        return t('wordCount.minutes', { minutes: roundedMinutes });
     }
 
     const hours = Math.floor(roundedMinutes / 60);
     const remainingMinutes = roundedMinutes % 60;
 
-    return `${hours} 小时 ${remainingMinutes} 分钟`;
+    return t('wordCount.hoursMinutes', { hours, minutes: remainingMinutes });
 }
 
 export function formatWordCount(count = 0) {
     const normalizedCount = Math.max(0, Number.isFinite(count) ? Math.round(count) : 0);
-    return `约 ${normalizedCount.toLocaleString('en-US')} 字`;
+    return t('wordCount.words', { count: normalizedCount.toLocaleString('en-US') });
 }
 
 export function computeReadingStats(body = '') {

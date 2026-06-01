@@ -3,20 +3,24 @@ import { getCollection } from 'astro:content';
 import PageIntro from '../../components/PageIntro.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { createArchiveGroups } from '../../lib/archive.js';
+import { t } from '../../lib/i18n.ts';
 
 const blogEntries = await getCollection('blog', ({ data }) => data.status !== 'draft');
 const archiveGroups = createArchiveGroups(blogEntries);
 ---
 
-<BaseLayout title="文章归档 - Calvin Xia" description="按年份浏览 Calvin Xia 的全部文章。" currentPage="articles">
+<BaseLayout title={t('archive.pageTitle')} titleKey="archive.pageTitle" description={t('archive.description')} descriptionKey="archive.description" currentPage="articles">
     <PageIntro
-        kicker="时间线"
-        title="文章归档"
-        subtitle="按发布时间整理的文章索引。"
+        kicker={t('archive.kicker')}
+        kickerKey="archive.kicker"
+        title={t('archive.title')}
+        titleKey="archive.title"
+        subtitle={t('archive.subtitle')}
+        subtitleKey="archive.subtitle"
         compact
     />
 
-    <section class="archive-timeline" aria-label="文章归档时间线">
+    <section class="archive-timeline" aria-label={t('archive.timelineAria')} data-i18n-aria-label="archive.timelineAria">
         {archiveGroups.map((group) => (
             <section class="archive-year" aria-labelledby={`archive-year-${group.year}`}>
                 <h2 id={`archive-year-${group.year}`}>{group.year}</h2>
@@ -34,8 +38,14 @@ const archiveGroups = createArchiveGroups(blogEntries);
     </section>
 
     <div class="page-return">
-        <a href="/articles/" class="btn btn-secondary" data-history="true" data-title="文章">
-            ← 返回文章列表
+        <a
+            href="/articles/"
+            class="btn btn-secondary"
+            data-history="true"
+            data-title={t('nav.articles')}
+            data-i18n-data-title="nav.articles"
+        >
+            ← <span data-i18n="common.backArticles">{t('common.backArticles')}</span>
         </a>
     </div>
 </BaseLayout>

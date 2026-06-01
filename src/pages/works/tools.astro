@@ -2,22 +2,33 @@
 import PageIntro from '../../components/PageIntro.astro';
 import ToolsSection from '../../components/ToolsSection.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { t } from '../../lib/i18n.ts';
 ---
 
-<BaseLayout title="工具集 - Calvin Xia" description="作品体系下的在线工具集" currentPage="works">
+<BaseLayout title={t('tools.pageTitle')} titleKey="tools.pageTitle" description={t('tools.description')} descriptionKey="tools.description" currentPage="works">
     <div class="tool-page-main">
         <PageIntro
-            kicker="作品工具"
-            title="工具集"
-            subtitle="计时器、随机选择器、Markdown 渲染。"
+            kicker={t('tools.kicker')}
+            kickerKey="tools.kicker"
+            title={t('tools.title')}
+            titleKey="tools.title"
+            subtitle={t('tools.subtitle')}
+            subtitleKey="tools.subtitle"
             center
         />
 
         <ToolsSection />
 
         <div class="page-return">
-            <a href="/works/" class="btn btn-secondary" data-history="true" data-title="作品">
-                返回作品页
+            <a
+                href="/works/"
+                class="btn btn-secondary"
+                data-history="true"
+                data-title={t('nav.works')}
+                data-i18n="common.backWorks"
+                data-i18n-data-title="nav.works"
+            >
+                {t('common.backWorks')}
             </a>
         </div>
     </div>

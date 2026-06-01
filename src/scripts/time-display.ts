@@ -1,4 +1,4 @@
-const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+import { t } from '../lib/i18n.ts';
 
 let intervalId: number | undefined;
 
@@ -17,7 +17,7 @@ function formatDate(date: Date): string {
     const year = date.getFullYear();
     const month = pad2(date.getMonth() + 1);
     const day = pad2(date.getDate());
-    const weekday = weekdays[date.getDay()];
+    const weekday = t(`time.weekdays.${date.getDay()}`);
     return `${year}-${month}-${day} ${weekday}`;
 }
 
@@ -30,7 +30,7 @@ function updateTime(): void {
     }
 
     timeElement.innerHTML = `
-        <span class="current-time__label">当前时间</span>
+        <span class="current-time__label">${t('time.label')}</span>
         <span class="current-time__clock">${formatTime(now)}</span>
         <span class="current-time__date">${formatDate(now)}</span>
     `;
@@ -44,6 +44,7 @@ export const TimeDisplay = {
 
         updateTime();
         intervalId = window.setInterval(updateTime, 1000);
+        window.addEventListener('calvin-lang-change', updateTime);
 
         window.addEventListener(
             'beforeunload',

@@ -1,3 +1,5 @@
+import { t } from '../lib/i18n.ts';
+
 type TimeInputName = 'hours' | 'minutes' | 'seconds';
 
 type TimerElements = Partial<{
@@ -236,13 +238,13 @@ export const Timer = {
 
         if (this.targetTime <= 0) {
             progressBar.style.width = '0%';
-            progressText.textContent = `已用时间: ${this.formatTime(Math.floor(elapsedTime / 1000))}`;
+            progressText.textContent = t('timer.elapsed', { time: this.formatTime(Math.floor(elapsedTime / 1000)) });
             return;
         }
 
         const progress = Math.min(100, Math.floor((elapsedTime / this.targetTime) * 100));
         progressBar.style.width = `${progress}%`;
-        progressText.textContent = `${progress}% 已完成`;
+        progressText.textContent = t('timer.completed', { progress });
     },
 
     start() {
@@ -316,6 +318,7 @@ function exposeTimerGlobals(): void {
         Timer,
     };
     window.changeTime = changeTime;
+    window.addEventListener('calvin-lang-change', () => Timer.syncDisplay());
 }
 
 exposeTimerGlobals();

@@ -2,26 +2,39 @@
 import MarkdownToolWidget from '../components/MarkdownToolWidget.astro';
 import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { t } from '../lib/i18n.ts';
 ---
 
 <BaseLayout
-    title="Markdown 渲染工具 - Calvin Xia"
-    description="Markdown 即时渲染、格式化 HTML 输出与微信公众号格式转换工具"
+    title={t('markdownTool.pageTitle')}
+    titleKey="markdownTool.pageTitle"
+    description={t('markdownTool.description')}
+    descriptionKey="markdownTool.description"
     currentPage="works"
 >
     <div class="tool-page-main">
         <PageIntro
-            kicker="独立工具"
-            title="Markdown 渲染工具"
-            subtitle="即时预览、HTML 导出、公众号格式转换。"
+            kicker={t('markdownTool.kicker')}
+            kickerKey="markdownTool.kicker"
+            title={t('markdownTool.title')}
+            titleKey="markdownTool.title"
+            subtitle={t('markdownTool.subtitle')}
+            subtitleKey="markdownTool.subtitle"
             center
         />
 
         <MarkdownToolWidget />
 
         <div class="page-return">
-            <a href="/works/" class="btn btn-secondary" data-history="true" data-title="作品">
-                返回作品页
+            <a
+                href="/works/"
+                class="btn btn-secondary"
+                data-history="true"
+                data-title={t('nav.works')}
+                data-i18n="common.backWorks"
+                data-i18n-data-title="nav.works"
+            >
+                {t('common.backWorks')}
             </a>
         </div>
     </div>

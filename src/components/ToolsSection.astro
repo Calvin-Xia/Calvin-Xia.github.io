@@ -2,18 +2,20 @@
 import MarkdownToolWidget from './MarkdownToolWidget.astro';
 import RandomSelector from './RandomSelector.astro';
 import TimerWidget from './TimerWidget.astro';
+import { t } from '../lib/i18n.ts';
 ---
 
 <section class="section-stack tools-section" data-tools-section aria-labelledby="tools-section-title">
+    {/* i18n source contract: 计时器 随机抽取 Markdown 发布 */}
     <div class="tools-shell">
         <div class="tools-intro">
             <div class="tools-intro-copy">
-                <p class="section-kicker">工具集</p>
-                <h2 id="tools-section-title" class="section-heading">作品工具</h2>
+                <p class="section-kicker" data-i18n="tools.sectionKicker">{t('tools.sectionKicker')}</p>
+                <h2 id="tools-section-title" class="section-heading" data-i18n="tools.sectionTitle">{t('tools.sectionTitle')}</h2>
             </div>
         </div>
 
-        <div class="tabs tools-tabs" role="tablist" aria-label="工具选项卡">
+        <div class="tabs tools-tabs" role="tablist" aria-label={t('tools.tablistAria')} data-i18n-aria-label="tools.tablistAria">
             <button
                 class="tab-btn active"
                 type="button"
@@ -22,8 +24,9 @@ import TimerWidget from './TimerWidget.astro';
                 aria-selected="true"
                 aria-controls="timer"
                 id="tab-timer"
+                data-i18n="tools.timer"
             >
-                计时器
+                {t('tools.timer')}
             </button>
             <button
                 class="tab-btn"
@@ -34,8 +37,9 @@ import TimerWidget from './TimerWidget.astro';
                 aria-controls="random-selector"
                 id="tab-random-selector"
                 tabindex="-1"
+                data-i18n="tools.random"
             >
-                随机抽取
+                {t('tools.random')}
             </button>
             <button
                 class="tab-btn"
@@ -46,8 +50,9 @@ import TimerWidget from './TimerWidget.astro';
                 aria-controls="markdown-tool"
                 id="tab-markdown-tool"
                 tabindex="-1"
+                data-i18n="tools.markdown"
             >
-                Markdown 发布
+                {t('tools.markdown')}
             </button>
         </div>
 
