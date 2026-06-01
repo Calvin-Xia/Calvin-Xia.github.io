@@ -28,7 +28,7 @@
         "minisearch": "^6.3.0",
         "rehype-katex": "^7.0.1",
         "remark-math": "^6.0.0",
-        "wrangler": "^4.87.0"
+        "wrangler": "^4.95.0"
     },
     "devDependencies": {
         "@aws-sdk/client-s3": "^3.1039.0",
