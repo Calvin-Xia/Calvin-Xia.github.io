@@ -27,6 +27,9 @@
 | Phase 4 | 清理与收尾 | 删除旧文件，旧 URL 重定向，CI/CD 更新，GitHub Actions 自动构建部署，文档更新，全站验证 |
 | Phase 5 | SEO 与评论系统 | RSS feed、sitemap 自动生成、giscus 评论区集成 |
 | Phase 6 | 文章统计与归档 | 字数/阅读时间自动计算、文章归档页、文章列表↔详情过渡增强、Umami 浏览量 Worker 代理 |
+| Phase 7 | 核心体验优化 | MiniSearch 懒加载搜索索引、Worker `/api/health` 健康检查 |
+| Phase 7.5 | 辅助增强 | 本地图标 WebP 降级、`/works/tools/` scoped PWA |
+| Phase 8 | 国际化 | UI 文字中英文切换，内容集合保持中文原文 |
 
 ### 执行状态
 
@@ -40,6 +43,9 @@
 | Phase 4 | 已完成 | 依赖 Phase 1-3 完成 |
 | Phase 5 | 已完成 | RSS feed、sitemap 自动生成、giscus 评论区（含 code review 修订），97 tests |
 | Phase 6 | 已完成 | `npm test`、`npm run build` 和桌面/移动浏览器验证通过；生产 `UMAMI_API_KEY` secret 已注入 |
+| Phase 7 | 已完成 | 搜索索引迁移到 `/search-index.json` + MiniSearch 懒加载；Worker 增加公开/详细健康检查 |
+| Phase 7.5 | 已完成 | `OptimizedIcon` 提供 WebP/PNG 降级；工具页 PWA manifest 和 Service Worker 限定 `/works/tools/` |
+| Phase 8 | 已完成 | 自定义 JSON i18n、Header 无刷新语言切换、`calvin-xia-lang` 持久化；内容集合和备案保持中文 |
 
 ### 目标目录结构（迁移后）
 
@@ -49,6 +55,8 @@
 ├── wrangler.jsonc
 ├── public/
 │   ├── storage/                  # 静态资源（不变）
+│   ├── manifest.json             # 工具页 PWA manifest
+│   ├── sw-tools.js               # 仅 /works/tools/ 的 Service Worker
 │   ├── .well-known/              # 验证文件（不变）
 │   └── libs/mammoth/             # mammoth 本地回退
 ├── src/
@@ -58,11 +66,15 @@
 │   │   ├── works/                # 作品元数据 JSON（4 个）
 │   │   ├── tools/                # 工具元数据 JSON（3 个）
 │   │   └── updates/              # 更新日志元数据 JSON（1 个）
+│   ├── i18n/
+│   │   ├── zh-CN.json
+│   │   └── en-US.json
 │   ├── components/
 │   │   ├── ArticleToc.astro
 │   │   ├── GiscusComments.astro
 │   │   ├── Header.astro
 │   │   ├── Footer.astro
+│   │   ├── OptimizedIcon.astro
 │   │   ├── SkipLink.astro
 │   │   ├── DynamicBackground.astro
 │   │   ├── TransitionIndicator.astro
@@ -84,9 +96,13 @@
 │   │   ├── archive.js
 │   │   ├── article-image-captions.js
 │   │   ├── content.ts
+│   │   ├── health-check.js
+│   │   ├── i18n.ts
 │   │   ├── remark-blockquote-breaks.js
 │   │   ├── shared-content.js
 │   │   ├── shared-content.d.ts
+│   │   ├── search-client.ts
+│   │   ├── search-index-builder.ts
 │   │   ├── site-seo.js
 │   │   ├── site-seo.d.ts
 │   │   ├── umami-view-counter.js
@@ -104,6 +120,7 @@
 │   │   ├── updates/[...slug].astro
 │   │   ├── rss.xml.ts
 │   │   ├── robots.txt.ts
+│   │   ├── search-index.json.ts
 │   │   ├── new-post.astro
 │   │   ├── markdown-tool.astro
 │   │   ├── styleguide.astro
@@ -139,14 +156,24 @@
 │   ├── article-reveals.test.js
 │   ├── article-transitions.test.js
 │   ├── blockquote-breaks.test.js
+│   ├── health-check.test.js
+│   ├── i18n-function.test.js
+│   ├── i18n.test.js
 │   ├── phase-2-5-integration.test.js
 │   ├── phase-2-content.test.js
 │   ├── phase-3-tools.test.js
 │   ├── phase-5-seo-comments.test.js
 │   ├── phase-6-stats-archive.test.js
+│   ├── phase-7-integration.test.js
+│   ├── phase-7.5-integration.test.js
+│   ├── phase-8-integration.test.js
 │   ├── post-utils.test.js
+│   ├── pwa-manifest.test.js
 │   ├── publish-post.test.js
-│   └── shared-content.test.js
+│   ├── search-client.test.js
+│   ├── search-index.test.js
+│   ├── shared-content.test.js
+│   └── sw-tools.test.js
 ├── .github/workflows/
 │   ├── deploy.yml
 │   ├── content-check.yml

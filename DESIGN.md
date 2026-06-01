@@ -11,7 +11,7 @@
 
 **Interaction Tier**: L2 轻量流畅  
 **Dependencies**: CSS + vanilla JavaScript + IntersectionObserver。不要引入 GSAP、ScrollTrigger、Lenis、Three.js 或全局 custom cursor。  
-**Brand Name**: 全站统一使用 `Calvin Xia`。Header logo 回首页；主导航只放 `文章 / 作品 / 关于`；工具继续归入作品体系。  
+**Brand Name**: 全站统一使用 `Calvin Xia`。Header logo 回首页；主导航只放 `文章 / 作品 / 关于`（英文 UI 中为 `Articles / Works / About`）；语言切换和主题切换放在 Header actions；工具继续归入作品体系。
 **Scope**: 本规范覆盖首页、文章列表、文章正文、作品页、工具页、关于页、更新日志、`/new-post` 本地页、评论、灯箱、基础表单与导航。它不修改 Worker、RSS、SEO、content schema、发布流程或 legacy 跳转策略。
 
 ## 2. Color Palette & Roles
@@ -564,7 +564,7 @@ select:disabled {
 - Wide article/tool layout max width: `1180px`
 - Text-heavy article width: `760px` to `820px`
 - Page padding: `clamp(1rem, 4vw, 2rem)`
-- Header height budget: desktop `64px` to `72px`, mobile `56px` to `64px`
+- Header height budget: desktop `64px` to `72px`; mobile may use a two-row shell around `96px` to `112px` so logo/actions and translated nav labels never overlap
 
 **Spacing Scale:**
 - Section padding desktop: `clamp(3rem, 7vw, 5.5rem)`
@@ -931,11 +931,11 @@ function initSpotlightCards() {
 |------|-------|-------------|
 | Desktop | `> 1024px` | Sticky header, horizontal nav, article TOC right sticky, multi-column entry grids |
 | Tablet | `700px - 1024px` | Keep nav horizontal when space allows, reduce hero scale, collapse dense grids to 2 columns |
-| Mobile | `< 700px` | Logo row + compact nav, single-column layout, TOC collapses above article, tools stack vertically |
+| Mobile | `< 700px` | Logo/actions row + nav row, single-column layout, TOC collapses above article, tools stack vertically |
 | Small Mobile | `< 420px` | Shorter labels, full-width buttons where needed, no single-character title lines |
 
 **Touch Targets:** minimum `44px × 44px`  
-**Collapsing Strategy:** Header logo remains home link. Main nav contains only `文章 / 作品 / 关于`; if width is constrained, nav can become a compact horizontal scroll or menu button. Theme toggle remains reachable in both desktop and mobile layouts.
+**Collapsing Strategy:** Header logo remains home link. Main nav contains only `文章 / 作品 / 关于` or `Articles / Works / About`; if width is constrained, nav uses its own row with horizontal scroll before any menu abstraction. Language and theme toggles remain reachable in both desktop and mobile layouts. Legal filing text remains Chinese in every language mode.
 
 ```css
 @media (max-width: 1024px) {
@@ -956,11 +956,20 @@ function initSpotlightCards() {
     }
 
     .site-header-inner {
-        min-height: 56px;
-        gap: 0.75rem;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "brand actions"
+            "nav nav";
+        min-height: 96px;
+        gap: 0.35rem 0.5rem;
+    }
+
+    .site-logo {
+        grid-area: brand;
     }
 
     .site-nav {
+        grid-area: nav;
         width: 100%;
         overflow-x: auto;
         scrollbar-width: none;
@@ -971,6 +980,7 @@ function initSpotlightCards() {
     }
 
     .nav-link,
+    .lang-toggle,
     .theme-toggle,
     .btn,
     button,

@@ -1,6 +1,6 @@
 # 快速开始
 
-这份文档用于第一次接手仓库时快速跑起 Astro 站点。Phase 4 清理已完成，所有内容管理通过 Astro 内容集合和 npm 脚本进行。
+这份文档用于第一次接手仓库时快速跑起 Astro 站点。Phase 8 已完成，所有内容管理通过 Astro 内容集合和 npm 脚本进行，站点同时包含 MiniSearch 搜索索引、Worker 健康检查、工具页 PWA 和 UI 国际化。
 
 ## 1. 安装与启动
 
@@ -14,6 +14,7 @@ npm run dev
 - `http://localhost:4321/`
 - `http://localhost:4321/articles/`
 - `http://localhost:4321/works/`
+- `http://localhost:4321/works/tools/`
 
 ## 2. 配置本地环境
 
@@ -26,6 +27,7 @@ npm run dev
 - `R2_ENDPOINT` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` / `R2_PUBLIC_URL`
 - `NEW_POST_SECRET`
 - `NEW_POST_ALLOWED_ORIGINS`
+- `HEALTH_CHECK_TOKEN`（Worker `/api/health` 详细响应使用，生产环境通过 Wrangler secret 注入）
 
 `.env` 和 `.dev.vars` 不要提交。Worker 配置在 `wrangler.jsonc` 中，本地 Worker 调试用 `npx wrangler dev`。
 
@@ -40,6 +42,7 @@ npm run api
 npm run publish -- --dry-run <obsidian-post-dir>
 npm run publish -- <obsidian-post-dir>
 npx wrangler secret put UMAMI_API_KEY
+npx wrangler secret put HEALTH_CHECK_TOKEN
 ```
 
 ## 4. 最常见修改场景
@@ -77,6 +80,29 @@ npm test
 npm run build
 ```
 
+### 修改 UI 文案或语言切换
+
+UI 国际化集中在：
+
+- `src/i18n/zh-CN.json`
+- `src/i18n/en-US.json`
+- `src/lib/i18n.ts`
+- Header 语言切换与 `data-i18n*` 属性
+
+新增或修改 UI 文案时，两份 JSON 必须保持键一致。内容集合（文章标题、摘要、标签、正文）保持中文原文，不做英文翻译。更新后运行：
+
+```bash
+npm test
+npm run build
+```
+
+### 检查搜索、健康检查或 PWA
+
+- 搜索索引端点：`/search-index.json`
+- Worker 健康检查：`/api/health`
+- 详细健康检查：`Authorization: Bearer <HEALTH_CHECK_TOKEN>`
+- 工具页 PWA：`/works/tools/`，manifest 和 Service Worker 分别位于 `public/manifest.json`、`public/sw-tools.js`
+
 ## 5. 提交前检查
 
 至少运行：
@@ -98,6 +124,8 @@ npm run test:coverage
 ```bash
 npx wrangler secret list
 ```
+
+如果需要查看 `/api/health` 的详细响应，也确认 `HEALTH_CHECK_TOKEN` 已注入。
 
 ## 6. 接下来读什么
 
