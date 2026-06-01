@@ -23,6 +23,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run tests
+        run: npm test
+
+      - name: Run coverage
+        run: npm run test:coverage
+
+      - name: Validate content structure
+        run: |
+          test -f src/content.config.ts
+          test -f src/content/blog/20260411-ai-reliance.md
+          test -f src/content/updates/fingerprint-app-update-log.json
+
       - name: Build Astro site
         run: npm run build
 
