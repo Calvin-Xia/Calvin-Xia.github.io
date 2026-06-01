@@ -1,4 +1,4 @@
-import MiniSearch, { type SearchResult } from 'minisearch';
+import MiniSearch, { type AsPlainObject, type SearchOptions, type SearchResult } from 'minisearch';
 import { searchIndexOptions, type SearchEntry } from './search-index-builder.ts';
 
 export type SearchHit = SearchResult & SearchEntry;
@@ -9,7 +9,7 @@ export interface ClientSearchOptions {
 }
 
 type SearchIndexPayload = {
-    index: Record<string, unknown>;
+    index: AsPlainObject;
 };
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<{
@@ -60,10 +60,15 @@ export function search(
     }
 
     const typeFilter = options.types?.length ? new Set(options.types) : null;
-    const results = index.search(normalizedQuery, {
+    const searchOptions: SearchOptions = {
         ...searchIndexOptions.searchOptions,
-        filter: typeFilter ? (result) => typeFilter.has(String(result.type)) : undefined,
-    }) as SearchHit[];
+    };
+
+    if (typeFilter) {
+        searchOptions.filter = (result) => typeFilter.has(String(result['type']));
+    }
+
+    const results = index.search(normalizedQuery, searchOptions) as SearchHit[];
 
     return typeof options.limit === 'number' ? results.slice(0, options.limit) : results;
 }

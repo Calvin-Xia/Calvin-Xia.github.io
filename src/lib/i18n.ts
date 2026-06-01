@@ -54,7 +54,7 @@ export function setLang(lang: Lang): void {
 
     if (typeof document !== 'undefined') {
         document.documentElement.lang = nextLang;
-        document.documentElement.dataset.lang = nextLang;
+        document.documentElement.dataset['lang'] = nextLang;
     }
 }
 
@@ -143,7 +143,7 @@ export function applyTranslations(root?: ParentNode): void {
     const lang = getCurrentLang();
     if (typeof document !== 'undefined') {
         document.documentElement.lang = lang;
-        document.documentElement.dataset.lang = lang;
+        document.documentElement.dataset['lang'] = lang;
     }
 
     targetRoot.querySelectorAll('[data-i18n]').forEach((element) => {
@@ -169,11 +169,11 @@ export function applyTranslations(root?: ParentNode): void {
 
 function bindLanguageToggle(root: ParentNode): void {
     root.querySelectorAll<HTMLButtonElement>('[data-lang-toggle]').forEach((button) => {
-        if (button.dataset.langReady === 'true') {
+        if (button.dataset['langReady'] === 'true') {
             return;
         }
 
-        button.dataset.langReady = 'true';
+        button.dataset['langReady'] = 'true';
         button.addEventListener('click', () => {
             const nextLang = getCurrentLang() === 'zh-CN' ? 'en-US' : 'zh-CN';
             setLang(nextLang);
