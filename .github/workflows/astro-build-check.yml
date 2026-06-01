@@ -38,6 +38,9 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Generate Astro types
+        run: npx astro sync
+
       - name: Run TypeScript check
         run: npx tsc --noEmit
 

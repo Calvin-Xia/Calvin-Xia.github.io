@@ -1,6 +1,14 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { SecurityLogger } from '../src/lib/security-logger.js';
+
+const rootDir = path.resolve(import.meta.dirname, '..');
+
+function readSource(...segments) {
+    return readFileSync(path.join(rootDir, ...segments), 'utf8');
+}
 
 describe('Phase 9 Integration', () => {
     it('security logger should track API calls', () => {
@@ -29,5 +37,15 @@ describe('Phase 9 Integration', () => {
 
         assert.ok(alertData);
         assert.ok(alertData.errorRate > 0.1);
+    });
+
+    it('Astro build check should generate content types before running TypeScript', () => {
+        const workflow = readSource('.github', 'workflows', 'astro-build-check.yml');
+        const typecheckIndex = workflow.indexOf('npx tsc --noEmit');
+        const astroSyncIndex = workflow.indexOf('npx astro sync');
+
+        assert.notEqual(typecheckIndex, -1);
+        assert.notEqual(astroSyncIndex, -1);
+        assert.ok(astroSyncIndex < typecheckIndex);
     });
 });
