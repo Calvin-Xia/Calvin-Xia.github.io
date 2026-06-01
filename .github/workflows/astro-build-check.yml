@@ -35,6 +35,12 @@ jobs:
           test -f src/content/blog/20260411-ai-reliance.md
           test -f src/content/updates/fingerprint-app-update-log.json
 
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript check
+        run: npx tsc --noEmit
+
       - name: Build Astro site
         run: npm run build
 
