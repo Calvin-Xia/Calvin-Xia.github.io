@@ -2,14 +2,106 @@
 import { t } from '../lib/i18n.ts';
 ---
 
-<aside class="article-toc-shell" data-article-toc hidden aria-label={t('toc.aria')} data-i18n-aria-label="toc.aria">
+<aside id="article-toc-panel" class="article-toc-shell" data-article-toc hidden aria-label={t('toc.aria')} data-i18n-aria-label="toc.aria">
     <div class="article-progress" aria-hidden="true">
         <span data-reading-progress-bar></span>
     </div>
     <details class="article-toc" open>
         <summary class="article-toc__summary"><span data-i18n="toc.summary">{t('toc.summary')}</span> <span data-reading-progress-text>0%</span></summary>
         <nav aria-label={t('toc.sectionsAria')} data-i18n-aria-label="toc.sectionsAria">
-            <ol class="article-toc__list" data-article-toc-list></ol>
+            <ol class="article-toc__list" data-article-toc-list role="list"></ol>
         </nav>
     </details>
 </aside>
+<button
+    class="article-toc-toggle"
+    type="button"
+    data-article-toc-toggle
+    aria-label={t('toc.toggleAria')}
+    data-i18n-aria-label="toc.toggleAria"
+    aria-controls="article-toc-panel"
+    aria-expanded="false"
+>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+        <path d="M4 6h16M4 12h16M4 18h16"></path>
+    </svg>
+</button>
+
+<script>
+    const MOBILE_TOC_QUERY = '(max-width: 768px)';
+
+    function getCurrentTocElements() {
+        const tocShell = document.querySelector('[data-article-toc]');
+        const tocToggle = document.querySelector('[data-article-toc-toggle]');
+        return { tocShell, tocToggle };
+    }
+
+    function setTocToggleState(tocShell, tocToggle) {
+        if (!tocShell || !tocToggle) {
+            return;
+        }
+
+        const isExpanded = !tocShell.hidden && !tocShell.classList.contains('is-collapsed');
+        tocToggle.setAttribute('aria-expanded', String(isExpanded));
+    }
+
+    function syncMobileTocState() {
+        const { tocShell, tocToggle } = getCurrentTocElements();
+        if (!tocShell || !tocToggle) {
+            return;
+        }
+
+        const isMobile = window.matchMedia(MOBILE_TOC_QUERY).matches;
+        if (!isMobile || tocShell.hidden) {
+            tocShell.classList.remove('is-collapsed');
+            delete tocShell.dataset.articleTocUserToggled;
+            setTocToggleState(tocShell, tocToggle);
+            return;
+        }
+
+        tocShell.querySelector('.article-toc')?.setAttribute('open', '');
+        if (tocShell.dataset.articleTocUserToggled !== 'true') {
+            tocShell.classList.add('is-collapsed');
+        }
+        setTocToggleState(tocShell, tocToggle);
+    }
+
+    function initArticleTocToggle() {
+        if (document.documentElement.dataset.articleTocToggleBound === 'true') {
+            syncMobileTocState();
+            return;
+        }
+
+        document.documentElement.dataset.articleTocToggleBound = 'true';
+        document.addEventListener('click', (event) => {
+            const { tocShell, tocToggle } = getCurrentTocElements();
+            if (!tocShell || !tocToggle || tocShell.hidden || !window.matchMedia(MOBILE_TOC_QUERY).matches) {
+                return;
+            }
+
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            if (tocToggle.contains(target)) {
+                tocShell.dataset.articleTocUserToggled = 'true';
+                tocShell.classList.toggle('is-collapsed');
+                setTocToggleState(tocShell, tocToggle);
+                return;
+            }
+
+            if (tocShell.contains(target) && !target.closest?.('[data-toc-link]')) {
+                return;
+            }
+
+            tocShell.classList.add('is-collapsed');
+            setTocToggleState(tocShell, tocToggle);
+        });
+        window.addEventListener('resize', syncMobileTocState);
+        document.addEventListener('astro:page-load', syncMobileTocState);
+        syncMobileTocState();
+    }
+
+    initArticleTocToggle();
+</script>

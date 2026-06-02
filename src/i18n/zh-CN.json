@@ -343,7 +343,8 @@
     "toc": {
         "aria": "文章目录",
         "summary": "目录",
-        "sectionsAria": "文章章节"
+        "sectionsAria": "文章章节",
+        "toggleAria": "切换目录"
     },
     "transition": {
         "loadingAria": "页面加载中"

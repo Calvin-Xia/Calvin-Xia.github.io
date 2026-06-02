@@ -343,7 +343,8 @@
     "toc": {
         "aria": "Article table of contents",
         "summary": "Contents",
-        "sectionsAria": "Article sections"
+        "sectionsAria": "Article sections",
+        "toggleAria": "Toggle table of contents"
     },
     "transition": {
         "loadingAria": "Page loading"
