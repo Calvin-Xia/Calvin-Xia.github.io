@@ -89,10 +89,12 @@ function hideToolbar(toolbar) {
 }
 
 async function writeClipboard(text, windowRef) {
-    if (windowRef.navigator?.clipboard?.writeText) {
-        await windowRef.navigator.clipboard.writeText(text);
-        return true;
-    }
+    try {
+        if (windowRef.navigator?.clipboard?.writeText) {
+            await windowRef.navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch {}
 
     return false;
 }

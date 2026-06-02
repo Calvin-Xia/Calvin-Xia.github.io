@@ -49,9 +49,9 @@ export function initArticleEnhancements(root = document) {
         windowRef: documentRef.defaultView || window,
     });
     const cleanup = () => {
-        selectionToolbarCleanup();
-        progressCleanup();
-        sectionRevealCleanup();
+        for (const fn of [selectionToolbarCleanup, progressCleanup, sectionRevealCleanup]) {
+            try { fn(); } catch {}
+        }
         enhancementCleanups.delete(documentRef);
     };
 
