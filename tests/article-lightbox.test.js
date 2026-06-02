@@ -1,13 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { describe, test } from 'node:test';
-
-const rootDir = path.resolve(import.meta.dirname, '..');
-
-function readProjectFile(...segments) {
-    return readFileSync(path.join(rootDir, ...segments), 'utf8');
-}
 
 class FakeElement {
     constructor(tagName, attributes = {}) {
