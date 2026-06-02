@@ -50,4 +50,16 @@ describe('Phase 10 article experience integration', () => {
         assert.match(styles, /\.selection-toolbar\.is-visible\s*\{[\s\S]*opacity:\s*1;[\s\S]*visibility:\s*visible;/);
         assert.match(styles, /\.selection-toolbar-feedback\s*\{[\s\S]*position:\s*fixed;[\s\S]*bottom:\s*2rem;/);
     });
+
+    test('phase 10 uses vanilla article enhancement modules without new dependencies', () => {
+        const packageJson = JSON.parse(readProjectFile('package.json'));
+        const enhancements = readProjectFile('src', 'lib', 'article-enhancements', 'article-enhancements.js');
+
+        assert.match(enhancements, /initImageLightbox/);
+        assert.match(enhancements, /initReadingProgress/);
+        assert.match(enhancements, /initSelectionToolbar/);
+        assert.equal(packageJson.dependencies.gsap, undefined);
+        assert.equal(packageJson.dependencies['three'], undefined);
+        assert.equal(packageJson.dependencies['@floating-ui/dom'], undefined);
+    });
 });
