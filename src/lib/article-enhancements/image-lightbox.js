@@ -2,8 +2,7 @@ import { t } from '../i18n.ts';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
-const SCALE_STEP = 0.25;
-const TOUCH_SCALE_SENSITIVITY = 240;
+const SCALE_STEP = 0.5;
 const TRUSTED_IMAGE_HOSTS = new Set([
     'assets.calvin-xia.cn',
     'content.calvin-xia.cn',
@@ -34,6 +33,17 @@ function createButton(documentRef, className, label, text) {
 
 export function clampScale(value, min = MIN_SCALE, max = MAX_SCALE) {
     return Math.min(max, Math.max(min, Number(value) || min));
+}
+
+export function calculatePinchScale({ startScale, startDistance, currentDistance }) {
+    const initialDistance = Number(startDistance);
+    const nextDistance = Number(currentDistance);
+
+    if (!initialDistance || !nextDistance || initialDistance <= 0 || nextDistance <= 0) {
+        return clampScale(startScale);
+    }
+
+    return clampScale((Number(startScale) || MIN_SCALE) * (nextDistance / initialDistance));
 }
 
 export function getImageCaption(image) {
@@ -97,6 +107,8 @@ export function createLightboxController({ documentRef = document } = {}) {
         scale: 1,
         sourceImage: null,
         touchDistance: 0,
+        touchStartScale: 1,
+        isPinching: false,
     };
 
     function updateScale() {
@@ -127,7 +139,7 @@ export function createLightboxController({ documentRef = document } = {}) {
 
         state.sourceImage = image;
         state.imageNode.setAttribute('src', source);
-        state.imageNode.setAttribute('alt', getAttributeValue(image, 'alt') || caption);
+        state.imageNode.setAttribute('alt', getAttributeValue(image, 'alt') || caption || t('articleEnhancements.lightboxDefaultAlt'));
         state.captionNode.textContent = caption;
         setButtonDisabled(state.previousButton, state.images.length < 2);
         setButtonDisabled(state.nextButton, state.images.length < 2);
@@ -167,13 +179,94 @@ export function createLightboxController({ documentRef = document } = {}) {
         renderCurrentImage();
     }
 
-    function touchDistance(event) {
+    function getTouchDistance(event) {
         if (!event.touches || event.touches.length < 2) {
             return 0;
         }
 
         const [first, second] = event.touches;
         return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+    }
+
+    function getTouchCenter(event) {
+        if (!event.touches || event.touches.length < 2) {
+            return null;
+        }
+
+        const [first, second] = event.touches;
+        return {
+            x: (first.clientX + second.clientX) / 2,
+            y: (first.clientY + second.clientY) / 2,
+        };
+    }
+
+    function updateTouchTransformOrigin(event) {
+        const center = getTouchCenter(event);
+        const rect = state.imageNode?.getBoundingClientRect?.();
+
+        if (!center || !rect || !rect.width || !rect.height) {
+            state.imageNode.style.transformOrigin = 'center center';
+            return;
+        }
+
+        const x = clampScale(((center.x - rect.left) / rect.width) * 100, 0, 100);
+        const y = clampScale(((center.y - rect.top) / rect.height) * 100, 0, 100);
+        state.imageNode.style.transformOrigin = `${x}% ${y}%`;
+    }
+
+    function focusableElements() {
+        return Array.from(state.dialog?.querySelectorAll?.(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ) || []).filter((element) => !element.disabled && element.getAttribute?.('aria-hidden') !== 'true');
+    }
+
+    function trapFocus(event) {
+        const elements = focusableElements();
+        if (!elements.length) {
+            return false;
+        }
+
+        const firstElement = elements[0];
+        const lastElement = elements[elements.length - 1];
+        const activeElement = documentRef.activeElement;
+
+        if (event.shiftKey && activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+            return true;
+        }
+
+        if (!event.shiftKey && activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+            return true;
+        }
+
+        return false;
+    }
+
+    function handleDialogKeydown(event) {
+        if (event.key === 'Tab') {
+            trapFocus(event);
+            return;
+        }
+
+        const handlers = {
+            Escape: close,
+            ArrowLeft: showPrevious,
+            ArrowRight: showNext,
+            '+': () => setScale(state.scale + SCALE_STEP),
+            '=': () => setScale(state.scale + SCALE_STEP),
+            '-': () => setScale(state.scale - SCALE_STEP),
+        };
+        const handler = handlers[event.key];
+
+        if (!handler) {
+            return;
+        }
+
+        event.preventDefault();
+        handler();
     }
 
     function isFrameOutsideClick(event) {
@@ -212,6 +305,8 @@ export function createLightboxController({ documentRef = document } = {}) {
         const closeButton = createButton(documentRef, 'article-lightbox__button--close', t('articleEnhancements.lightboxClose'), 'x');
 
         dialog.classList.add('article-lightbox');
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-label', t('articleEnhancements.lightboxAria'));
         dialog.setAttribute('aria-modal', 'true');
         frame.classList.add('article-lightbox__frame');
         toolbar.classList.add('article-lightbox__toolbar');
@@ -240,23 +335,50 @@ export function createLightboxController({ documentRef = document } = {}) {
                 close();
             }
         });
+        dialog.addEventListener('keydown', handleDialogKeydown);
         dialog.addEventListener('wheel', (event) => {
             event.preventDefault();
             setScale(state.scale + (event.deltaY < 0 ? SCALE_STEP : -SCALE_STEP));
         }, { passive: false });
         image.addEventListener('touchstart', (event) => {
-            state.touchDistance = touchDistance(event);
+            if (event.touches?.length !== 2) {
+                return;
+            }
+
+            state.isPinching = true;
+            state.touchDistance = getTouchDistance(event);
+            state.touchStartScale = state.scale;
+            updateTouchTransformOrigin(event);
         }, { passive: true });
         image.addEventListener('touchmove', (event) => {
-            const nextDistance = touchDistance(event);
+            if (!state.isPinching || event.touches?.length !== 2) {
+                return;
+            }
+
+            const nextDistance = getTouchDistance(event);
             if (!state.touchDistance || !nextDistance) {
                 return;
             }
 
             event.preventDefault();
-            setScale(state.scale + (nextDistance - state.touchDistance) / TOUCH_SCALE_SENSITIVITY);
-            state.touchDistance = nextDistance;
+            updateTouchTransformOrigin(event);
+            setScale(calculatePinchScale({
+                startScale: state.touchStartScale,
+                startDistance: state.touchDistance,
+                currentDistance: nextDistance,
+            }));
         }, { passive: false });
+        image.addEventListener('touchend', (event) => {
+            if (event.touches?.length >= 2) {
+                state.touchDistance = getTouchDistance(event);
+                state.touchStartScale = state.scale;
+                return;
+            }
+
+            state.isPinching = false;
+            state.touchDistance = 0;
+            state.touchStartScale = state.scale;
+        }, { passive: true });
 
         state.captionNode = caption;
         state.closeButton = closeButton;

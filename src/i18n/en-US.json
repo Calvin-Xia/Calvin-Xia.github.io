@@ -357,7 +357,9 @@
         "lightboxZoomOut": "Zoom out",
         "lightboxReset": "Reset zoom",
         "lightboxZoomIn": "Zoom in",
-        "lightboxClose": "Close image preview"
+        "lightboxClose": "Close image preview",
+        "lightboxAria": "Image viewer",
+        "lightboxDefaultAlt": "Article image"
     },
     "newPost": {
         "pageTitle": "New Article - Calvin Xia",

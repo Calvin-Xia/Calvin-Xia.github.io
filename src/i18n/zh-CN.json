@@ -357,7 +357,9 @@
         "lightboxZoomOut": "缩小图片",
         "lightboxReset": "重置缩放",
         "lightboxZoomIn": "放大图片",
-        "lightboxClose": "关闭图片预览"
+        "lightboxClose": "关闭图片预览",
+        "lightboxAria": "图片查看器",
+        "lightboxDefaultAlt": "文章图片"
     },
     "newPost": {
         "pageTitle": "新建文章 - Calvin Xia",
