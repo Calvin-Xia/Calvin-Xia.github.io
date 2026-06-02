@@ -36,7 +36,8 @@ describe('article reading progress', () => {
 
         assert.equal(shouldCollapseTocForViewport(390), true);
         assert.equal(shouldCollapseTocForViewport(767), true);
-        assert.equal(shouldCollapseTocForViewport(768), false);
+        assert.equal(shouldCollapseTocForViewport(768), true);
+        assert.equal(shouldCollapseTocForViewport(769), false);
     });
 
     test('normalizes table of contents entries for rendering', async () => {

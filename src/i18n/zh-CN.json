@@ -343,7 +343,8 @@
     "toc": {
         "aria": "文章目录",
         "summary": "目录",
-        "sectionsAria": "文章章节"
+        "sectionsAria": "文章章节",
+        "toggleAria": "切换目录"
     },
     "transition": {
         "loadingAria": "页面加载中"
@@ -356,7 +357,14 @@
         "lightboxZoomOut": "缩小图片",
         "lightboxReset": "重置缩放",
         "lightboxZoomIn": "放大图片",
-        "lightboxClose": "关闭图片预览"
+        "lightboxClose": "关闭图片预览",
+        "lightboxAria": "图片查看器",
+        "lightboxDefaultAlt": "文章图片",
+        "selectionToolbarAria": "选中文本工具栏",
+        "selectionCopy": "复制",
+        "selectionShare": "分享",
+        "selectionCopied": "已复制",
+        "selectionLinkCopied": "链接已复制"
     },
     "newPost": {
         "pageTitle": "新建文章 - Calvin Xia",

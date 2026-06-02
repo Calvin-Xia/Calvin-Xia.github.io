@@ -1,3 +1,6 @@
+import { addTocAccessibility, bindTocKeyboardEvents } from './heading-index.js';
+
+const MOBILE_TOC_BREAKPOINT = 768;
 const MIN_TOC_HEADINGS = 3;
 const TOC_ACTIVE_SCROLL_PADDING = 12;
 const tocCleanupCallbacks = new WeakMap();
@@ -16,7 +19,7 @@ export function shouldRenderToc(entries, minHeadings = MIN_TOC_HEADINGS) {
     return Array.isArray(entries) && entries.length >= minHeadings;
 }
 
-export function shouldCollapseTocForViewport(width, breakpoint = 767) {
+export function shouldCollapseTocForViewport(width, breakpoint = MOBILE_TOC_BREAKPOINT) {
     return Number(width) <= breakpoint;
 }
 
@@ -101,6 +104,15 @@ function setActiveTocItem(tocRoot, activeId) {
     keepActiveTocLinkVisible(tocRoot, activeLink);
 }
 
+function setTocToggleExpanded(documentRef, tocRoot, expanded) {
+    const toggle = documentRef.querySelector?.('[data-article-toc-toggle]');
+    if (!toggle || toggle.getAttribute('aria-controls') !== tocRoot.id) {
+        return;
+    }
+
+    toggle.setAttribute('aria-expanded', String(expanded));
+}
+
 function clearTocList(list) {
     while (list.firstChild) {
         list.firstChild.remove();
@@ -127,6 +139,9 @@ function renderTocList(tocRoot, entries, documentRef) {
         listItem.appendChild(link);
         list.appendChild(listItem);
     });
+
+    addTocAccessibility(list);
+    bindTocKeyboardEvents(list, documentRef);
 }
 
 function findCurrentHeadingId(headings) {
@@ -201,11 +216,10 @@ export function initReadingProgress({
 
     const details = tocRoot.querySelector?.('.article-toc');
     const syncTocDisclosure = () => {
-        if (details && shouldCollapseTocForViewport(windowRef.innerWidth)) {
-            details.removeAttribute('open');
-        } else {
-            details?.setAttribute?.('open', '');
-        }
+        const shouldCollapse = shouldCollapseTocForViewport(windowRef.innerWidth);
+        details?.setAttribute?.('open', '');
+        tocRoot.classList?.toggle?.('is-collapsed', shouldCollapse);
+        setTocToggleExpanded(documentRef, tocRoot, !shouldCollapse);
     };
     syncTocDisclosure();
 
@@ -243,6 +257,11 @@ export function initReadingProgress({
             const targetId = link.getAttribute('href')?.slice(1);
             if (targetId) {
                 windowRef.history?.replaceState?.(null, '', `#${targetId}`);
+            }
+
+            if (shouldCollapseTocForViewport(windowRef.innerWidth)) {
+                tocRoot.classList?.add?.('is-collapsed');
+                setTocToggleExpanded(documentRef, tocRoot, false);
             }
         });
     });

@@ -1853,6 +1853,14 @@ select:disabled {
     display: none;
 }
 
+.article-toc-toggle {
+    display: none;
+}
+
+.article-toc-shell[hidden] + .article-toc-toggle {
+    display: none;
+}
+
 .article-progress {
     height: 0.24rem;
     border-radius: var(--radius-pill);
@@ -2031,6 +2039,76 @@ select:disabled {
     margin-block-start: 0.65rem;
     color: var(--text-inverse);
     text-align: center;
+}
+
+.selection-toolbar {
+    position: fixed;
+    z-index: 1000;
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-raised);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-8px);
+    transition:
+        opacity var(--duration-fast) var(--ease-out),
+        visibility var(--duration-fast) var(--ease-out),
+        transform var(--duration-fast) var(--ease-out);
+}
+
+.selection-toolbar.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.selection-toolbar-btn {
+    min-height: 44px;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.875rem;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.selection-toolbar-btn:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-hover);
+}
+
+.selection-toolbar-feedback {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    z-index: 1001;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    color: var(--text-inverse);
+    font-size: 0.875rem;
+    transform: translateX(-50%);
+    animation: selectionToolbarFeedback 2s var(--ease-out) both;
+}
+
+@keyframes selectionToolbarFeedback {
+    0%,
+    100% {
+        opacity: 0;
+    }
+
+    20%,
+    80% {
+        opacity: 1;
+    }
 }
 
 .new-post-workbench {
@@ -2510,6 +2588,72 @@ html[data-astro-transition='back']::view-transition-old(site-main) {
 
     .article-lightbox__frame {
         width: calc(100vw - 1rem);
+    }
+}
+
+@media (max-width: 768px) {
+    .article-reading-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .article-toc-shell {
+        position: fixed;
+        right: 0;
+        top: 50%;
+        z-index: 100;
+        width: min(calc(100vw - 4rem), 280px);
+        max-width: 280px;
+        max-height: 80vh;
+        overflow: hidden;
+        transform: translateY(-50%);
+        border: 1px solid var(--border);
+        border-right: 0;
+        border-radius: var(--radius-md) 0 0 var(--radius-md);
+        background: var(--surface);
+        box-shadow: var(--shadow-raised);
+        transition: transform var(--duration-base) var(--ease-out);
+    }
+
+    .article-toc-shell.is-collapsed {
+        transform: translateY(-50%) translateX(100%);
+    }
+
+    .article-toc {
+        max-height: 80vh;
+    }
+
+    .article-toc > nav {
+        max-height: calc(80vh - 4rem);
+    }
+
+    .article-toc-toggle {
+        position: fixed;
+        right: 1rem;
+        bottom: 2rem;
+        z-index: 101;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 50%;
+        padding: 0;
+        background: var(--accent);
+        color: var(--text-inverse);
+        box-shadow: var(--shadow-raised);
+        cursor: pointer;
+    }
+
+    .article-toc-toggle:hover {
+        background: var(--accent-hover);
+        color: var(--text-inverse);
+    }
+}
+
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+    .article-toc-shell {
+        transition: none;
     }
 }
 

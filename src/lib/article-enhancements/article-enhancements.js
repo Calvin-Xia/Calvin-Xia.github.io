@@ -2,6 +2,7 @@ import { enhanceArticleImageCaptions } from '../article-image-captions.js';
 import { buildHeadingIndex } from './heading-index.js';
 import { initImageLightbox } from './image-lightbox.js';
 import { initReadingProgress } from './reading-progress.js';
+import { initSelectionToolbar } from './selection-toolbar.js';
 import { initSectionReveals } from './section-reveals.js';
 
 const enhancementCleanups = new WeakMap();
@@ -34,6 +35,9 @@ export function initArticleEnhancements(root = document) {
     enhanceArticleImageCaptions(markdownContent, documentRef);
     const headings = buildHeadingIndex(markdownContent, documentRef);
     initImageLightbox(markdownContent, { documentRef });
+    const selectionToolbarCleanup = initSelectionToolbar(markdownContent, {
+        windowRef: documentRef.defaultView || window,
+    });
     const progressCleanup = initReadingProgress({
         tocRoot,
         contentRoot: markdownContent,
@@ -45,8 +49,9 @@ export function initArticleEnhancements(root = document) {
         windowRef: documentRef.defaultView || window,
     });
     const cleanup = () => {
-        progressCleanup();
-        sectionRevealCleanup();
+        for (const fn of [selectionToolbarCleanup, progressCleanup, sectionRevealCleanup]) {
+            try { fn(); } catch {}
+        }
         enhancementCleanups.delete(documentRef);
     };
 

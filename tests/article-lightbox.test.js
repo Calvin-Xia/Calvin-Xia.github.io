@@ -1,13 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { describe, test } from 'node:test';
-
-const rootDir = path.resolve(import.meta.dirname, '..');
-
-function readProjectFile(...segments) {
-    return readFileSync(path.join(rootDir, ...segments), 'utf8');
-}
 
 class FakeElement {
     constructor(tagName, attributes = {}) {
@@ -145,12 +137,69 @@ describe('article image lightbox', () => {
         assert.equal(clampScale(7), 4);
     });
 
-    test('names the touch pinch zoom sensitivity constant', () => {
-        const source = readProjectFile('src', 'lib', 'article-enhancements', 'image-lightbox.js');
+    test('calculates pinch zoom from the initial touch distance without incremental drift', async () => {
+        const { calculatePinchScale } = await import('../src/lib/article-enhancements/image-lightbox.js');
 
-        assert.match(source, /const\s+TOUCH_SCALE_SENSITIVITY\s*=\s*240/);
-        assert.match(source, /\(nextDistance\s*-\s*state\.touchDistance\)\s*\/\s*TOUCH_SCALE_SENSITIVITY/);
-        assert.doesNotMatch(source, /\(nextDistance\s*-\s*state\.touchDistance\)\s*\/\s*240/);
+        assert.equal(calculatePinchScale({ startScale: 1, startDistance: 120, currentDistance: 240 }), 2);
+        assert.equal(calculatePinchScale({ startScale: 2, startDistance: 200, currentDistance: 50 }), 1);
+        assert.equal(calculatePinchScale({ startScale: 3, startDistance: 100, currentDistance: 200 }), 4);
+        assert.equal(calculatePinchScale({ startScale: 2, startDistance: 0, currentDistance: 200 }), 2);
+    });
+
+    test('keyboard shortcuts switch images, zoom, and close the dialog', async () => {
+        const { createLightboxController } = await import('../src/lib/article-enhancements/image-lightbox.js');
+        const documentRef = createFakeDocument();
+        const firstImage = new FakeElement('img', { src: '/storage/first.jpg', alt: 'First image' });
+        const secondImage = new FakeElement('img', { src: '/storage/second.jpg', alt: 'Second image' });
+        const controller = createLightboxController({ documentRef });
+        const preventedKeys = [];
+
+        controller.open(firstImage, [firstImage, secondImage]);
+
+        const dialog = documentRef.body.querySelector('.article-lightbox');
+        const renderedImage = dialog.querySelector('.article-lightbox__image');
+        const keyHandlers = dialog.listeners.get('keydown');
+        const dispatchKey = (key) => keyHandlers.forEach((handler) => handler({
+            key,
+            preventDefault() {
+                preventedKeys.push(key);
+            },
+        }));
+
+        dispatchKey('+');
+        assert.equal(controller.getState().scale, 1.5);
+
+        dispatchKey('-');
+        assert.equal(controller.getState().scale, 1);
+
+        dispatchKey('ArrowRight');
+        assert.equal(renderedImage.getAttribute('src'), '/storage/second.jpg');
+
+        dispatchKey('ArrowLeft');
+        assert.equal(renderedImage.getAttribute('src'), '/storage/first.jpg');
+
+        dispatchKey('Escape');
+        assert.equal(dialog.open, false);
+        assert.deepEqual(preventedKeys, ['+', '-', 'ArrowRight', 'ArrowLeft', 'Escape']);
+    });
+
+    test('creates an accessible image viewer dialog with fallback alt text', async () => {
+        const { createLightboxController } = await import('../src/lib/article-enhancements/image-lightbox.js');
+        const documentRef = createFakeDocument();
+        const image = new FakeElement('img', { src: '/storage/photo.jpg' });
+        const controller = createLightboxController({ documentRef });
+
+        controller.open(image, [image]);
+
+        const dialog = documentRef.body.querySelector('.article-lightbox');
+        const renderedImage = dialog.querySelector('.article-lightbox__image');
+
+        assert.equal(dialog.getAttribute('role'), 'dialog');
+        assert.equal(dialog.getAttribute('aria-modal'), 'true');
+        assert.equal(dialog.getAttribute('aria-label'), '图片查看器');
+        assert.equal(dialog.getAttribute('aria-describedby'), 'article-lightbox-caption');
+        assert.equal(dialog.querySelector('.article-lightbox__caption').getAttribute('id'), 'article-lightbox-caption');
+        assert.equal(renderedImage.getAttribute('alt'), '文章图片');
     });
 
     test('uses figure captions before image alt text', async () => {
@@ -286,6 +335,34 @@ describe('article image lightbox', () => {
         assert.equal(renderedImage.getAttribute('src'), '/storage/photo.jpg');
         assert.equal(dialog.open, false);
         assert.equal(image.focused, true);
-        assert.equal(controller.getState().scale, 1.25);
+        assert.equal(controller.getState().scale, 1.5);
+    });
+
+    test('single-finger touchend does not reset touchStartScale when not pinching', async () => {
+        const { createLightboxController } = await import('../src/lib/article-enhancements/image-lightbox.js');
+        const documentRef = createFakeDocument();
+        const image = new FakeElement('img', { src: '/storage/photo.jpg', alt: 'Photo' });
+        const controller = createLightboxController({ documentRef });
+
+        controller.open(image, [image]);
+        controller.zoomIn();
+        controller.zoomIn();
+
+        const dialog = documentRef.body.querySelector('.article-lightbox');
+        const renderedImage = dialog.querySelector('.article-lightbox__image');
+        const touchEndHandlers = renderedImage.listeners.get('touchend');
+
+        assert.ok(touchEndHandlers, 'touchend handlers should be registered');
+        assert.equal(controller.getState().isPinching, false);
+        assert.equal(controller.getState().scale, 2);
+
+        const initialStartScale = controller.getState().touchStartScale;
+
+        for (const handler of touchEndHandlers) {
+            handler({ touches: [] });
+        }
+
+        assert.equal(controller.getState().isPinching, false, 'isPinching stays false');
+        assert.equal(controller.getState().touchStartScale, initialStartScale, 'touchStartScale unchanged for non-pinch touchend');
     });
 });

@@ -65,6 +65,56 @@ function appendHeadingAnchor(heading, documentRef, text) {
     heading.appendChild(anchor);
 }
 
+export function addTocAccessibility(tocList) {
+    if (!tocList?.querySelectorAll) {
+        return;
+    }
+
+    tocList.setAttribute?.('role', 'list');
+    tocList.setAttribute?.('aria-label', t('toc.aria'));
+    tocList.querySelectorAll('a').forEach((link) => {
+        link.setAttribute?.('role', 'link');
+        link.setAttribute?.('tabindex', '0');
+    });
+}
+
+export function bindTocKeyboardEvents(tocList, documentRef = tocList?.ownerDocument || globalThis.document) {
+    if (!tocList?.querySelectorAll || !tocList?.addEventListener || tocList.dataset?.tocKeyboardBound === 'true') {
+        return;
+    }
+
+    if (tocList.dataset) {
+        tocList.dataset.tocKeyboardBound = 'true';
+    }
+
+    tocList.addEventListener('keydown', (event) => {
+        const links = Array.from(tocList.querySelectorAll('a'));
+        if (!links.length) {
+            return;
+        }
+
+        const activeElement = documentRef?.activeElement;
+        const currentIndex = Math.max(0, links.indexOf(activeElement));
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            links[(currentIndex + 1) % links.length].focus();
+            return;
+        }
+
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            links[(currentIndex - 1 + links.length) % links.length].focus();
+            return;
+        }
+
+        if (event.key === 'Enter' && links.includes(activeElement)) {
+            event.preventDefault();
+            activeElement.click?.();
+        }
+    });
+}
+
 export function buildHeadingIndex(root, documentRef = document) {
     if (!root?.querySelectorAll) {
         return [];
