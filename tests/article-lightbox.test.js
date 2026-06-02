@@ -345,4 +345,32 @@ describe('article image lightbox', () => {
         assert.equal(image.focused, true);
         assert.equal(controller.getState().scale, 1.5);
     });
+
+    test('single-finger touchend does not reset touchStartScale when not pinching', async () => {
+        const { createLightboxController } = await import('../src/lib/article-enhancements/image-lightbox.js');
+        const documentRef = createFakeDocument();
+        const image = new FakeElement('img', { src: '/storage/photo.jpg', alt: 'Photo' });
+        const controller = createLightboxController({ documentRef });
+
+        controller.open(image, [image]);
+        controller.zoomIn();
+        controller.zoomIn();
+
+        const dialog = documentRef.body.querySelector('.article-lightbox');
+        const renderedImage = dialog.querySelector('.article-lightbox__image');
+        const touchEndHandlers = renderedImage.listeners.get('touchend');
+
+        assert.ok(touchEndHandlers, 'touchend handlers should be registered');
+        assert.equal(controller.getState().isPinching, false);
+        assert.equal(controller.getState().scale, 2);
+
+        const initialStartScale = controller.getState().touchStartScale;
+
+        for (const handler of touchEndHandlers) {
+            handler({ touches: [] });
+        }
+
+        assert.equal(controller.getState().isPinching, false, 'isPinching stays false');
+        assert.equal(controller.getState().touchStartScale, initialStartScale, 'touchStartScale unchanged for non-pinch touchend');
+    });
 });

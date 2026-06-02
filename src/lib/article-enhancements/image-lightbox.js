@@ -8,6 +8,10 @@ const TRUSTED_IMAGE_HOSTS = new Set([
     'content.calvin-xia.cn',
 ]);
 
+function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
+
 function getAttributeValue(element, name) {
     return element?.getAttribute?.(name) || element?.[name] || '';
 }
@@ -209,8 +213,8 @@ export function createLightboxController({ documentRef = document } = {}) {
             return;
         }
 
-        const x = clampScale(((center.x - rect.left) / rect.width) * 100, 0, 100);
-        const y = clampScale(((center.y - rect.top) / rect.height) * 100, 0, 100);
+        const x = clamp(((center.x - rect.left) / rect.width) * 100, 0, 100);
+        const y = clamp(((center.y - rect.top) / rect.height) * 100, 0, 100);
         state.imageNode.style.transformOrigin = `${x}% ${y}%`;
     }
 
@@ -375,6 +379,10 @@ export function createLightboxController({ documentRef = document } = {}) {
             if (event.touches?.length >= 2) {
                 state.touchDistance = getTouchDistance(event);
                 state.touchStartScale = state.scale;
+                return;
+            }
+
+            if (!state.isPinching) {
                 return;
             }
 
