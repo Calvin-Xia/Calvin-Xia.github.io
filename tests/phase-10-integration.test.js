@@ -36,4 +36,17 @@ describe('Phase 10 article experience integration', () => {
         assert.match(source, /dialog\.addEventListener\(\s*['"]keydown['"]/);
         assert.match(source, /dialog\.setAttribute\(\s*['"]aria-keyshortcuts['"]\s*,\s*['"]Escape ArrowLeft ArrowRight \+ -['"]\s*\)/);
     });
+
+    test('selection toolbar is importable, initialized, and styled', async () => {
+        const mod = await import('../src/lib/article-enhancements/selection-toolbar.js');
+        const enhancements = readProjectFile('src', 'lib', 'article-enhancements', 'article-enhancements.js');
+        const styles = readProjectFile('src', 'styles', 'global.css');
+
+        assert.equal(typeof mod.initSelectionToolbar, 'function');
+        assert.match(enhancements, /import\s+\{\s*initSelectionToolbar\s*\}\s+from\s+['"]\.\/selection-toolbar\.js['"]/);
+        assert.match(enhancements, /selectionToolbarCleanup\s*=\s*initSelectionToolbar\(markdownContent/);
+        assert.match(styles, /\.selection-toolbar\s*\{[\s\S]*position:\s*fixed;[\s\S]*z-index:\s*1000;[\s\S]*opacity:\s*0;/);
+        assert.match(styles, /\.selection-toolbar\.is-visible\s*\{[\s\S]*opacity:\s*1;[\s\S]*visibility:\s*visible;/);
+        assert.match(styles, /\.selection-toolbar-feedback\s*\{[\s\S]*position:\s*fixed;[\s\S]*bottom:\s*2rem;/);
+    });
 });

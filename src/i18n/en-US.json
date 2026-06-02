@@ -359,7 +359,12 @@
         "lightboxZoomIn": "Zoom in",
         "lightboxClose": "Close image preview",
         "lightboxAria": "Image viewer",
-        "lightboxDefaultAlt": "Article image"
+        "lightboxDefaultAlt": "Article image",
+        "selectionToolbarAria": "Selected text toolbar",
+        "selectionCopy": "Copy",
+        "selectionShare": "Share",
+        "selectionCopied": "Copied",
+        "selectionLinkCopied": "Link copied"
     },
     "newPost": {
         "pageTitle": "New Article - Calvin Xia",
