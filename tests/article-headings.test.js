@@ -38,8 +38,66 @@ class FakeHeading {
     }
 }
 
+class FakeTocLink {
+    constructor(text) {
+        this.textContent = text;
+        this.attributes = new Map();
+        this.focused = false;
+        this.clicked = false;
+    }
+
+    setAttribute(name, value) {
+        this.attributes.set(name, String(value));
+    }
+
+    getAttribute(name) {
+        return this.attributes.get(name) ?? null;
+    }
+
+    focus() {
+        this.focused = true;
+        this.ownerDocument.activeElement = this;
+    }
+
+    click() {
+        this.clicked = true;
+    }
+}
+
+class FakeTocList {
+    constructor(links, ownerDocument) {
+        this.links = links;
+        this.ownerDocument = ownerDocument;
+        this.attributes = new Map();
+        this.dataset = {};
+        this.listeners = new Map();
+        links.forEach((link) => {
+            link.ownerDocument = ownerDocument;
+        });
+    }
+
+    setAttribute(name, value) {
+        this.attributes.set(name, String(value));
+    }
+
+    getAttribute(name) {
+        return this.attributes.get(name) ?? null;
+    }
+
+    querySelectorAll(selector) {
+        return selector === 'a' ? this.links : [];
+    }
+
+    addEventListener(type, handler) {
+        const handlers = this.listeners.get(type) || [];
+        handlers.push(handler);
+        this.listeners.set(type, handlers);
+    }
+}
+
 function createFakeDocument() {
     return {
+        activeElement: null,
         createElement(tagName) {
             return new FakeHeading(tagName, '');
         },
@@ -91,5 +149,45 @@ describe('article heading index', () => {
         assert.equal(headings[1].querySelector('.heading-anchor').getAttribute('href'), '#重复标题');
         assert.equal(headings[1].querySelector('.heading-anchor').textContent, '#');
         assert.equal(headings[1].dataset.headingIndexed, 'true');
+    });
+
+    test('adds accessible TOC metadata and arrow-key navigation', async () => {
+        const { addTocAccessibility, bindTocKeyboardEvents } = await import('../src/lib/article-enhancements/heading-index.js');
+        const documentRef = createFakeDocument();
+        const links = [
+            new FakeTocLink('第一节'),
+            new FakeTocLink('第二节'),
+            new FakeTocLink('第三节'),
+        ];
+        const tocList = new FakeTocList(links, documentRef);
+        const preventedKeys = [];
+
+        addTocAccessibility(tocList);
+        bindTocKeyboardEvents(tocList, documentRef);
+
+        assert.equal(tocList.getAttribute('role'), 'list');
+        assert.equal(tocList.getAttribute('aria-label'), '文章目录');
+        links.forEach((link) => {
+            assert.equal(link.getAttribute('role'), 'link');
+            assert.equal(link.getAttribute('tabindex'), '0');
+        });
+
+        links[0].focus();
+        const dispatchKey = (key) => tocList.listeners.get('keydown').forEach((handler) => handler({
+            key,
+            preventDefault() {
+                preventedKeys.push(key);
+            },
+        }));
+
+        dispatchKey('ArrowDown');
+        assert.equal(documentRef.activeElement, links[1]);
+
+        dispatchKey('ArrowUp');
+        assert.equal(documentRef.activeElement, links[0]);
+
+        dispatchKey('Enter');
+        assert.equal(links[0].clicked, true);
+        assert.deepEqual(preventedKeys, ['ArrowDown', 'ArrowUp', 'Enter']);
     });
 });

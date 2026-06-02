@@ -1,3 +1,5 @@
+import { addTocAccessibility, bindTocKeyboardEvents } from './heading-index.js';
+
 const MOBILE_TOC_BREAKPOINT = 768;
 const MIN_TOC_HEADINGS = 3;
 const TOC_ACTIVE_SCROLL_PADDING = 12;
@@ -137,6 +139,9 @@ function renderTocList(tocRoot, entries, documentRef) {
         listItem.appendChild(link);
         list.appendChild(listItem);
     });
+
+    addTocAccessibility(list);
+    bindTocKeyboardEvents(list, documentRef);
 }
 
 function findCurrentHeadingId(headings) {
