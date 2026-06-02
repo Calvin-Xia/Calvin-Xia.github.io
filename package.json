@@ -25,6 +25,7 @@
         "astro": "^6.1.10",
         "dompurify": "^3.3.1",
         "highlight.js": "^11.11.1",
+        "jieba-wasm": "^2.4.0",
         "katex": "^0.16.25",
         "marked": "^17.0.1",
         "minisearch": "^6.3.0",
