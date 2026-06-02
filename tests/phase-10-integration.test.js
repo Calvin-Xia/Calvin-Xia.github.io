@@ -29,4 +29,11 @@ describe('Phase 10 article experience integration', () => {
         assert.match(styles, /\.article-toc-toggle\s*\{[\s\S]*display:\s*none;/);
         assert.match(styles, /@media\s*\(max-width:\s*768px\)\s*\{[\s\S]*\.article-toc-toggle\s*\{[\s\S]*position:\s*fixed;[\s\S]*right:\s*1rem;[\s\S]*bottom:\s*2rem;[\s\S]*width:\s*48px;[\s\S]*height:\s*48px;/);
     });
+
+    test('lightbox exposes custom keyboard shortcuts to assistive technology', () => {
+        const source = readProjectFile('src', 'lib', 'article-enhancements', 'image-lightbox.js');
+
+        assert.match(source, /dialog\.addEventListener\(\s*['"]keydown['"]/);
+        assert.match(source, /dialog\.setAttribute\(\s*['"]aria-keyshortcuts['"]\s*,\s*['"]Escape ArrowLeft ArrowRight \+ -['"]\s*\)/);
+    });
 });

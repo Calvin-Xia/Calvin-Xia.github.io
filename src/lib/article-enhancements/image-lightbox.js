@@ -308,6 +308,7 @@ export function createLightboxController({ documentRef = document } = {}) {
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-label', t('articleEnhancements.lightboxAria'));
         dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-keyshortcuts', 'Escape ArrowLeft ArrowRight + -');
         frame.classList.add('article-lightbox__frame');
         toolbar.classList.add('article-lightbox__toolbar');
         figure.classList.add('article-lightbox__figure');
