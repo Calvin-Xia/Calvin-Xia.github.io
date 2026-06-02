@@ -104,11 +104,13 @@ const markExtension: TokenizerAndRendererExtension = {
             return undefined;
         }
 
+        const text = match[1] ?? '';
+
         return {
             type: 'mark',
             raw: match[0],
-            text: match[1],
-            tokens: this.lexer.inlineTokens(match[1]),
+            text,
+            tokens: this.lexer.inlineTokens(text),
         };
     },
     renderer(token) {
@@ -517,7 +519,7 @@ export const MarkdownRenderer = {
         let firstImageAdded = false;
 
         for (let index = 0; index < lines.length; index += 1) {
-            const line = lines[index];
+            const line = lines[index] ?? '';
             if (line.startsWith('#')) {
                 previewContent += `${line}\n`;
                 if (index < 3) {
@@ -597,12 +599,14 @@ export const MarkdownRenderer = {
         }
     },
 
-    processImages(element = this.outputElement) {
-        if (!element) {
+    processImages(element?: HTMLElement | null) {
+        const targetElement = element ?? this.outputElement;
+
+        if (!targetElement) {
             return;
         }
 
-        const flexWrappers = element.querySelectorAll<HTMLElement>('div[style*="flex"]');
+        const flexWrappers = targetElement.querySelectorAll<HTMLElement>('div[style*="flex"]');
         flexWrappers.forEach((wrapper) => {
             wrapper.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
                 const altText = image.getAttribute('alt');
@@ -634,7 +638,7 @@ export const MarkdownRenderer = {
             });
         });
 
-        element.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
+        targetElement.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
             if (image.closest('[style*="flex"]')) {
                 return;
             }
@@ -690,9 +694,9 @@ export const MarkdownRenderer = {
         }
     },
 
-    formatHTML(html = this.outputElement?.innerHTML ?? '') {
+    formatHTML(html?: string) {
         const template = document.createElement('template');
-        template.innerHTML = html.trim();
+        template.innerHTML = (html ?? this.outputElement?.innerHTML ?? '').trim();
         const lines: string[] = [];
         template.content.childNodes.forEach((node) => {
             lines.push(...formatNode(node, 0));
@@ -922,8 +926,9 @@ ${content}
             this.weChatCopyStatus.textContent = t(key, parsedVars);
         }
 
-        if (this.outputElement?.textContent === t('markdownTool.emptyPreview') || !this.outputElement?.innerHTML.trim()) {
-            this.outputElement.innerHTML = emptyPreviewHtml();
+        const outputElement = this.outputElement;
+        if (outputElement && (outputElement.textContent === t('markdownTool.emptyPreview') || !outputElement.innerHTML.trim())) {
+            outputElement.innerHTML = emptyPreviewHtml();
         }
     },
 
@@ -944,7 +949,7 @@ ${content}
             return;
         }
 
-        this.weChatCopyStatus.dataset.state = state;
+        this.weChatCopyStatus.dataset['state'] = state;
     },
 
     showLoading(key: string, duration = 2000) {

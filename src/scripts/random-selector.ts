@@ -25,7 +25,7 @@ const state: RandomSelectorState = {
     items: [],
     cleanupController: null,
 };
-let currentFileStatus: { key: string; vars?: Record<string, string | number>; isError: boolean } = {
+let currentFileStatus: { key: string; vars?: Record<string, string | number> | undefined; isError: boolean } = {
     key: 'random.noFile',
     isError: false,
 };
@@ -262,8 +262,8 @@ export const RandomSelector = {
             const chosen = document.getElementById('chosen');
             if (chosen) {
                 chosen.textContent = '';
-                delete chosen.dataset.selectedItem;
-                delete chosen.dataset.emptyChoice;
+                delete chosen.dataset['selectedItem'];
+                delete chosen.dataset['emptyChoice'];
                 chosen.classList.remove('selector-result--error');
             }
         }
@@ -277,16 +277,21 @@ export const RandomSelector = {
 
         if (state.items.length === 0) {
             chosen.textContent = t('random.emptyChoice');
-            chosen.dataset.emptyChoice = 'true';
-            delete chosen.dataset.selectedItem;
+            chosen.dataset['emptyChoice'] = 'true';
+            delete chosen.dataset['selectedItem'];
             chosen.classList.add('selector-result--error');
             return;
         }
 
         const idx = Math.floor(Math.random() * state.items.length);
-        chosen.textContent = t('random.chosen', { item: state.items[idx] });
-        chosen.dataset.selectedItem = state.items[idx];
-        delete chosen.dataset.emptyChoice;
+        const selectedItem = state.items[idx];
+        if (!selectedItem) {
+            return;
+        }
+
+        chosen.textContent = t('random.chosen', { item: selectedItem });
+        chosen.dataset['selectedItem'] = selectedItem;
+        delete chosen.dataset['emptyChoice'];
         chosen.classList.remove('selector-result--error');
     },
 
@@ -356,10 +361,10 @@ if (typeof window !== 'undefined') {
         updateList();
         setFileSelectionStatus(currentFileStatus.key, currentFileStatus.vars, currentFileStatus.isError);
         const chosen = document.getElementById('chosen');
-        if (chosen?.dataset.emptyChoice === 'true') {
+        if (chosen?.dataset['emptyChoice'] === 'true') {
             chosen.textContent = t('random.emptyChoice');
-        } else if (chosen?.dataset.selectedItem) {
-            chosen.textContent = t('random.chosen', { item: chosen.dataset.selectedItem });
+        } else if (chosen?.dataset['selectedItem']) {
+            chosen.textContent = t('random.chosen', { item: chosen.dataset['selectedItem'] });
         }
     });
 }

@@ -1,4 +1,5 @@
 import { checkHealth } from './lib/health-check.js';
+import { SecurityLogger } from './lib/security-logger.js';
 import { handleViewCounterRequest } from './lib/umami-view-counter.js';
 
 interface Env {
@@ -9,6 +10,29 @@ interface Env {
         fetch(request: Request): Response | Promise<Response>;
     };
 }
+
+interface SecurityLogEntry {
+    timestamp: string;
+    path: string;
+    status: number;
+    method: string;
+    isError: boolean;
+}
+
+interface SecurityAlert {
+    errorRate: number;
+    threshold: number;
+    totalRequests: number;
+    errorRequests: number;
+}
+
+const API_STATS_INTERVAL = 100;
+const securityLogger = new SecurityLogger({ alertThreshold: 0.1, maxSize: 1000 });
+let apiCallCounter = 0;
+
+securityLogger.onAlert((alert: SecurityAlert) => {
+    console.warn('Security Alert:', JSON.stringify(alert));
+});
 
 function createJsonResponse(data: unknown, init: ResponseInit = {}): Response {
     const headers = new Headers(init.headers || {});
@@ -71,14 +95,57 @@ async function handleHealthRequest(request: Request, env: Env): Promise<Response
     }
 }
 
+function logApiCallStats(url: URL): void {
+    if (!url.pathname.startsWith('/api/')) {
+        return;
+    }
+
+    apiCallCounter += 1;
+
+    if (apiCallCounter > 0 && apiCallCounter % API_STATS_INTERVAL === 0) {
+        console.log('API Call Stats:', JSON.stringify({
+            totalCalls: apiCallCounter,
+            errorRate: securityLogger.getErrorRate(),
+            timestamp: new Date().toISOString(),
+        }));
+    }
+}
+
+function logSecurityRequest(request: Request, url: URL, response: Response): void {
+    if (!url.pathname.startsWith('/api/')) {
+        return;
+    }
+
+    const entry = securityLogger.logRequest({
+        path: url.pathname,
+        status: response.status,
+        method: request.method,
+    }) as SecurityLogEntry;
+
+    if (entry.isError) {
+        console.warn('Security Request Error:', JSON.stringify({
+            timestamp: entry.timestamp,
+            path: entry.path,
+            status: entry.status,
+            method: entry.method,
+        }));
+    }
+
+    logApiCallStats(url);
+}
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
+        let response: Response;
 
         if (url.pathname === '/api/health') {
-            return handleHealthRequest(request, env);
+            response = await handleHealthRequest(request, env);
+        } else {
+            response = await handleViewCounterRequest(request, env);
         }
 
-        return handleViewCounterRequest(request, env);
+        logSecurityRequest(request, url, response);
+        return response;
     },
 };

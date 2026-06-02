@@ -32,8 +32,7 @@ export { CONTENT_TYPES, TYPE_PRIORITY, compareContentItems, isFreshDate, parseDa
 export function blogEntryToItem(entry: CollectionEntry<'blog'>): ContentItem {
     const automaticStats = computeReadingStats(entry.body);
     const readTimeDisplay = entry.data.readTime || automaticStats.readTimeDisplay;
-
-    return {
+    const item: ContentItem = {
         id: entry.id,
         type: 'article',
         title: entry.data.title,
@@ -43,7 +42,6 @@ export function blogEntryToItem(entry: CollectionEntry<'blog'>): ContentItem {
         tags: entry.data.tags,
         category: entry.data.category,
         featured: Boolean(entry.data.featured),
-        status: entry.data.status,
         readingStats: {
             ...automaticStats,
             readTimeDisplay,
@@ -52,13 +50,19 @@ export function blogEntryToItem(entry: CollectionEntry<'blog'>): ContentItem {
             isManualReadTime: Boolean(entry.data.readTime),
         },
     };
+
+    if (entry.data.status) {
+        item.status = entry.data.status;
+    }
+
+    return item;
 }
 
 export function dataEntryToItem(
     type: Exclude<ContentType, 'article'>,
     entry: CollectionEntry<'works'> | CollectionEntry<'tools'> | CollectionEntry<'updates'>,
 ): ContentItem {
-    return {
+    const item: ContentItem = {
         id: entry.id,
         type,
         title: entry.data.title,
@@ -68,9 +72,17 @@ export function dataEntryToItem(
         tags: entry.data.tags,
         category: entry.data.category,
         featured: Boolean(entry.data.featured),
-        externalUrl: 'externalUrl' in entry.data ? entry.data.externalUrl : undefined,
-        status: entry.data.status,
     };
+
+    if ('externalUrl' in entry.data && entry.data.externalUrl) {
+        item.externalUrl = entry.data.externalUrl;
+    }
+
+    if (entry.data.status) {
+        item.status = entry.data.status;
+    }
+
+    return item;
 }
 
 export function getUniqueValues(values: string[]): string[] {

@@ -10,7 +10,7 @@ export async function GET(context: APIContext) {
     return rss({
         title: 'Mr.Xia - 个人小站',
         description: 'Mr.Xia的个人网站 - 记录生活、技术与思考',
-        site: context.site,
+        site: context.site ?? new URL('https://calvin-xia.cn'),
         items,
         customData: createRssChannelCustomData(items),
     });

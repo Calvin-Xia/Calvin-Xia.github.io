@@ -61,7 +61,8 @@ export function initButtonRipples(): void {
         return;
     }
 
-    rippleAbortController = new AbortController();
+    const cleanupController = new AbortController();
+    rippleAbortController = cleanupController;
 
     document.querySelectorAll<HTMLElement>('.btn').forEach((button) => {
         button.addEventListener(
@@ -80,7 +81,7 @@ export function initButtonRipples(): void {
                 button.appendChild(ripple);
                 window.setTimeout(() => ripple.remove(), 600);
             },
-            { signal: rippleAbortController.signal },
+            { signal: cleanupController.signal },
         );
     });
 }

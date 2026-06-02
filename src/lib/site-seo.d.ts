@@ -12,7 +12,7 @@ export interface RssSourceEntry {
         excerpt: string;
         category: string;
         tags: string[];
-        status?: string;
+        status?: string | undefined;
     };
 }
 

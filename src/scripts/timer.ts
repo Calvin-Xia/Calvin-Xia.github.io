@@ -230,7 +230,8 @@ export const Timer = {
         this.updateProgress(totalElapsed);
     },
 
-    updateProgress(elapsedTime = this.elapsedTime) {
+    updateProgress(elapsedTime?: number) {
+        const currentElapsedTime = elapsedTime ?? this.elapsedTime;
         const { progressBar, progressText } = this.cachedElements;
         if (!progressBar || !progressText) {
             return;
@@ -238,11 +239,11 @@ export const Timer = {
 
         if (this.targetTime <= 0) {
             progressBar.style.width = '0%';
-            progressText.textContent = t('timer.elapsed', { time: this.formatTime(Math.floor(elapsedTime / 1000)) });
+            progressText.textContent = t('timer.elapsed', { time: this.formatTime(Math.floor(currentElapsedTime / 1000)) });
             return;
         }
 
-        const progress = Math.min(100, Math.floor((elapsedTime / this.targetTime) * 100));
+        const progress = Math.min(100, Math.floor((currentElapsedTime / this.targetTime) * 100));
         progressBar.style.width = `${progress}%`;
         progressText.textContent = t('timer.completed', { progress });
     },

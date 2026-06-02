@@ -10,7 +10,7 @@ import {
 import { buildSearchIndex, type SearchEntry } from '../lib/search-index-builder.ts';
 
 function itemToSearchEntry(item: ContentItem): SearchEntry {
-    return {
+    const entry: SearchEntry = {
         id: item.id,
         type: item.type,
         title: item.title,
@@ -20,13 +20,16 @@ function itemToSearchEntry(item: ContentItem): SearchEntry {
         date: item.date,
         filePath: item.filePath,
         typeLabel: CONTENT_TYPES[item.type]?.label || '',
-        readingStats: item.readingStats
-            ? {
-                wordCountDisplay: item.readingStats.wordCountDisplay,
-                readTimeDisplay: item.readingStats.readTimeDisplay,
-            }
-            : undefined,
     };
+
+    if (item.readingStats) {
+        entry.readingStats = {
+            wordCountDisplay: item.readingStats.wordCountDisplay,
+            readTimeDisplay: item.readingStats.readTimeDisplay,
+        };
+    }
+
+    return entry;
 }
 
 export const GET: APIRoute = async () => {
