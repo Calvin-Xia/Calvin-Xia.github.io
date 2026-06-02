@@ -27,7 +27,8 @@ interface SecurityAlert {
 }
 
 const API_STATS_INTERVAL = 100;
-const securityLogger = new SecurityLogger({ alertThreshold: 0.1 });
+const securityLogger = new SecurityLogger({ alertThreshold: 0.1, maxSize: 1000 });
+let apiCallCounter = 0;
 
 securityLogger.onAlert((alert: SecurityAlert) => {
     console.warn('Security Alert:', JSON.stringify(alert));
@@ -99,13 +100,11 @@ function logApiCallStats(url: URL): void {
         return;
     }
 
-    const apiCalls = securityLogger.getLogs().filter(
-        (log: SecurityLogEntry) => log.path.startsWith('/api/'),
-    ).length;
+    apiCallCounter += 1;
 
-    if (apiCalls > 0 && apiCalls % API_STATS_INTERVAL === 0) {
+    if (apiCallCounter > 0 && apiCallCounter % API_STATS_INTERVAL === 0) {
         console.log('API Call Stats:', JSON.stringify({
-            totalCalls: apiCalls,
+            totalCalls: apiCallCounter,
             errorRate: securityLogger.getErrorRate(),
             timestamp: new Date().toISOString(),
         }));
@@ -113,6 +112,10 @@ function logApiCallStats(url: URL): void {
 }
 
 function logSecurityRequest(request: Request, url: URL, response: Response): void {
+    if (!url.pathname.startsWith('/api/')) {
+        return;
+    }
+
     const entry = securityLogger.logRequest({
         path: url.pathname,
         status: response.status,

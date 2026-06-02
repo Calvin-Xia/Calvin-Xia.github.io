@@ -1,8 +1,10 @@
 export class SecurityLogger {
     constructor(options = {}) {
         this.logs = [];
+        this.maxSize = options.maxSize || 1000;
         this.alertThreshold = options.alertThreshold || 0.1;
         this.alertCallback = null;
+        this.alertFired = false;
     }
 
     logRequest({ path, status, method }) {
@@ -13,6 +15,11 @@ export class SecurityLogger {
             method,
             isError: status >= 400,
         };
+
+        if (this.logs.length >= this.maxSize) {
+            this.logs.shift();
+        }
+
         this.logs.push(entry);
         this.checkAlert();
         return entry;
@@ -33,17 +40,27 @@ export class SecurityLogger {
     }
 
     checkAlert() {
-        if (this.alertCallback && this.getErrorRate() > this.alertThreshold) {
+        if (!this.alertCallback) {
+            return;
+        }
+
+        const errorRate = this.getErrorRate();
+
+        if (errorRate > this.alertThreshold && !this.alertFired) {
+            this.alertFired = true;
             this.alertCallback({
-                errorRate: this.getErrorRate(),
+                errorRate,
                 threshold: this.alertThreshold,
                 totalRequests: this.logs.length,
                 errorRequests: this.logs.filter((log) => log.isError).length,
             });
+        } else if (errorRate <= this.alertThreshold) {
+            this.alertFired = false;
         }
     }
 
     reset() {
         this.logs = [];
+        this.alertFired = false;
     }
 }

@@ -36,6 +36,74 @@ describe('SecurityLogger', () => {
 
         assert.ok(alertTriggered);
     });
+
+    it('should evict oldest entries when maxSize is reached', () => {
+        const logger = new SecurityLogger({ maxSize: 5 });
+
+        for (let i = 0; i < 7; i++) {
+            logger.logRequest({ path: `/api/test/${i}`, status: 200, method: 'GET' });
+        }
+
+        const logs = logger.getLogs();
+        assert.equal(logs.length, 5);
+        assert.equal(logs[0].path, '/api/test/2');
+        assert.equal(logs[4].path, '/api/test/6');
+    });
+
+    it('should fire alert only once until error rate drops below threshold', () => {
+        const logger = new SecurityLogger({ alertThreshold: 0.1 });
+        let alertCount = 0;
+        logger.onAlert(() => {
+            alertCount += 1;
+        });
+
+        for (let i = 0; i < 4; i++) {
+            logger.logRequest({ path: '/api/views/test', status: 200, method: 'GET' });
+        }
+        logger.logRequest({ path: '/api/views/test', status: 500, method: 'GET' });
+
+        assert.equal(alertCount, 1);
+
+        logger.logRequest({ path: '/api/views/test', status: 500, method: 'GET' });
+        logger.logRequest({ path: '/api/views/test', status: 500, method: 'GET' });
+
+        assert.equal(alertCount, 1);
+
+        for (let i = 0; i < 40; i++) {
+            logger.logRequest({ path: '/api/views/test', status: 200, method: 'GET' });
+        }
+
+        logger.logRequest({ path: '/api/views/test', status: 500, method: 'GET' });
+        logger.logRequest({ path: '/api/views/test', status: 500, method: 'GET' });
+
+        assert.equal(alertCount, 2);
+    });
+
+    it('should reset alertFired flag on reset()', () => {
+        const logger = new SecurityLogger({ alertThreshold: 0.1 });
+        let alertCount = 0;
+        logger.onAlert(() => {
+            alertCount += 1;
+        });
+
+        // Trigger alert
+        for (let i = 0; i < 4; i++) {
+            logger.logRequest({ path: '/api/views/test', status: 200, method: 'GET' });
+        }
+        logger.logRequest({ path: '/api/views/test', status: 500, method: 'GET' });
+        assert.equal(alertCount, 1);
+
+        // Reset
+        logger.reset();
+
+        // Trigger alert again
+        for (let i = 0; i < 4; i++) {
+            logger.logRequest({ path: '/api/views/test', status: 200, method: 'GET' });
+        }
+        logger.logRequest({ path: '/api/views/test', status: 500, method: 'GET' });
+
+        assert.equal(alertCount, 2);
+    });
 });
 
 async function importFreshWorker(label) {
