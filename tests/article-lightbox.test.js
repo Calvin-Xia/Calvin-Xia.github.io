@@ -205,6 +205,8 @@ describe('article image lightbox', () => {
         assert.equal(dialog.getAttribute('role'), 'dialog');
         assert.equal(dialog.getAttribute('aria-modal'), 'true');
         assert.equal(dialog.getAttribute('aria-label'), '图片查看器');
+        assert.equal(dialog.getAttribute('aria-describedby'), 'article-lightbox-caption');
+        assert.equal(dialog.querySelector('.article-lightbox__caption').getAttribute('id'), 'article-lightbox-caption');
         assert.equal(renderedImage.getAttribute('alt'), '文章图片');
     });
 

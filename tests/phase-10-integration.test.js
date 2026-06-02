@@ -14,6 +14,7 @@ describe('Phase 10 article experience integration', () => {
         const component = readProjectFile('src', 'components', 'ArticleToc.astro');
 
         assert.match(component, /id="article-toc-panel"/);
+        assert.match(component, /role="complementary"/);
         assert.match(component, /data-article-toc-toggle/);
         assert.match(component, /aria-controls="article-toc-panel"/);
         assert.match(component, /aria-expanded="false"/);

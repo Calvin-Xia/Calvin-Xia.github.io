@@ -309,11 +309,13 @@ export function createLightboxController({ documentRef = document } = {}) {
         dialog.setAttribute('aria-label', t('articleEnhancements.lightboxAria'));
         dialog.setAttribute('aria-modal', 'true');
         dialog.setAttribute('aria-keyshortcuts', 'Escape ArrowLeft ArrowRight + -');
+        dialog.setAttribute('aria-describedby', 'article-lightbox-caption');
         frame.classList.add('article-lightbox__frame');
         toolbar.classList.add('article-lightbox__toolbar');
         figure.classList.add('article-lightbox__figure');
         image.classList.add('article-lightbox__image');
         caption.classList.add('article-lightbox__caption');
+        caption.setAttribute('id', 'article-lightbox-caption');
 
         toolbar.append(previousButton, zoomOutButton, resetButton, zoomInButton, nextButton, closeButton);
         figure.append(image, caption);
