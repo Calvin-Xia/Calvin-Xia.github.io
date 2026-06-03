@@ -1337,6 +1337,67 @@ select:disabled {
     display: grid;
 }
 
+.search-history-container:empty {
+    display: none;
+}
+
+.search-history {
+    display: grid;
+    gap: 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+    background: var(--surface);
+    box-shadow: var(--shadow-subtle);
+}
+
+.search-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.search-history-clear {
+    min-height: 32px;
+    border: 0;
+    padding: 0 0.25rem;
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.875rem;
+}
+
+.search-history-clear:hover {
+    background: transparent;
+    color: var(--accent-hover);
+    transform: none;
+}
+
+.search-history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.search-history-item {
+    min-height: 36px;
+    border-color: var(--border-muted);
+    border-radius: var(--radius-pill);
+    padding: 0.35rem 0.72rem;
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.search-history-item:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
 .suggestion-item {
     padding: 0.75rem 0.9rem;
     border-bottom: 1px solid var(--border-muted);
@@ -1430,6 +1491,40 @@ select:disabled {
 
 .blog-card-excerpt {
     color: var(--text-secondary);
+}
+
+.search-result {
+    padding: clamp(1rem, 3vw, 1.35rem);
+}
+
+.search-result-title {
+    margin: 0;
+    font-size: 1.18rem;
+}
+
+.search-result-title mark,
+.search-result-excerpt mark,
+.search-highlight {
+    border-radius: var(--radius-xs);
+    padding: 0.08rem 0.18rem;
+    background: var(--mark-bg);
+    color: var(--text);
+}
+
+.search-result-meta {
+    gap: 0.65rem;
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+}
+
+.search-result-excerpt {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.search-result-date {
+    color: var(--text-tertiary);
 }
 
 .blog-card-meta,

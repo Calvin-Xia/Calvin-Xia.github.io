@@ -1,45 +1,35 @@
 import MiniSearch, { type Options } from 'minisearch';
+import { cut_for_search } from 'jieba-wasm/node';
 
-export type SearchEntryType = 'blog' | 'works' | 'tools' | 'updates' | 'article' | 'work' | 'tool' | 'update-log';
+import { searchIndexOptions } from './search-index-options.ts';
+import { tokenizeSearchText } from './search-tokenizer.ts';
+export { searchIndexOptions };
+export type { SearchEntry, SearchEntryType } from './search-types.ts';
+import type { SearchEntry } from './search-types.ts';
 
-export interface SearchEntry {
-    id: string;
-    type: SearchEntryType;
-    title: string;
-    excerpt: string;
-    category: string;
-    tags: string[];
-    date: string;
-    filePath: string;
-    typeLabel: string;
-    readingStats?: {
-        wordCountDisplay: string;
-        readTimeDisplay: string;
-    };
+function tokenizeWithJieba(text: string): string[] {
+    const terms = new Set(tokenizeSearchText(text));
+
+    for (const term of cut_for_search(String(text || ''), true)) {
+        for (const token of tokenizeSearchText(term)) {
+            terms.add(token);
+        }
+    }
+
+    return Array.from(terms);
 }
 
-export const searchIndexOptions: Options<SearchEntry> = {
-    fields: ['title', 'excerpt', 'category', 'tags', 'typeLabel'],
-    storeFields: [
-        'id',
-        'type',
-        'title',
-        'excerpt',
-        'category',
-        'tags',
-        'date',
-        'filePath',
-        'typeLabel',
-        'readingStats',
-    ],
+const buildSearchIndexOptions: Options<SearchEntry> = {
+    ...searchIndexOptions,
+    tokenize: tokenizeWithJieba,
     searchOptions: {
-        boost: { title: 6, tags: 4, excerpt: 3, category: 2, typeLabel: 1 },
-        prefix: true,
+        ...searchIndexOptions.searchOptions,
+        tokenize: tokenizeWithJieba,
     },
 };
 
 export function buildSearchIndex(entries: SearchEntry[]): string {
-    const miniSearch = new MiniSearch<SearchEntry>(searchIndexOptions);
+    const miniSearch = new MiniSearch<SearchEntry>(buildSearchIndexOptions);
     miniSearch.addAll(entries);
 
     return JSON.stringify({
