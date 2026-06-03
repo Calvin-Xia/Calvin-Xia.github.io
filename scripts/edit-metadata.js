@@ -24,6 +24,16 @@ function cleanString(value) {
     return String(value ?? '').trim();
 }
 
+function stripUndefined(obj) {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+            result[key] = value;
+        }
+    }
+    return result;
+}
+
 function normalizeTags(tags) {
     if (Array.isArray(tags)) {
         return tags.map(cleanString).filter(Boolean);
@@ -62,7 +72,8 @@ export function normalizePostMetadata(metadata) {
     normalized.date = cleanString(source.date);
     normalized.excerpt = cleanString(source.excerpt);
     normalized.category = cleanString(source.category);
-    normalized.tags = normalizeTags(source.tags);
+    const tags = normalizeTags(source.tags);
+    normalized.tags = tags.length > 0 ? tags : ['未分类'];
 
     const featured = normalizeFeatured(source.featured);
     if (featured === undefined) {
@@ -159,7 +170,8 @@ export async function writePostMetadataAtomic(filePath, metadata, {
     tempPath = createTempPath(filePath),
 } = {}) {
     const current = await readPostMetadata(filePath, { readFile });
-    const validation = validatePostMetadata({ ...current.metadata, ...metadata }, { skipValidation });
+    const merged = { ...current.metadata, ...stripUndefined(metadata) };
+    const validation = validatePostMetadata(merged, { skipValidation });
 
     if (validation.errors) {
         throw createValidationError(validation.errors);

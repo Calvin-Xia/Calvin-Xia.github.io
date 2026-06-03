@@ -280,4 +280,58 @@ describe('edit metadata CLI helpers', () => {
             help: true,
         });
     });
+
+    test('normalizePostMetadata defaults empty tags to uncategorized', () => {
+        const withEmptyArray = validatePostMetadata({
+            title: '标题',
+            date: '2026-06-01',
+            category: '随笔',
+            tags: [],
+        });
+        assert.equal(withEmptyArray.errors, null);
+        assert.deepEqual(withEmptyArray.value.tags, ['未分类']);
+
+        const withEmptyString = validatePostMetadata({
+            title: '标题',
+            date: '2026-06-01',
+            category: '随笔',
+            tags: '',
+        });
+        assert.equal(withEmptyString.errors, null);
+        assert.deepEqual(withEmptyString.value.tags, ['未分类']);
+    });
+
+    test('writePostMetadataAtomic allows clearing optional fields', async () => {
+        const filePath = await createTempPost([
+            '---',
+            'title: "旧标题"',
+            'date: "2026-06-01"',
+            'excerpt: "旧摘要"',
+            'category: "随笔"',
+            'tags:',
+            '  - "标签"',
+            'author: "旧作者"',
+            'readTime: "5 min"',
+            'status: "published"',
+            '---',
+            '',
+            '# 正文',
+            '',
+        ].join('\n'));
+
+        const result = await writePostMetadataAtomic(filePath, {
+            author: '',
+            readTime: '',
+            status: '',
+        });
+
+        assert.equal(result.metadata.author, undefined);
+        assert.equal(result.metadata.readTime, undefined);
+        assert.equal(result.metadata.status, undefined);
+
+        const updated = await readFile(filePath, 'utf8');
+        assert.ok(!updated.includes('author:'), 'author should be removed from frontmatter');
+        assert.ok(!updated.includes('readTime:'), 'readTime should be removed from frontmatter');
+        assert.ok(!updated.includes('status:'), 'status should be removed from frontmatter');
+    });
 });
