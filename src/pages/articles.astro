@@ -20,13 +20,8 @@ const [blogEntries, workEntries, toolEntries] = await Promise.all([
 
 const articles = blogEntries.map(blogEntryToItem).sort(compareContentItems);
 const searchableTypes = ['article', 'work', 'tool'];
-const searchFilterItems = [
-    ...articles,
-    ...workEntries.map((entry) => dataEntryToItem('work', entry)),
-    ...toolEntries.map((entry) => dataEntryToItem('tool', entry)),
-];
-const categories = getUniqueValues(searchFilterItems.map((item) => item.category));
-const tags = getUniqueValues(searchFilterItems.flatMap((item) => item.tags));
+const categories = getUniqueValues(articles.map((item) => item.category));
+const tags = getUniqueValues(articles.flatMap((item) => item.tags));
 
 const payload = {
     articles,
@@ -751,6 +746,7 @@ const payload = {
                 hideSearchHistory();
 
                 if (!query) {
+                    debouncedShowSuggestions.cancel();
                     hideSuggestions();
                     restoreArticleView();
                     showSearchHistory();

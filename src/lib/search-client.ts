@@ -202,10 +202,10 @@ export function filterSearchResults(
 export function debounce<T extends (...args: never[]) => unknown>(
     func: T,
     wait: number,
-): (...args: Parameters<T>) => void {
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
     let timeout: ReturnType<typeof setTimeout> | undefined;
 
-    return (...args: Parameters<T>) => {
+    const debounced = (...args: Parameters<T>) => {
         if (timeout) {
             clearTimeout(timeout);
         }
@@ -214,6 +214,15 @@ export function debounce<T extends (...args: never[]) => unknown>(
             func(...args);
         }, wait);
     };
+
+    debounced.cancel = () => {
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = undefined;
+        }
+    };
+
+    return debounced;
 }
 
 export function getSearchHistory(): string[] {
