@@ -1,6 +1,6 @@
 # 站点维护与界面更新说明
 
-这份文档描述 Astro 迁移完成后的站点维护方式。Phase 0-8 已完成，所有内容维护入口通过 Astro 内容集合、翻译 JSON 和 npm 脚本进行，旧 HTML/JSON/Python 管线已移除。Phase 5 补上了 RSS/sitemap/giscus 评论区，Phase 6 补上了字数字阅读时间、归档页和文章浏览量 Worker 代理，Phase 7 补上了 MiniSearch 懒加载搜索和 Worker 健康检查，Phase 7.5 补上了本地图标 WebP 降级和工具页 PWA，Phase 8 补上了 UI 国际化。Phase 2.5 的图片灯箱、标题锚点、目录、阅读进度、逐段渐显和 TeX 渲染仍集中维护在文章增强模块中。
+这份文档描述 Astro 迁移完成后的站点维护方式。Phase 0-12 已完成，所有内容维护入口通过 Astro 内容集合、翻译 JSON 和 npm 脚本进行，旧 HTML/JSON/Python 管线已移除。Phase 5 补上了 RSS/sitemap/giscus 评论区，Phase 6 补上了字数字阅读时间、归档页和文章浏览量 Worker 代理，Phase 7 补上了 MiniSearch 懒加载搜索和 Worker 健康检查，Phase 7.5 补上了本地图标 WebP 降级和工具页 PWA，Phase 8 补上了 UI 国际化，Phase 9 补上安全监控与 CI 质量检查，Phase 10 补上移动端/可访问性/选择工具栏文章体验，Phase 11 补上中文搜索增强，Phase 12 补上单篇文章元数据编辑 CLI。
 
 ## 当前内容结构
 
@@ -21,7 +21,8 @@ Astro 内容集合：
 辅助脚本：
 
 - `tools/api-server.js`：本地 `/new-post/` API
-- `scripts/publish-post.js`：Obsidian→R2 发布管线
+- `scripts/publish-post.js`：Obsidian→R2 发布管线，标签留空时默认写入 `未分类`
+- `scripts/edit-metadata.js`：交互式编辑单篇 Markdown frontmatter，Zod 验证并原子写入
 - `scripts/post-utils.js`、`scripts/markdown-utils.js`、`scripts/slug.js`、`scripts/content-types.js`：发布和文件操作工具
 
 Worker：
@@ -29,6 +30,7 @@ Worker：
 - `src/worker.ts`：Cloudflare Worker 入口，代理 Umami API 实现文章浏览量
 - `src/lib/umami-view-counter.js`：Umami API 代理核心逻辑
 - `src/lib/health-check.js`：Worker `/api/health` 健康检查逻辑
+- `src/lib/security-logger.js`：API 调用频率、4xx/5xx 和高错误率告警记录
 - `wrangler.jsonc`：Wrangler 部署配置（Worker 入口、ASSETS binding）
 - `.dev.vars.example`：本地 Worker secret 占位模板（`UMAMI_API_KEY`、`HEALTH_CHECK_TOKEN`）
 
@@ -36,9 +38,9 @@ Worker：
 
 - `word-count.js`：字数统计与阅读时间自动计算
 - `archive.js`：归档数据按年份分组
-- `search-index-builder.ts`：构建 MiniSearch 序列化索引
-- `search-client.ts`：客户端懒加载搜索索引并执行搜索
-- `article-enhancements/`：图片灯箱、标题锚点、目录、阅读进度、逐段渐显
+- `search-index-builder.ts`：构建 MiniSearch 序列化索引并接入 `jieba-wasm` 中文分词
+- `search-client.ts`：客户端懒加载搜索索引，提供高亮、过滤、防抖和搜索历史
+- `article-enhancements/`：图片灯箱、标题锚点、目录、阅读进度、逐段渐显、选择工具栏
 - `site-seo.js`：共享 SEO helpers（RSS/sitemap/OG 等）
 
 工具页 PWA：
@@ -54,15 +56,16 @@ Worker：
 - 文章页 `/articles/`
   - 默认展示 blog 集合文章。
   - 每张卡片展示自动计算的字数（如 "约 3,500 字"）和阅读时间。
-  - 搜索索引由 `/search-index.json` 提供，客户端首次搜索时懒加载 MiniSearch 索引。
+  - 搜索索引由 `/search-index.json` 提供，客户端首次搜索时懒加载 MiniSearch 索引；中文分词由 `jieba-wasm` 增强。
   - 搜索范围由构建时 payload 的 `searchableTypes` 控制，目前包括 article、work、tool。
+  - 搜索结果显示标题、日期、片段和关键词高亮；输入防抖执行，最近 10 条搜索历史保存在 localStorage。
   - 搜索、分类和标签状态通过 URL 参数 `q`、`category`、`tag` 持久化。
   - 上方有 "文章归档" 入口链接到 `/articles/archive/`。
 - 文章详情 `/articles/{slug}/`
   - 从 `src/content/blog/*.md` 静态生成。
   - meta 区域展示字数和阅读时间（frontmatter 手动 `readTime` 优先）。
   - 图片 `alt` 会渲染为灰色说明文字。
-  - 图片灯箱、标题锚点、目录、阅读进度、逐段渐显和 TeX 公式渲染由 `src/lib/article-enhancements/` 运行时增强。
+  - 图片灯箱、标题锚点、目录、阅读进度、逐段渐显、选择工具栏和 TeX 公式渲染由 `src/lib/article-enhancements/` 运行时增强。
   - 底部显示 giscus 评论区（基于 GitHub Discussions，懒加载）。
   - 文章卡片底部显示 Umami 浏览量（Worker 代理）。
   - `/articles/` ↔ `/articles/{slug}/` 使用 Astro `ClientRouter`/View Transitions 方向性动画，返回时恢复滚动位置和搜索状态。
@@ -118,6 +121,22 @@ npm run build
 
 发布脚本只修改仓库中的 Markdown 副本，不修改 Obsidian vault 原始内容。
 
+标签提示为空时，发布脚本会默认写入 `未分类`，避免生成空的 `tags:` frontmatter。
+
+## 编辑文章元数据
+
+单篇文章 frontmatter 可通过 CLI 修改：
+
+```bash
+npm run edit-metadata -- src/content/blog/20260503-labors-day.md
+```
+
+该工具要求目标 Markdown 已有 frontmatter。它会交互式修改标题、日期、摘要、分类、标签等字段，默认使用 Zod 验证，保存时写入同目录临时文件后 rename。确需绕过验证时：
+
+```bash
+npm run edit-metadata -- --skip-validation src/content/blog/20260503-labors-day.md
+```
+
 ## 本地快速创建文章
 
 1. 运行本地 API：
@@ -169,6 +188,7 @@ npm run build
 
 ```bash
 npm test
+npm run lint
 npm run build
 git diff --check
 ```
@@ -209,14 +229,25 @@ npm run test:coverage
 
 若浏览量不显示，检查 `npx wrangler secret list` 确认 `UMAMI_API_KEY` 已注入。
 
-### 搜索索引（Phase 7）
+### 安全监控与代码质量（Phase 9）
+
+Worker 安全监控集中在 `src/lib/security-logger.js` 和 `src/worker.ts`：
+
+- API 响应为 4xx/5xx 时记录经过清洗的错误信息
+- 每 100 次 API 调用输出一次统计
+- 错误率超过阈值时触发告警回调
+- 日志不得包含 `UMAMI_API_KEY`、`HEALTH_CHECK_TOKEN` 或请求鉴权 token
+
+代码质量检查集中在 `eslint.config.js`、`tsconfig.json` 和 `astro-build-check.yml`。常规开发可用 `npm run lint`、`npx astro sync`、`npx tsc --noEmit` 本地复现 CI 质量步骤。
+
+### 搜索索引（Phase 7 / Phase 11）
 
 文章页搜索由构建时 MiniSearch 索引驱动：
 
 - `src/pages/search-index.json.ts` 生成 `/search-index.json`
-- `src/lib/search-index-builder.ts` 定义索引字段、存储字段和权重
-- `src/lib/search-client.ts` 首次搜索时懒加载索引，后续复用同一个 MiniSearch 实例
-- `src/pages/articles.astro` 负责筛选 UI、建议下拉、URL 参数同步和结果渲染
+- `src/lib/search-index-builder.ts` 定义索引字段、存储字段、权重和 `jieba-wasm` 中文分词
+- `src/lib/search-client.ts` 首次搜索时懒加载索引，后续复用同一个 MiniSearch 实例，并负责高亮、分类/标签过滤、防抖和搜索历史
+- `src/pages/articles.astro` 负责筛选 UI、历史/建议下拉、URL 参数同步和结果渲染
 
 新增可搜索内容类型时，需同时更新共享内容映射、索引构建逻辑、客户端过滤逻辑和测试。
 
@@ -263,7 +294,7 @@ UI 国际化使用自定义轻量实现，不引入路由级 `/en`：
 - 备案文字和公安备案图标 alt 保持中文，不挂 `data-i18n`。
 - Header 移动端要保留 44px 触达目标，并避免英文导航与语言/主题按钮重叠。
 
-### 文章体验增强（Phase 2.5）
+### 文章体验增强（Phase 2.5 / Phase 10）
 
 集中维护在 `src/lib/article-enhancements/`，运行时入口为 `src/scripts/article-runtime.js`：
 
@@ -271,13 +302,25 @@ UI 国际化使用自定义轻量实现，不引入路由级 `/en`：
 - 标题锚点：`heading-index.js`，构建期生成稳定 id 和 `#` 锚点
 - 目录与进度：`reading-progress.js`，`IntersectionObserver` 高亮当前章节
 - 逐段渐显：`section-reveals.js`，段落和图片滚动进入视口时淡入
+- 选择工具栏：`selection-toolbar.js`，选中文本后提供复制和分享入口
 - 样式在 `src/styles/global.css`，目录容器在 `src/components/ArticleToc.astro`
 
-修改增强行为时，需同时运行 `npm test`（含 `phase-2-5-integration.test.js`）并在桌面/移动端验证。
+移动端 TOC 保持右侧 wiki 侧边栏姿态，灯箱支持 1x-4x 缩放、左右箭头、Escape、+/- 和焦点恢复。修改增强行为时，需同时运行 `npm test`（含 `phase-2-5-integration.test.js`、`phase-10-integration.test.js`）并在桌面/移动端验证。
+
+### 内容管理 CLI（Phase 12）
+
+`scripts/edit-metadata.js` 是单篇文章元数据编辑工具，测试在 `tests/edit-metadata.test.js`。维护要点：
+
+- 读取和写入 frontmatter 使用 `gray-matter`
+- 修改后的元数据使用 Zod 验证
+- 写入使用临时文件 + rename，失败时清理临时文件
+- `metadata-editor-check.yml` 会在相关文件变更时验证 CLI 测试和 help 入口
+
+发布流程标签默认值修复位于 `scripts/publish-post.js` 与 `scripts/post-utils.js`，对应测试在 `tests/publish-post.test.js` 和 `tests/post-utils.test.js`。
 
 ## CI
 
 - `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages
-- `content-check.yml`：push/PR 时运行 `npm ci && npm run build` 验证构建
-- `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出
+- `astro-build-check.yml`：安装依赖，运行测试、覆盖率、内容结构检查、ESLint、Astro 类型生成、TypeScript 检查、构建和关键静态输出验证
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
+- `metadata-editor-check.yml`：当元数据编辑 CLI、测试或依赖变更时，运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口

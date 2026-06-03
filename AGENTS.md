@@ -1,11 +1,11 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-05-31
-**Branch:** main
+**Generated:** 2026-06-03
+**Branch:** codex-phase-12-content-management
 
 ## OVERVIEW
 
-Astro v6 static personal site (blog, works, tools, updates). Cloudflare Worker proxies article view counts via Umami and exposes `/api/health`. Article search uses a build-time MiniSearch index. `/works/tools/` has a scoped PWA Service Worker. UI text is internationalized with local JSON dictionaries. Deployed to GitHub Pages.
+Astro v6 static personal site (blog, works, tools, updates). Cloudflare Worker proxies article view counts via Umami, exposes `/api/health`, and records basic security telemetry for API errors/rates. Article search uses a build-time MiniSearch index with `jieba-wasm` Chinese tokenization, result highlighting, history, debounce, and filters. `/works/tools/` has a scoped PWA Service Worker. UI text is internationalized with local JSON dictionaries. Content maintenance includes Obsidian → R2 publishing and a single-file metadata editor CLI. Deployed to GitHub Pages; Worker deploy remains manual.
 
 ## STRUCTURE
 
@@ -22,11 +22,11 @@ Calvin-Xia.github.io/
 │   ├── scripts/          # Client-side JS/TS (article runtime, view counter)
 │   ├── styles/           # global.css (design tokens + components)
 │   └── worker.ts         # Cloudflare Worker entry (view counter + health API)
-├── scripts/              # Publish pipeline (Obsidian → R2)
-├── tests/                # Node built-in test runner (18 test files)
+├── scripts/              # Publish pipeline + metadata editor CLI
+├── tests/                # Node built-in test runner (34 test files)
 ├── tools/                # Local API server (new-post)
 ├── public/               # Static assets, PWA manifest/SW, CDN content, legacy redirects
-├── .github/workflows/    # CI: deploy, content-check, astro-build-check
+├── .github/workflows/    # CI: deploy, astro-build-check, phase-2-content-check, metadata-editor-check
 ├── astro.config.mjs      # Astro config (site, markdown, Vite proxy)
 ├── wrangler.jsonc         # Cloudflare Worker config
 ├── DESIGN.md             # Visual/interaction spec (1028 lines)
@@ -44,16 +44,18 @@ Calvin-Xia.github.io/
 | Edit page routes | `src/pages/*.astro` | File-based routing |
 | Client-side scripts | `src/scripts/` | article-runtime.js is main entry |
 | Article enhancements | `src/lib/article-enhancements/` | Lightbox, TOC, progress, reveals |
-| Search index | `src/lib/search-index-builder.ts`, `src/lib/search-client.ts`, `src/pages/search-index.json.ts` | Build-time MiniSearch JSON + lazy client loading |
+| Search index | `src/lib/search-index-builder.ts`, `src/lib/search-client.ts`, `src/pages/search-index.json.ts` | Build-time MiniSearch JSON + jieba-wasm + lazy client loading |
 | Internationalization | `src/i18n/*.json`, `src/lib/i18n.ts` | UI translations only; content collections stay Chinese |
 | SEO/helpers | `src/lib/site-seo.js` | Sitemap, meta helpers |
 | Remark plugins | `src/lib/remark-*.js` | Markdown build-time transforms |
 | Content schema | `src/content.config.ts` | Zod validation |
 | Global styles | `src/styles/global.css` | CSS variables, design tokens |
-| Publish pipeline | `scripts/publish-post.js` | Obsidian → Astro + R2 |
+| Publish pipeline | `scripts/publish-post.js` | Obsidian → Astro + R2; blank tags default to `未分类` |
+| Metadata editor CLI | `scripts/edit-metadata.js` | Single Markdown frontmatter editor with Zod validation + atomic write |
 | Tests | `tests/*.test.js` | Node built-in runner |
 | CI workflows | `.github/workflows/` | 4 workflows |
-| Worker entry | `src/worker.ts` | Umami view counter proxy + `/api/health` |
+| Worker entry | `src/worker.ts` | Umami view counter proxy + `/api/health` + security logging |
+| Security logger | `src/lib/security-logger.js` | API rate/error tracking and alert callbacks |
 | Tool PWA | `public/manifest.json`, `public/sw-tools.js` | Scoped to `/works/tools/` only |
 | Design spec | `DESIGN.md` | Visual/interaction rules |
 
@@ -79,7 +81,7 @@ Calvin-Xia.github.io/
 
 **Fonts**: Noto Serif SC (headings), Noto Sans SC + Inter (body), JetBrains Mono (code). NEVER: Orbitron, Caveat, Playfair Display.
 
-**Dependencies**: MiniSearch is used for search. No GSAP, ScrollTrigger, Lenis, Three.js, custom cursor. CSS + vanilla JS + IntersectionObserver only.
+**Dependencies**: MiniSearch + jieba-wasm are used for search. gray-matter + prompts + Zod are used by the metadata editor CLI. No GSAP, ScrollTrigger, Lenis, Three.js, custom cursor. CSS + vanilla JS + IntersectionObserver only.
 
 **Accessibility**: Never hide focus rings. Touch targets ≥44px. Respect `prefers-reduced-motion`.
 
@@ -94,7 +96,7 @@ Calvin-Xia.github.io/
 - Store secrets in `/new-post`
 
 **Missing but acceptable (no action needed):**
-- No ESLint/Prettier config — style enforced via repo docs + strict TS
+- No Prettier config — style is enforced via repo docs, ESLint warnings/errors, and strict TS
 - No `src/env.d.ts` — tsconfig extends `astro/tsconfigs/strict`
 - Single layout for all pages — intentional for this project size
 - Node `--test` instead of Vitest — works fine, no migration needed
@@ -108,7 +110,9 @@ npm run build            # Build to dist/
 npm run preview          # Preview production build
 npm test                 # Run tests (node --test tests/*.test.js)
 npm run test:coverage    # Tests with coverage
+npm run lint             # ESLint for src/ and tests/
 npm run api              # Local new-post API at 127.0.0.1:4322
+npm run edit-metadata -- <file>  # Edit one Markdown file's frontmatter
 npm run publish -- <dir> # Publish Obsidian post to Astro + R2
 npm run publish -- --dry-run <dir>  # Preview publish plan
 npx wrangler dev         # Local Worker dev (uses .dev.vars)
@@ -128,7 +132,11 @@ npx wrangler secret put HEALTH_CHECK_TOKEN  # Optional detailed health secret
 
 **Migration artifacts**: `move-to-astro/`, `blog/`, `UpdateLog/` at root are archives. No runtime purpose.
 
-**Search index**: `/search-index.json` is generated at build time from content collections. Client search must lazy-load it through `src/lib/search-client.ts`; do not re-embed the full searchable payload in `articles.astro`.
+**Search index**: `/search-index.json` is generated at build time from content collections. Client search must lazy-load it through `src/lib/search-client.ts`; do not re-embed the full searchable payload in `articles.astro`. Search supports Chinese tokenization, highlighted snippets, debounce, localStorage history, and category/tag filters.
+
+**Metadata editor**: `npm run edit-metadata -- <markdown-file>` edits one existing Markdown frontmatter block. The tool validates with Zod by default and writes atomically via temporary file + rename. Use `--skip-validation` only for deliberate schema bypasses.
+
+**Publish tags**: `npm run publish` prompts `标签 (逗号分隔) [未分类]:`; blank input must write `['未分类']`. The fallback chain in `scripts/post-utils.js` must also prevent empty `tags:` output.
 
 **Tool PWA**: `public/sw-tools.js` must only handle `/works/tools/` requests. Never broaden its scope to the whole site without a new design review.
 
@@ -136,7 +144,7 @@ npx wrangler secret put HEALTH_CHECK_TOKEN  # Optional detailed health secret
 
 **Test patterns**: Source contract tests (read source, assert regex) are unique to this project. No shared test utilities — each file defines its own helpers.
 
-**CI note**: `phase-2-content-check.yml` is the only workflow that runs tests. `content-check.yml` is redundant with `astro-build-check.yml`.
+**CI note**: `astro-build-check.yml` runs tests, coverage, content structure checks, ESLint, Astro type generation, TypeScript checks, build, and static output verification. `phase-2-content-check.yml` remains as the content-pipeline backup workflow. `metadata-editor-check.yml` is scoped to metadata editor file-operation changes. There is no `content-check.yml`.
 
 **Worker note**: Worker is not in CI. Deploys require manual `npx wrangler deploy`. If you update `src/worker.ts`, `src/lib/umami-view-counter.js`, or `src/lib/health-check.js`, remember to deploy and verify `/api/views/{slug}` and `/api/health`.
 

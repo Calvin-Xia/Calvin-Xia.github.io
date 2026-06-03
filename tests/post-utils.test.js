@@ -205,6 +205,7 @@ describe('post utility functions', () => {
         assert.match(result, /title: "20260503-my-post"/);
         assert.match(result, /date: "2026-05-03"/);
         assert.match(result, /category: "未分类"/);
+        assert.match(result, /tags:\n  - "未分类"/);
         assert.match(result, /!\[图\]\(https:\/\/content\.example\.com\/my-post\/a\.png\)/);
         assert.ok(result.includes('\n\n# Hello\n'));
     });
@@ -229,6 +230,25 @@ describe('post utility functions', () => {
         assert.match(result, /date: "2026-04-01"/);
         assert.match(result, /  - "tag1"/);
         assert.match(result, /# Hello/);
+    });
+
+    test('readTransformedMarkdown defaults empty source tags to uncategorized', async () => {
+        const vaultDir = await createTempDir();
+        const postDir = path.join(vaultDir, '20260503-my-post');
+        await mkdir(postDir, { recursive: true });
+        await writeFile(path.join(postDir, 'draft.md'),
+            '---\ntitle: "My Title"\ndate: "2026-04-01"\ntags:\n---\n\n# Hello\n', 'utf8');
+
+        const plan = {
+            sourceMarkdownPath: path.join(postDir, 'draft.md'),
+            dirName: '20260503-my-post',
+            publicUrl: 'https://content.example.com',
+            assetSlug: 'my-post',
+        };
+
+        const result = await readTransformedMarkdown(plan);
+
+        assert.match(result, /tags:\n  - "未分类"/);
     });
 
     test('readTransformedMarkdown gives user metadata priority over source frontmatter', async () => {
