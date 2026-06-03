@@ -6,17 +6,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import {
     blogEntryToItem,
     compareContentItems,
+    dataEntryToItem,
     getUniqueValues,
     isFreshDate,
 } from '../lib/content';
 import { t } from '../lib/i18n.ts';
 
-const blogEntries = await getCollection('blog', ({ data }) => data.status !== 'draft');
+const [blogEntries, workEntries, toolEntries] = await Promise.all([
+    getCollection('blog', ({ data }) => data.status !== 'draft'),
+    getCollection('works', ({ data }) => data.status !== 'draft'),
+    getCollection('tools', ({ data }) => data.status !== 'draft'),
+]);
 
 const articles = blogEntries.map(blogEntryToItem).sort(compareContentItems);
 const searchableTypes = ['article', 'work', 'tool'];
-const categories = getUniqueValues(articles.map((item) => item.category));
-const tags = getUniqueValues(articles.flatMap((item) => item.tags));
+const searchFilterItems = [
+    ...articles,
+    ...workEntries.map((entry) => dataEntryToItem('work', entry)),
+    ...toolEntries.map((entry) => dataEntryToItem('tool', entry)),
+];
+const categories = getUniqueValues(searchFilterItems.map((item) => item.category));
+const tags = getUniqueValues(searchFilterItems.flatMap((item) => item.tags));
 
 const payload = {
     articles,
@@ -73,6 +83,12 @@ const payload = {
                 role="listbox"
                 aria-label={t('articles.searchSuggestionsAria')}
                 data-i18n-aria-label="articles.searchSuggestionsAria"
+            ></div>
+            <div
+                id="search-history-container"
+                class="search-history-container"
+                aria-label={t('articles.searchHistory')}
+                data-i18n-aria-label="articles.searchHistory"
             ></div>
         </div>
     </section>
@@ -163,7 +179,15 @@ const payload = {
 <script id="content-search-data" type="application/json" set:html={JSON.stringify(payload)}></script>
 <script>
     import { t } from '../lib/i18n.ts';
-    import { loadSearchIndex, search as searchContent } from '../lib/search-client.ts';
+    import {
+        addToSearchHistory,
+        debounce,
+        filterSearchResults,
+        formatSearchResult,
+        loadSearchIndex,
+        renderSearchHistory,
+        search as searchContent,
+    } from '../lib/search-client.ts';
     import { isFreshDate } from '../lib/shared-content.js';
 
     (() => {
@@ -177,7 +201,6 @@ const payload = {
             isSearchMode: false,
             searchRequestId: 0,
             suggestionRequestId: 0,
-            debounceTimer: null,
             selectedSuggestionIndex: -1,
             suggestionItems: [],
         };
@@ -185,6 +208,7 @@ const payload = {
         const searchInput = document.getElementById('search-input');
         const searchBtn = document.getElementById('search-btn');
         const suggestionsContainer = document.getElementById('search-suggestions');
+        const historyContainer = document.getElementById('search-history-container');
         const resultsContainer = document.getElementById('content-results');
         const skeletons = document.getElementById('content-skeletons');
         const filterNav = document.getElementById('article-filter-nav');
@@ -343,9 +367,9 @@ const payload = {
             container.append(stats);
         }
 
-        function createContentCard(item, { mixed = false, index = 0 } = {}) {
+        function createContentCard(item, { mixed = false, index = 0, highlighted = false } = {}) {
             const card = document.createElement('article');
-            card.className = `blog-card content-card-enter${mixed ? ' blog-card--mixed' : ''}`;
+            card.className = `blog-card content-card-enter${mixed ? ' blog-card--mixed' : ''}${highlighted ? ' search-result' : ''}`;
             card.style.setProperty('--stagger-index', String(index));
 
             const link = document.createElement('a');
@@ -353,18 +377,26 @@ const payload = {
             link.className = 'blog-card-link';
 
             const title = document.createElement('h2');
-            title.className = 'blog-card-title';
-            title.textContent = item.title;
+            title.className = `blog-card-title${highlighted ? ' search-result-title' : ''}`;
+            if (highlighted && item.highlightedTitle) {
+                title.innerHTML = item.highlightedTitle;
+            } else {
+                title.textContent = item.title;
+            }
 
             const excerpt = document.createElement('p');
-            excerpt.className = 'blog-card-excerpt';
-            excerpt.textContent = item.excerpt;
+            excerpt.className = `blog-card-excerpt${highlighted ? ' search-result-excerpt' : ''}`;
+            if (highlighted && item.highlightedExcerpt) {
+                excerpt.innerHTML = item.highlightedExcerpt;
+            } else {
+                excerpt.textContent = item.excerpt;
+            }
 
             link.append(title, excerpt);
             card.append(link);
 
             const meta = document.createElement('div');
-            meta.className = 'blog-card-meta';
+            meta.className = `blog-card-meta${highlighted ? ' search-result-meta' : ''}`;
 
             if (mixed) {
                 meta.append(createTypeBadge(item.type));
@@ -392,7 +424,7 @@ const payload = {
             });
 
             const dateElement = document.createElement('div');
-            dateElement.className = 'blog-card-date blog-card-date-row';
+            dateElement.className = `blog-card-date blog-card-date-row${highlighted ? ' search-result-date' : ''}`;
 
             const dateText = document.createElement('span');
             dateText.textContent = item.date;
@@ -428,6 +460,38 @@ const payload = {
                 button.classList.toggle('active', active);
                 button.setAttribute('aria-pressed', String(active));
             });
+        }
+
+        function getCurrentSearchFilters() {
+            return {
+                category: state.currentCategory === 'all' ? '' : state.currentCategory,
+                tag: state.currentTag === 'all' ? '' : state.currentTag,
+            };
+        }
+
+        function showSearchHistory() {
+            if (!historyContainer || searchInput.value.trim()) {
+                return;
+            }
+
+            renderSearchHistory(
+                historyContainer,
+                (query) => {
+                    searchInput.value = query;
+                    hideSearchHistory();
+                    void performSearch();
+                },
+                {
+                    title: t('articles.searchHistory'),
+                    clear: t('articles.clearSearchHistory'),
+                },
+            );
+        }
+
+        function hideSearchHistory() {
+            if (historyContainer) {
+                historyContainer.innerHTML = '';
+            }
         }
 
         function renderNoResults() {
@@ -490,8 +554,8 @@ const payload = {
 
         async function performSearch({ updateUrl = true } = {}) {
             const query = searchInput.value.trim();
-            clearTimeout(state.debounceTimer);
             hideSuggestions();
+            hideSearchHistory();
             state.searchQuery = query;
             const requestId = ++state.searchRequestId;
 
@@ -501,8 +565,9 @@ const payload = {
             }
 
             state.isSearchMode = true;
-            setFilterVisibility(false);
+            setFilterVisibility(true);
             setSearchStatus(t('articles.searching'));
+            addToSearchHistory(query);
 
             if (updateUrl) {
                 updateUrlFromState();
@@ -527,15 +592,20 @@ const payload = {
                 return;
             }
 
-            setSearchStatus(t('articles.searchResultCount', { query, count: results.length }));
+            const formattedResults = filterSearchResults(
+                results.map((result) => formatSearchResult(result, query)),
+                getCurrentSearchFilters(),
+            );
+
+            setSearchStatus(t('articles.searchResultCount', { query, count: formattedResults.length }));
 
             showSkeletonThen(() => {
-                if (!results.length) {
+                if (!formattedResults.length) {
                     renderNoResults();
                     return;
                 }
 
-                renderCards(results, { mixed: true });
+                renderCards(formattedResults, { mixed: true, highlighted: true });
             });
         }
 
@@ -603,6 +673,14 @@ const payload = {
             searchInput.removeAttribute('aria-activedescendant');
         }
 
+        const debouncedPerformSearch = debounce(() => {
+            void performSearch();
+        }, 300);
+
+        const debouncedShowSuggestions = debounce((query) => {
+            void showSuggestions(query);
+        }, 180);
+
         function updateSuggestionSelection() {
             state.suggestionItems.forEach((item, index) => {
                 const selected = index === state.selectedSuggestionIndex;
@@ -616,10 +694,6 @@ const payload = {
         }
 
         function handleFilterClick(event) {
-            if (state.isSearchMode) {
-                return;
-            }
-
             const button = event.currentTarget;
             const filterValue = button.dataset.filter;
             const filterType = button.dataset.type;
@@ -640,6 +714,12 @@ const payload = {
             }
 
             updateUrlFromState();
+
+            if (state.isSearchMode && state.searchQuery) {
+                void performSearch({ updateUrl: false });
+                return;
+            }
+
             showSkeletonThen(renderArticleList);
         }
 
@@ -671,18 +751,22 @@ const payload = {
             });
 
             searchInput.addEventListener('input', (event) => {
-                clearTimeout(state.debounceTimer);
                 const query = event.target.value.trim();
+                hideSearchHistory();
 
                 if (!query) {
                     hideSuggestions();
                     restoreArticleView();
+                    showSearchHistory();
                     return;
                 }
 
-                state.debounceTimer = window.setTimeout(() => {
-                    void showSuggestions(query);
-                }, 180);
+                debouncedShowSuggestions(query);
+                debouncedPerformSearch();
+            });
+
+            searchInput.addEventListener('focus', () => {
+                showSearchHistory();
             });
 
             searchInput.addEventListener('keydown', (event) => {
@@ -727,13 +811,18 @@ const payload = {
             });
 
             document.addEventListener('click', (event) => {
-                if (!searchInput.contains(event.target) && !suggestionsContainer.contains(event.target)) {
+                if (
+                    !searchInput.contains(event.target)
+                    && !suggestionsContainer.contains(event.target)
+                    && !historyContainer?.contains(event.target)
+                ) {
                     hideSuggestions();
+                    hideSearchHistory();
                 }
             });
         }
 
-        if (searchInput && searchBtn && suggestionsContainer && resultsContainer) {
+        if (searchInput && searchBtn && suggestionsContainer && historyContainer && resultsContainer) {
             bindEvents();
             restoreStateFromUrl();
 
