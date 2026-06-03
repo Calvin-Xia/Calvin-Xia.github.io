@@ -1,0 +1,42 @@
+name: Metadata Editor Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/edit-metadata.js
+      - tests/edit-metadata.test.js
+      - package.json
+      - package-lock.json
+      - .github/workflows/metadata-editor-check.yml
+  pull_request:
+    paths:
+      - scripts/edit-metadata.js
+      - tests/edit-metadata.test.js
+      - package.json
+      - package-lock.json
+      - .github/workflows/metadata-editor-check.yml
+
+jobs:
+  validate-metadata-editor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run metadata editor edge case tests
+        run: node --test tests/edit-metadata.test.js
+
+      - name: Verify CLI help entry
+        run: npm run edit-metadata -- --help

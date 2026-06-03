@@ -1,6 +1,6 @@
 # 快速开始
 
-这份文档用于第一次接手仓库时快速跑起 Astro 站点。Phase 8 已完成，所有内容管理通过 Astro 内容集合和 npm 脚本进行，站点同时包含 MiniSearch 搜索索引、Worker 健康检查、工具页 PWA 和 UI 国际化。
+这份文档用于第一次接手仓库时快速跑起 Astro 站点。Phase 12 已完成，所有内容管理通过 Astro 内容集合和 npm 脚本进行，站点同时包含增强中文搜索、Worker 健康检查与安全监控、工具页 PWA、UI 国际化、文章体验增强和单篇文章元数据编辑 CLI。
 
 ## 1. 安装与启动
 
@@ -38,7 +38,9 @@ npm run dev
 npm run build
 npm test
 npm run test:coverage
+npm run lint
 npm run api
+npm run edit-metadata -- <markdown-file>
 npm run publish -- --dry-run <obsidian-post-dir>
 npm run publish -- <obsidian-post-dir>
 npx wrangler secret put UMAMI_API_KEY
@@ -53,10 +55,20 @@ npx wrangler secret put HEALTH_CHECK_TOKEN
 
 1. 在 Obsidian vault 中准备文章目录。
 2. 先运行 `npm run publish -- --dry-run <dir>` 检查 Markdown 目标路径和 R2 key。
-3. 确认后运行 `npm run publish -- <dir>`。
+3. 确认后运行 `npm run publish -- <dir>`；标签提示直接回车时默认使用 `未分类`。
 4. 运行 `npm test` 和 `npm run build`。
 
 这条流程只修改仓库副本，不修改 Obsidian vault 原文。
+
+### 编辑文章元数据
+
+已有文章的标题、日期、摘要、分类和标签等 frontmatter 可用 CLI 交互式修改：
+
+```bash
+npm run edit-metadata -- src/content/blog/20260503-labors-day.md
+```
+
+默认会执行 Zod 验证并通过临时文件原子写入。只有在明确需要绕过 schema 时使用 `--skip-validation`。
 
 ### 本地快速新建文章
 
@@ -99,8 +111,10 @@ npm run build
 ### 检查搜索、健康检查或 PWA
 
 - 搜索索引端点：`/search-index.json`
+- 搜索增强：`jieba-wasm` 中文分词、结果高亮、防抖搜索、最近 10 条历史、分类/标签过滤
 - Worker 健康检查：`/api/health`
 - 详细健康检查：`Authorization: Bearer <HEALTH_CHECK_TOKEN>`
+- Worker 安全监控：`src/lib/security-logger.js` 记录 API 频率、4xx/5xx 和高错误率告警信号
 - 工具页 PWA：`/works/tools/`，manifest 和 Service Worker 分别位于 `public/manifest.json`、`public/sw-tools.js`
 
 ## 5. 提交前检查
@@ -109,6 +123,7 @@ npm run build
 
 ```bash
 npm test
+npm run lint
 npm run build
 git diff --check
 ```

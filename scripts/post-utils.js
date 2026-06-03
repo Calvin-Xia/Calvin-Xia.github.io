@@ -55,6 +55,11 @@ export function deriveDateFromDirName(dirName) {
     return '';
 }
 
+function tagsWithDefault(tags) {
+    const normalizedTags = normalizeTags(tags);
+    return normalizedTags.length > 0 ? normalizedTags : ['未分类'];
+}
+
 export function validatePostPayload(payload) {
     const source = payload && typeof payload === 'object' ? payload : {};
     const title = String(source.title || '').trim();
@@ -187,7 +192,7 @@ export async function readTransformedMarkdown(plan) {
         date: userMeta.date || sourceMeta.date || deriveDateFromDirName(plan.dirName),
         excerpt: userMeta.excerpt || sourceMeta.excerpt || '',
         category: userMeta.category || sourceMeta.category || '未分类',
-        tags: userMeta.tags || sourceMeta.tags || [],
+        tags: tagsWithDefault(userMeta.tags || sourceMeta.tags || ['未分类']),
         body: transformedBody,
         featured: userMeta.featured ?? sourceMeta.featured,
         author: userMeta.author || sourceMeta.author,

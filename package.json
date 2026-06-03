@@ -13,6 +13,7 @@
         "preview": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro preview",
         "astro": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro",
         "api": "node tools/api-server.js",
+        "edit-metadata": "node scripts/edit-metadata.js",
         "publish": "node scripts/publish-post.js",
         "test": "node --test tests/*.test.js",
         "test:coverage": "node --test --experimental-test-coverage tests/*.test.js",
@@ -41,6 +42,9 @@
         "cross-env": "^10.1.0",
         "dotenv": "^17.4.2",
         "eslint": "^10.4.1",
-        "typescript": "^5.9.3"
+        "gray-matter": "^4.0.3",
+        "prompts": "^2.4.2",
+        "typescript": "^5.9.3",
+        "zod": "^4.3.6"
     }
 }

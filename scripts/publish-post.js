@@ -179,18 +179,21 @@ async function confirmPlan() {
     }
 }
 
-async function promptForPostMetadata(dirName) {
-    const rl = createInterface({ input, output });
+export async function promptForPostMetadata(dirName, {
+    createInterface: openInterface = createInterface,
+    logger = console,
+} = {}) {
+    const rl = openInterface({ input, output });
     const derivedDate = deriveDateFromDirName(dirName);
     try {
-        console.log('\n请输入文章元数据：');
+        logger.log('\n请输入文章元数据：');
         const title = (await rl.question('标题: ')).trim();
         if (!title) throw new Error('标题不能为空');
         const date = (await rl.question(`日期 [${derivedDate}]: `)).trim() || derivedDate;
         const excerpt = (await rl.question('摘要: ')).trim();
         const category = (await rl.question('分类 [未分类]: ')).trim() || '未分类';
-        const tagsInput = (await rl.question('标签 (逗号分隔): ')).trim();
-        const tags = tagsInput ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean) : [];
+        const tagsInput = (await rl.question('标签 (逗号分隔) [未分类]: ')).trim();
+        const tags = tagsInput ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean) : ['未分类'];
 
         return { title, date, excerpt, category, tags };
     } finally {

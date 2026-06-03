@@ -3,7 +3,12 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, test } from 'node:test';
-import { executePublishPlan, parsePublishArgs, uploadAssets } from '../scripts/publish-post.js';
+import {
+    executePublishPlan,
+    parsePublishArgs,
+    promptForPostMetadata,
+    uploadAssets,
+} from '../scripts/publish-post.js';
 
 const tempDirs = [];
 
@@ -56,6 +61,31 @@ describe('publish post uploads', () => {
 
         assert.deepEqual(calls, []);
         assert.ok(logs.some((message) => message.includes('Dry run only')));
+    });
+
+    test('metadata prompt shows the default tag and uses it when tags are blank', async () => {
+        const prompts = [];
+        const answers = ['新文章', '', '摘要', '', ''];
+
+        const metadata = await promptForPostMetadata('20260603-my-post', {
+            createInterface: () => ({
+                async question(prompt) {
+                    prompts.push(prompt);
+                    return answers.shift();
+                },
+                close() {},
+            }),
+            logger: { log() {} },
+        });
+
+        assert.deepEqual(metadata, {
+            title: '新文章',
+            date: '2026-06-03',
+            excerpt: '摘要',
+            category: '未分类',
+            tags: ['未分类'],
+        });
+        assert.equal(prompts[4], '标签 (逗号分隔) [未分类]: ');
     });
 
     test('retries transient R2 upload failures before succeeding', async () => {
