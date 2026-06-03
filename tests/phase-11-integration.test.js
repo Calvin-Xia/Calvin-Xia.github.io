@@ -126,7 +126,6 @@ describe('Phase 11 search enhancement integration', () => {
         assert.match(source, /addToSearchHistory\(query\)/);
         assert.match(source, /renderSearchHistory\(/);
         assert.match(source, /formatSearchResult\(result,\s*query\)/);
-        assert.match(source, /filterSearchResults\(/);
         assert.match(source, /search-history-container/);
         assert.match(source, /search-result/);
     });

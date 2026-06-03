@@ -182,7 +182,6 @@ const payload = {
     import {
         addToSearchHistory,
         debounce,
-        filterSearchResults,
         formatSearchResult,
         loadSearchIndex,
         renderSearchHistory,
@@ -576,7 +575,7 @@ const payload = {
             let results = [];
 
             try {
-                results = await getSearchResults(query);
+                results = await getSearchResults(query, getCurrentSearchFilters());
             } catch (error) {
                 if (requestId !== state.searchRequestId) {
                     return;
@@ -592,10 +591,7 @@ const payload = {
                 return;
             }
 
-            const formattedResults = filterSearchResults(
-                results.map((result) => formatSearchResult(result, query)),
-                getCurrentSearchFilters(),
-            );
+            const formattedResults = results.map((result) => formatSearchResult(result, query));
 
             setSearchStatus(t('articles.searchResultCount', { query, count: formattedResults.length }));
 

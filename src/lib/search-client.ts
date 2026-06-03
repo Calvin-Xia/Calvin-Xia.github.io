@@ -216,26 +216,6 @@ export function debounce<T extends (...args: never[]) => unknown>(
     };
 }
 
-export function initSearch(
-    searchInput: HTMLInputElement,
-    searchFunction: (query: string) => void,
-    wait = 300,
-): () => void {
-    const debouncedSearch = debounce((query: string) => {
-        searchFunction(query);
-    }, wait);
-    const handleInput = (event: Event) => {
-        const query = (event.target as HTMLInputElement).value;
-        debouncedSearch(query);
-    };
-
-    searchInput.addEventListener('input', handleInput);
-
-    return () => {
-        searchInput.removeEventListener('input', handleInput);
-    };
-}
-
 export function getSearchHistory(): string[] {
     const storage = getStorage();
 
