@@ -46,9 +46,15 @@ describe('frontend visual reform source contract', () => {
     test('home page uses the approved brand and keeps search/tools secondary', () => {
         const home = readSource('src', 'pages', 'index.astro');
         const styles = readSource('src', 'styles', 'global.css');
+        const chineseTranslations = JSON.parse(readSource('src', 'i18n', 'zh-CN.json'));
+        const englishTranslations = JSON.parse(readSource('src', 'i18n', 'en-US.json'));
 
         assert.match(home, /<h1[^>]*>\s*Calvin Xia\s*<\/h1>/);
+        assert.equal(chineseTranslations.home.subtitle, '坐标以外，理性之内');
+        assert.equal(englishTranslations.home.subtitle, 'Beyond coordinates, within reason.');
         assert.doesNotMatch(home, /欢迎来到 Mr\.Xia 的小站/);
+        assert.doesNotMatch(home, /data-i18n=["']home\.kicker["']/);
+        assert.doesNotMatch(home, /class=["']hero-kicker["']/);
         assert.doesNotMatch(home, /href=["']\/works\/tools\/["']/);
         assert.match(home, /id=["']currentTime["']/);
         assert.match(home, /recent-updates/);
@@ -102,11 +108,27 @@ describe('frontend visual reform source contract', () => {
 
     test('page titles and supporting panels keep readable editorial spacing', () => {
         const articles = readSource('src', 'pages', 'articles.astro');
+        const works = readSource('src', 'pages', 'works.astro');
+        const about = readSource('src', 'pages', 'about.astro');
         const styles = readSource('src', 'styles', 'global.css');
+        const chineseTranslations = JSON.parse(readSource('src', 'i18n', 'zh-CN.json'));
+        const englishTranslations = JSON.parse(readSource('src', 'i18n', 'en-US.json'));
 
         assert.match(articles, /article-index-hero/);
+        assert.doesNotMatch(articles, /articles\.subtitle/);
+        assert.doesNotMatch(works, /works\.subtitle/);
+        assert.doesNotMatch(about, /about\.subtitle/);
+        assert.equal(Object.hasOwn(chineseTranslations.articles, 'subtitle'), false);
+        assert.equal(Object.hasOwn(englishTranslations.articles, 'subtitle'), false);
+        assert.equal(Object.hasOwn(chineseTranslations.works, 'subtitle'), false);
+        assert.equal(Object.hasOwn(englishTranslations.works, 'subtitle'), false);
+        assert.equal(Object.hasOwn(chineseTranslations.about, 'subtitle'), false);
+        assert.equal(Object.hasOwn(englishTranslations.about, 'subtitle'), false);
         assert.match(styles, /\.page-title\s*\{[\s\S]*max-width:\s*min\(100%,\s*18ch\)/);
         assert.match(styles, /\.article-index-hero\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/);
+        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-index-hero\s*\{[\s\S]*grid-template-columns:\s*1fr[\s\S]*align-items:\s*stretch/);
+        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-index-hero \.articles-toolbar\s*\{[\s\S]*justify-content:\s*stretch/);
+        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-index-hero \.articles-toolbar \.btn\s*\{[\s\S]*width:\s*100%/);
         assert.match(styles, /\.article-hero \.page-title\s*\{[\s\S]*max-width:\s*min\(100%,\s*22ch\)/);
         assert.match(styles, /\.giscus-comments\s*\{[\s\S]*width:\s*min\(100%,\s*var\(--article-text-width\)\)/);
         assert.match(styles, /\.legal-stack\s*\{[\s\S]*padding:\s*clamp\(1\.5rem,\s*4vw,\s*2\.5rem\)/);
@@ -133,5 +155,11 @@ describe('frontend visual reform source contract', () => {
         const discoveryMatch = home.match(/home-discovery[\s\S]*?<\/section>/);
         assert.ok(discoveryMatch, 'home-discovery section should exist');
         assert.match(discoveryMatch[0], /<h2[\s>]/);
+    });
+
+    test('user-facing English work titles use current wording', () => {
+        const englishTranslations = JSON.parse(readSource('src', 'i18n', 'en-US.json'));
+
+        assert.equal(englishTranslations.works.classMap.title, 'Class 1 Whereabouts Map');
     });
 });

@@ -24,6 +24,7 @@ describe('Phase 8 Integration', () => {
     it('Footer should keep official filing records in Chinese', () => {
         const footer = readSource('src', 'components', 'Footer.astro');
         const englishTranslations = JSON.parse(readSource('src', 'i18n', 'en-US.json'));
+        const chineseTranslations = JSON.parse(readSource('src', 'i18n', 'zh-CN.json'));
 
         assert.match(footer, /渝ICP备2026000319号/);
         assert.match(footer, /公安备案/);
@@ -33,6 +34,8 @@ describe('Phase 8 Integration', () => {
         assert.equal(englishTranslations.footer.icp, '渝ICP备2026000319号');
         assert.equal(englishTranslations.footer.recordIconAlt, '公安备案');
         assert.equal(englishTranslations.footer.policeRecord, '渝公网安备50010102001439号');
+        assert.equal(chineseTranslations.footer.copyright, englishTranslations.footer.copyright);
+        assert.equal(chineseTranslations.footer.poweredBy, englishTranslations.footer.poweredBy);
     });
 
     it('page families should import i18n helpers', () => {

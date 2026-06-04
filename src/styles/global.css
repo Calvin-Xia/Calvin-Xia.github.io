@@ -1590,6 +1590,10 @@ select:disabled {
     padding-block-end: 0.1rem;
 }
 
+.article-index-hero .articles-toolbar .btn {
+    white-space: nowrap;
+}
+
 .archive-timeline {
     display: grid;
     gap: 1rem;
@@ -2648,7 +2652,12 @@ html[data-astro-transition='back']::view-transition-old(site-main) {
     }
 
     .article-index-hero .articles-toolbar {
-        justify-content: flex-start;
+        justify-content: stretch;
+    }
+
+    .article-index-hero .articles-toolbar .btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .index-row {
