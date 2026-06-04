@@ -212,6 +212,33 @@ describe('page transitions', () => {
         assert.equal(shouldUseClientRouter(javascriptAnchor, location), false);
     });
 
+    test('shouldUseClientRouter rejects non-HTML endpoints', async () => {
+        const { shouldUseClientRouter } = await import('../src/scripts/page-transitions.js');
+        const location = new URL('https://calvin-xia.cn/');
+
+        const rssAnchor = new FakeAnchor('/rss.xml');
+        assert.equal(shouldUseClientRouter(rssAnchor, location), false);
+
+        const sitemapAnchor = new FakeAnchor('/sitemap-index.xml');
+        assert.equal(shouldUseClientRouter(sitemapAnchor, location), false);
+
+        const jsonAnchor = new FakeAnchor('/search-index.json');
+        assert.equal(shouldUseClientRouter(jsonAnchor, location), false);
+
+        const robotsAnchor = new FakeAnchor('/robots.txt');
+        assert.equal(shouldUseClientRouter(robotsAnchor, location), false);
+
+        const pdfAnchor = new FakeAnchor('/document.pdf');
+        assert.equal(shouldUseClientRouter(pdfAnchor, location), false);
+
+        const imageAnchor = new FakeAnchor('/photo.png');
+        assert.equal(shouldUseClientRouter(imageAnchor, location), false);
+
+        // HTML pages should still work
+        const htmlAnchor = new FakeAnchor('/about/');
+        assert.equal(shouldUseClientRouter(htmlAnchor, location), true);
+    });
+
     test('markTransitionLinks does not add data-astro-reload to internal links', async () => {
         const { markTransitionLinks } = await import('../src/scripts/page-transitions.js');
         const anchor = new FakeAnchor('/works/');

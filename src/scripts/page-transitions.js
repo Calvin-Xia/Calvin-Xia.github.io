@@ -2,6 +2,7 @@ const ARTICLE_TRANSITION_PATHS = ['/articles/', '/updates/'];
 const SWAP_FADE_CLASS = 'is-swap-fade-in';
 const DEFAULT_SWAP_FADE_DURATION_MS = 260;
 const ARTICLE_LIST_SCROLL_KEY = 'article-list-scroll-y';
+const NON_HTML_EXTENSIONS = /\.(xml|json|txt|pdf|zip|tar|gz|woff2?|ttf|eot|png|jpe?g|gif|svg|webp|avif|ico|mp[34]|webm|ogg|wasm)$/i;
 
 function normalizePathname(pathname) {
     const value = String(pathname || '/');
@@ -87,6 +88,10 @@ export function shouldUseClientRouter(anchor, locationRef = window.location) {
 
     const url = new URL(href, locationRef.href);
     if (url.origin !== locationRef.origin || isHashOnlyUrl(url, locationRef)) {
+        return false;
+    }
+
+    if (NON_HTML_EXTENSIONS.test(url.pathname)) {
         return false;
     }
 
