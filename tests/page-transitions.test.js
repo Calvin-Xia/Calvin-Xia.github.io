@@ -204,6 +204,12 @@ describe('page transitions', () => {
 
         const mailtoAnchor = new FakeAnchor('mailto:test@example.com');
         assert.equal(shouldUseClientRouter(mailtoAnchor, location), false);
+
+        const telAnchor = new FakeAnchor('tel:+1234567890');
+        assert.equal(shouldUseClientRouter(telAnchor, location), false);
+
+        const javascriptAnchor = new FakeAnchor('javascript:void(0)');
+        assert.equal(shouldUseClientRouter(javascriptAnchor, location), false);
     });
 
     test('markTransitionLinks does not add data-astro-reload to internal links', async () => {

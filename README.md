@@ -1,6 +1,6 @@
 # Calvin Xia 个人主页
 
-这是一个基于 [Astro](https://astro.build) 的静态个人站点，已从根目录 HTML/CSS/vanilla JS 全面迁移完成。Phase 0-12 已完成：博客、作品、工具和更新日志由 Astro 内容集合驱动，RSS feed、sitemap、giscus 评论区、文章字数/阅读时间、归档页、文章浏览量 Worker 代理、工具页 PWA、UI 国际化、安全监控、CI 质量检查、增强文章体验、中文搜索增强和单篇文章元数据编辑 CLI 均已落地。Phase 4 清理已执行，旧管线文件已移除。
+这是一个基于 [Astro](https://astro.build) 的静态个人站点，已从根目录 HTML/CSS/vanilla JS 全面迁移完成。Phase 0-13 已完成：博客、作品、工具和更新日志由 Astro 内容集合驱动，RSS feed、sitemap、giscus 评论区、文章字数/阅读时间、归档页、文章浏览量 Worker 代理、工具页 PWA、UI 国际化、安全监控、CI 质量检查、增强文章体验、中文搜索增强、单篇文章元数据编辑 CLI 和全站页面过渡动画均已落地。Phase 4 清理已执行，旧管线文件已移除。
 
 ## 当前结构
 
@@ -97,7 +97,7 @@ npm run publish -- <obsidian-post-dir>
 - `npm run publish -- --dry-run <dir>` 只打印 Obsidian→R2 发布计划，不写文件、不上传
 - `npm run publish -- <dir>` 复制 Obsidian Markdown 到 `src/content/blog/`，上传 `file/` 资源到 R2，并替换副本中的资源 URL；标签提示为空时默认写入 `未分类`
 - `npm run edit-metadata -- <markdown-file>` 交互式编辑单篇文章 frontmatter，使用 Zod 验证并通过临时文件原子写入
-- 文章阅读体验增强由 `src/scripts/article-runtime.js` 统一初始化，并在 Astro `ClientRouter` 页面切换后重新绑定
+- 文章阅读体验增强由 `src/scripts/article-runtime.js` 统一初始化，并在 Astro `ClientRouter` 页面切换后重新绑定；`src/scripts/page-transitions.js` 处理全站页面过渡动画
 
 ## 内容维护
 
@@ -175,7 +175,7 @@ Phase 2.5 和 Phase 10 的文章页增强集中在 `src/lib/article-enhancements
 - 归档：`/articles/archive/` 按年份展示非草稿文章时间线，入口位于文章首页。
 - 浏览量：详情页通过 `src/scripts/view-counter.js` 请求 `/api/views/{slug}`；Cloudflare Worker 在服务端携带 `UMAMI_API_KEY` 调用 Umami，失败时前端自动隐藏浏览量。
 - 渐显：文章正文段落和图片在滚动进入视口时逐段淡入渐显（`section-reveals`），`prefers-reduced-motion: reduce` 时跳过动画直接显示。
-- 切换：`/articles/` 与 `/updates/` 的低风险站内链接使用 Astro `ClientRouter`/View Transitions 渐进增强；文章列表↔详情使用方向性动画，返回列表时恢复滚动位置和 URL 参数中的搜索/筛选状态；`prefers-reduced-motion: reduce` 会关闭相关动画。
+- 切换：所有站内链接使用 Astro `ClientRouter`/View Transitions 渐进增强；文章列表↔详情使用方向性动画，返回列表时恢复滚动位置和 URL 参数中的搜索/筛选状态；其他页面使用默认 fade 过渡；`prefers-reduced-motion: reduce` 会关闭相关动画。
 - 选择工具栏：选中文本后显示复制/分享工具栏，复制失败时也会安全收起，不阻断阅读。
 - CDN：项目配置的 CDN 图片会被灯箱信任；本地 dev 下 CDN 图片会临时代理到 `/__cdn/...`，代理请求使用配置的 worker origin 作为 Referer。
 

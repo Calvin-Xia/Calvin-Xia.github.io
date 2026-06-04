@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-06-03
-**Branch:** codex-phase-12-content-management
+**Generated:** 2026-06-04
+**Branch:** codex-phase-13-page-transitions
 
 ## OVERVIEW
 
@@ -23,7 +23,7 @@ Calvin-Xia.github.io/
 │   ├── styles/           # global.css (design tokens + components)
 │   └── worker.ts         # Cloudflare Worker entry (view counter + health API)
 ├── scripts/              # Publish pipeline + metadata editor CLI
-├── tests/                # Node built-in test runner (34 test files)
+├── tests/                # Node built-in test runner (36 test files)
 ├── tools/                # Local API server (new-post)
 ├── public/               # Static assets, PWA manifest/SW, CDN content, legacy redirects
 ├── .github/workflows/    # CI: deploy, astro-build-check, phase-2-content-check, metadata-editor-check
@@ -42,7 +42,7 @@ Calvin-Xia.github.io/
 | Modify page layout | `src/layouts/BaseLayout.astro` | Single layout for all pages |
 | Add shared component | `src/components/*.astro` | PascalCase naming |
 | Edit page routes | `src/pages/*.astro` | File-based routing |
-| Client-side scripts | `src/scripts/` | article-runtime.js is main entry |
+| Client-side scripts | `src/scripts/` | article-runtime.js is main entry; page-transitions.js handles full-site ClientRouter transitions |
 | Article enhancements | `src/lib/article-enhancements/` | Lightbox, TOC, progress, reveals |
 | Search index | `src/lib/search-index-builder.ts`, `src/lib/search-client.ts`, `src/pages/search-index.json.ts` | Build-time MiniSearch JSON + jieba-wasm + lazy client loading |
 | Internationalization | `src/i18n/*.json`, `src/lib/i18n.ts` | UI translations only; content collections stay Chinese |
@@ -71,7 +71,7 @@ Calvin-Xia.github.io/
 
 **Content collections**: Blog uses `[0-9]*.md` glob. Works/tools/updates use `**/*.json`. Date format: `YYYY-MM-DD` string.
 
-**Client scripts**: Loaded in `BaseLayout.astro`. Initialize on `DOMContentLoaded` AND `astro:page-load` (View Transitions support).
+**Client scripts**: Loaded in `BaseLayout.astro`. Initialize on `DOMContentLoaded` AND `astro:page-load` (View Transitions support). All internal links use ClientRouter via `page-transitions.js`; article list↔detail uses directional slide animations.
 
 **i18n**: UI text lives in `src/i18n/zh-CN.json` and `src/i18n/en-US.json`. Keep keys identical. Use `t()` server-side and `data-i18n*` attributes for runtime updates. Do not translate blog/work/tool/update collection content. Keep filing/record text in Chinese.
 
