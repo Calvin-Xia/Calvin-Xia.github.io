@@ -99,7 +99,7 @@ describe('Phase 2.5 article experience integration', () => {
 
     test('swap fallback and spinner animations are paused unless active', () => {
         const styles = readProjectFile('src', 'styles', 'global.css');
-        const transitions = readProjectFile('src', 'scripts', 'article-transitions.js');
+        const transitions = readProjectFile('src', 'scripts', 'page-transitions.js');
 
         assert.match(styles, /--swap-fade-duration:\s*260ms/);
         assert.match(styles, /\.site-main\.is-swap-fade-in\s*\{[\s\S]*animation:\s*siteSwapFadeIn\s+var\(--swap-fade-duration\)\s+ease\s+both/s);
