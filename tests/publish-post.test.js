@@ -6,6 +6,7 @@ import { afterEach, describe, test } from 'node:test';
 import {
     executePublishPlan,
     parsePublishArgs,
+    promptForFileSelection,
     promptForPostMetadata,
     uploadAssets,
 } from '../scripts/publish-post.js';
@@ -167,5 +168,98 @@ describe('publish post uploads', () => {
 
         assert.equal(attemptsByKey.get('my-post/fail.png'), 3);
         assert.equal(attemptsByKey.get('my-post/ok.jpeg'), 1);
+    });
+});
+
+describe('promptForFileSelection', () => {
+    test('returns files in selection order', async () => {
+        const mockPrompts = async (question) => {
+            if (question.type === 'multiselect') {
+                return { files: ['c.md', 'a.md'] };
+            }
+            if (question.type === 'confirm') {
+                return { confirmed: true };
+            }
+        };
+
+        const result = await promptForFileSelection(
+            ['a.md', 'b.md', 'c.md'],
+            { prompts: mockPrompts },
+        );
+
+        assert.deepEqual(result, ['c.md', 'a.md']);
+    });
+
+    test('returns null on decline', async () => {
+        const mockPrompts = async (question) => {
+            if (question.type === 'multiselect') {
+                return { files: ['a.md'] };
+            }
+            if (question.type === 'confirm') {
+                return { confirmed: false };
+            }
+        };
+
+        const result = await promptForFileSelection(
+            ['a.md', 'b.md'],
+            { prompts: mockPrompts },
+        );
+
+        assert.equal(result, null);
+    });
+
+    test('returns null on empty selection', async () => {
+        const mockPrompts = async (question) => {
+            if (question.type === 'multiselect') {
+                return { files: [] };
+            }
+        };
+
+        const result = await promptForFileSelection(
+            ['a.md', 'b.md'],
+            { prompts: mockPrompts },
+        );
+
+        assert.equal(result, null);
+    });
+
+    test('returns null when no markdown files provided', async () => {
+        const result = await promptForFileSelection([]);
+
+        assert.equal(result, null);
+    });
+});
+
+describe('multi-md dry-run', () => {
+    test('prints dry-run info for each plan without side effects', async () => {
+        const calls = [];
+        const logs = [];
+        const plans = [
+            {
+                destinationMarkdownPath: path.join(os.tmpdir(), 'multi-dry-1.md'),
+                assets: [{ relativePath: 'a.png', key: 'post/a.png' }],
+            },
+            {
+                destinationMarkdownPath: path.join(os.tmpdir(), 'multi-dry-2.md'),
+                assets: [{ relativePath: 'b.png', key: 'post/b.png' }],
+            },
+        ];
+
+        for (const plan of plans) {
+            await executePublishPlan(plan, {
+                dryRun: true,
+                logger: {
+                    log: (message) => logs.push(message),
+                },
+                mkdir: async () => calls.push('mkdir'),
+                writeFile: async () => calls.push('writeFile'),
+                uploadAssets: async () => calls.push('uploadAssets'),
+                readTransformedMarkdown: async () => 'markdown',
+            });
+        }
+
+        assert.deepEqual(calls, []);
+        const dryRunMessages = logs.filter((m) => m.includes('Dry run only'));
+        assert.equal(dryRunMessages.length, 2);
     });
 });
