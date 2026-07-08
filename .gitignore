@@ -24,6 +24,7 @@ temp/
 .npm-cache/
 prd/
 prd-*/
+.sisyphus/
 
 # Astro / Node
 .astro/
