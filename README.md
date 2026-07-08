@@ -99,6 +99,27 @@ npm run publish -- <obsidian-post-dir>
 - `npm run edit-metadata -- <markdown-file>` 交互式编辑单篇文章 frontmatter，使用 Zod 验证并通过临时文件原子写入
 - 文章阅读体验增强由 `src/scripts/article-runtime.js` 统一初始化，并在 Astro `ClientRouter` 页面切换后重新绑定；`src/scripts/page-transitions.js` 处理全站页面过渡动画
 
+### 多文件发布
+
+如果 Obsidian 文件夹中包含多个 `.md` 文件，发布脚本会进入多文件模式：
+
+```bash
+# 交互式选择要发布的文件（方向键导航，空格选择/取消，回车确认）
+npm run publish -- 20260429-multi-article-post
+
+# Dry-run 显示所有文件的发布计划
+npm run publish -- --dry-run 20260429-multi-article-post
+```
+
+多文件模式特性：
+- 交互式文件选择，用户控制发布顺序
+- 确认步骤显示最终发布顺序
+- 每个文件独立的元数据提示（标题、日期、摘要、分类、标签）
+- 条件性序号：单文件无后缀，多文件自动添加 `-1`, `-2`, `-3` 后缀
+- 所有文章共享同一个 `file/` 资源目录
+
+单文件模式完全不变，保持向后兼容。
+
 ## 内容维护
 
 ### 新增 Astro 文章
