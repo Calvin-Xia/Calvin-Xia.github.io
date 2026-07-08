@@ -138,6 +138,16 @@ npx wrangler secret put HEALTH_CHECK_TOKEN  # Optional detailed health secret
 
 **Publish tags**: `npm run publish` prompts `标签 (逗号分隔) [未分类]:`; blank input must write `['未分类']`. The fallback chain in `scripts/post-utils.js` must also prevent empty `tags:` output.
 
+**Multi-md publish**: Folders with multiple `.md` files are supported. The tool shows an interactive multiselect (arrow keys to navigate, space to select, enter to confirm) letting you pick which files to publish. Selected files are published in selection order. Sequence numbering is conditional: single-md folders get no suffix (`slug.md`), multi-md folders get `-1`, `-2`, `-3` suffixes (`slug-1.md`, `slug-2.md`). All articles share the same `file/` assets directory. Single-md flow is unchanged.
+
+```bash
+# Folder with multiple .md files — interactive selection
+npm run publish -- 20260429-multi-article-post
+
+# Dry-run shows all plans for multi-md folders
+npm run publish -- --dry-run 20260429-multi-article-post
+```
+
 **Tool PWA**: `public/sw-tools.js` must only handle `/works/tools/` requests. Never broaden its scope to the whole site without a new design review.
 
 **Large files**: `articles.astro`, `markdown-renderer.ts`, and `src/lib/i18n.ts` are coordination-heavy. Handle with care.

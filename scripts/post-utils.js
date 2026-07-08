@@ -151,28 +151,40 @@ export async function buildPublishPlan({ vaultDir, dirName, outputDir, publicUrl
         throw new Error(`No markdown file found in ${postDir}`);
     }
 
-    if (markdownFiles.length > 1) {
-        throw new Error(`Expected one markdown file in ${postDir}, found ${markdownFiles.length}`);
-    }
+    markdownFiles.sort((a, b) => path.basename(a).localeCompare(path.basename(b), 'zh-CN'));
 
     const assetSlug = deriveAssetSlug(dirName);
     const assetDirEntry = entries.find((entry) => entry.isDirectory() && entry.name.toLowerCase() === 'file');
     const assetDir = assetDirEntry ? path.join(postDir, assetDirEntry.name) : path.join(postDir, 'file');
     const assetFiles = await walkFiles(assetDir);
 
-    return {
+    const assets = assetFiles.map((asset) => ({
+        ...asset,
+        key: `${assetSlug}/${asset.relativePath}`,
+        publicUrl: `${String(publicUrl || '').replace(/\/+$/, '')}/${encodeUrlPath(assetSlug)}/${encodeUrlPath(asset.relativePath)}`,
+    }));
+
+    if (markdownFiles.length === 1) {
+        return {
+            dirName,
+            postDir,
+            sourceMarkdownPath: markdownFiles[0],
+            destinationMarkdownPath: path.join(outputDir, `${dirName}.md`),
+            assetSlug,
+            publicUrl,
+            assets,
+        };
+    }
+
+    return markdownFiles.map((sourceMarkdownPath, index) => ({
         dirName,
         postDir,
-        sourceMarkdownPath: markdownFiles[0],
-        destinationMarkdownPath: path.join(outputDir, `${dirName}.md`),
+        sourceMarkdownPath,
+        destinationMarkdownPath: path.join(outputDir, `${dirName}-${index + 1}.md`),
         assetSlug,
         publicUrl,
-        assets: assetFiles.map((asset) => ({
-            ...asset,
-            key: `${assetSlug}/${asset.relativePath}`,
-            publicUrl: `${String(publicUrl || '').replace(/\/+$/, '')}/${encodeUrlPath(assetSlug)}/${encodeUrlPath(asset.relativePath)}`,
-        })),
-    };
+        assets,
+    }));
 }
 
 export async function readTransformedMarkdown(plan) {

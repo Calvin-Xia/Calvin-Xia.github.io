@@ -7,6 +7,7 @@ import { stdin as input, stdout as output } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
+import prompts from 'prompts';
 import { getContentType } from './content-types.js';
 import { buildPublishPlan, deriveDateFromDirName, readTransformedMarkdown } from './post-utils.js';
 
@@ -201,6 +202,44 @@ export async function promptForPostMetadata(dirName, {
     }
 }
 
+export async function promptForFileSelection(markdownFiles, {
+    prompts: promptUser = prompts,
+} = {}) {
+    if (!markdownFiles.length) {
+        return null;
+    }
+
+    const choices = markdownFiles.map((file) => ({
+        title: file,
+        value: file,
+    }));
+
+    const { files } = await promptUser({
+        type: 'multiselect',
+        name: 'files',
+        message: '选择要发布的 Markdown 文件（空格选择/取消，回车确认）：',
+        choices,
+        hint: '- 空格选择/取消，方向键移动，回车确认',
+    });
+
+    if (!files || files.length === 0) {
+        return null;
+    }
+
+    const { confirmed } = await promptUser({
+        type: 'confirm',
+        name: 'confirmed',
+        message: `将按此顺序发布: [${files.join(', ')}] — 确认？`,
+        initial: true,
+    });
+
+    if (!confirmed) {
+        return null;
+    }
+
+    return files;
+}
+
 async function main() {
     console.log('Obsidian Post Publisher');
 
@@ -217,6 +256,49 @@ async function main() {
         publicUrl: requireEnv('R2_PUBLIC_URL'),
     });
 
+    // Multi-md path: plan is an array
+    if (Array.isArray(plan)) {
+        if (dryRun) {
+            console.log(`Found ${plan.length} markdown files.`);
+            for (const p of plan) {
+                printPlan(p);
+            }
+            console.log('Dry run complete.');
+            return;
+        }
+
+        const selectedFiles = await promptForFileSelection(
+            plan.map((p) => p.sourceMarkdownPath),
+        );
+        if (!selectedFiles) {
+            console.log('Publish canceled.');
+            return;
+        }
+
+        const orderedPlans = selectedFiles
+            .map((file) => plan.find((p) => p.sourceMarkdownPath === file))
+            .filter(Boolean);
+
+        for (const p of orderedPlans) {
+            p.metadata = await promptForPostMetadata(p.dirName);
+        }
+
+        if (!directDirName) {
+            const confirmed = await confirmPlan();
+            if (!confirmed) {
+                console.log('Publish canceled.');
+                return;
+            }
+        }
+
+        for (const p of orderedPlans) {
+            await executePublishPlan(p, { dryRun: false });
+        }
+        console.log('Publish complete.');
+        return;
+    }
+
+    // Single-md path: existing flow
     printPlan(plan);
 
     if (!dryRun) {
