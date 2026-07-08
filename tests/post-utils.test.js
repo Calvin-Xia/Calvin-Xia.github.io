@@ -179,6 +179,109 @@ describe('post utility functions', () => {
         assert.equal(await readFile(path.join(postDir, 'draft.md'), 'utf8'), '![图](./File/a.PNG)\n');
     });
 
+    test('buildPublishPlan returns array of plans for multi-md folder', async () => {
+        const vaultDir = await createTempDir();
+        const outputDir = await createTempDir();
+        const postDir = path.join(vaultDir, '20260429-my-new-post');
+        await mkdir(path.join(postDir, 'File'), { recursive: true });
+        await writeFile(path.join(postDir, 'draft.md'), '# Draft\n', 'utf8');
+        await writeFile(path.join(postDir, 'notes.md'), '# Notes\n', 'utf8');
+        await writeFile(path.join(postDir, 'File', 'a.PNG'), 'png', 'utf8');
+
+        const plan = await buildPublishPlan({
+            vaultDir,
+            dirName: '20260429-my-new-post',
+            outputDir,
+            publicUrl: 'https://content.calvin-xia.cn',
+        });
+
+        assert.ok(Array.isArray(plan), 'multi-md plan should be an array');
+        assert.equal(plan.length, 2);
+    });
+
+    test('buildPublishPlan returns single object for single-md folder (backward compat)', async () => {
+        const vaultDir = await createTempDir();
+        const outputDir = await createTempDir();
+        const postDir = path.join(vaultDir, '20260429-my-new-post');
+        await mkdir(postDir, { recursive: true });
+        await writeFile(path.join(postDir, 'draft.md'), '# Draft\n', 'utf8');
+
+        const plan = await buildPublishPlan({
+            vaultDir,
+            dirName: '20260429-my-new-post',
+            outputDir,
+            publicUrl: 'https://content.calvin-xia.cn',
+        });
+
+        assert.ok(!Array.isArray(plan), 'single-md plan should be a plain object');
+        assert.equal(plan.dirName, '20260429-my-new-post');
+        assert.equal(plan.sourceMarkdownPath, path.join(postDir, 'draft.md'));
+    });
+
+    test('buildPublishPlan multi-md plans share same assets and assetSlug', async () => {
+        const vaultDir = await createTempDir();
+        const outputDir = await createTempDir();
+        const postDir = path.join(vaultDir, '20260429-shared-assets');
+        await mkdir(path.join(postDir, 'File'), { recursive: true });
+        await writeFile(path.join(postDir, 'a.md'), '# A\n', 'utf8');
+        await writeFile(path.join(postDir, 'b.md'), '# B\n', 'utf8');
+        await writeFile(path.join(postDir, 'File', 'cover.PNG'), 'png', 'utf8');
+
+        const plan = await buildPublishPlan({
+            vaultDir,
+            dirName: '20260429-shared-assets',
+            outputDir,
+            publicUrl: 'https://content.calvin-xia.cn',
+        });
+
+        assert.equal(plan[0].assetSlug, 'shared-assets');
+        assert.equal(plan[1].assetSlug, 'shared-assets');
+        assert.equal(plan[0].assets, plan[1].assets, 'assets should be same reference');
+        assert.deepEqual(plan[0].assets.map((a) => a.key), ['shared-assets/cover.PNG']);
+    });
+
+    test('buildPublishPlan multi-md destination paths have correct sequence numbering', async () => {
+        const vaultDir = await createTempDir();
+        const outputDir = await createTempDir();
+        const postDir = path.join(vaultDir, '20260708-multi');
+        await mkdir(postDir, { recursive: true });
+        await writeFile(path.join(postDir, 'alpha.md'), '# Alpha\n', 'utf8');
+        await writeFile(path.join(postDir, 'beta.md'), '# Beta\n', 'utf8');
+        await writeFile(path.join(postDir, 'gamma.md'), '# Gamma\n', 'utf8');
+
+        const plan = await buildPublishPlan({
+            vaultDir,
+            dirName: '20260708-multi',
+            outputDir,
+            publicUrl: 'https://content.calvin-xia.cn',
+        });
+
+        assert.equal(plan[0].destinationMarkdownPath, path.join(outputDir, '20260708-multi-1.md'));
+        assert.equal(plan[1].destinationMarkdownPath, path.join(outputDir, '20260708-multi-2.md'));
+        assert.equal(plan[2].destinationMarkdownPath, path.join(outputDir, '20260708-multi-3.md'));
+    });
+
+    test('buildPublishPlan multi-md plans are ordered alphabetically by filename', async () => {
+        const vaultDir = await createTempDir();
+        const outputDir = await createTempDir();
+        const postDir = path.join(vaultDir, '20260708-order');
+        await mkdir(postDir, { recursive: true });
+        await writeFile(path.join(postDir, 'gamma.md'), '# Gamma\n', 'utf8');
+        await writeFile(path.join(postDir, 'alpha.md'), '# Alpha\n', 'utf8');
+        await writeFile(path.join(postDir, 'beta.md'), '# Beta\n', 'utf8');
+
+        const plan = await buildPublishPlan({
+            vaultDir,
+            dirName: '20260708-order',
+            outputDir,
+            publicUrl: 'https://content.calvin-xia.cn',
+        });
+
+        assert.equal(path.basename(plan[0].sourceMarkdownPath), 'alpha.md');
+        assert.equal(path.basename(plan[1].sourceMarkdownPath), 'beta.md');
+        assert.equal(path.basename(plan[2].sourceMarkdownPath), 'gamma.md');
+    });
+
     test('deriveDateFromDirName extracts YYYY-MM-DD from dir name prefix', () => {
         assert.equal(deriveDateFromDirName('20260503-labors-day'), '2026-05-03');
         assert.equal(deriveDateFromDirName('20251231-2025年度总结'), '2025-12-31');
