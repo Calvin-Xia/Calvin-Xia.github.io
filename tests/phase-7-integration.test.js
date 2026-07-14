@@ -37,15 +37,17 @@ describe('Phase 7 integration', () => {
         assert.ok(elapsed < 200, `expected search under 200ms, got ${elapsed}ms`);
     });
 
-    test('health check degrades gracefully when Umami is unavailable', async () => {
+    test('health check degrades gracefully when Analytics Engine is not available', async () => {
+        const mockAnalytics = {
+            query: async () => ({ rows: [] }),
+        };
+
         const result = await checkHealth({
-            umamiUrl: 'https://invalid.example.com',
-            umamiApiKey: 'test',
+            analyticsEngine: mockAnalytics,
             version: '1.0.0',
-            fetchFn: async () => { throw new Error('DNS error'); },
         });
 
         assert.equal(result.status, 'degraded');
-        assert.equal(result.dependencies.umami.status, 'degraded');
+        assert.equal(result.dependencies.analytics.status, 'not_configured');
     });
 });

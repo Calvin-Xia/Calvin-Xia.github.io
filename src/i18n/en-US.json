@@ -277,7 +277,10 @@
         }
     },
     "viewCounter": {
-        "views": "{views} views"
+        "views": "{views} views",
+        "noData": "No views yet",
+        "unavailable": "Views unavailable",
+        "error": "Failed to load views"
     },
     "about": {
         "title": "About",

@@ -277,7 +277,10 @@
         }
     },
     "viewCounter": {
-        "views": "{views} 次阅读"
+        "views": "{views} 次阅读",
+        "noData": "暂无阅读量",
+        "unavailable": "阅读量不可用",
+        "error": "阅读量加载失败"
     },
     "about": {
         "title": "关于",

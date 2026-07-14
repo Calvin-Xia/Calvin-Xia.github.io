@@ -1,9 +1,9 @@
 import { checkHealth } from './lib/health-check.js';
 import { SecurityLogger } from './lib/security-logger.js';
-import { handleViewCounterRequest } from './lib/umami-view-counter.js';
+import { handleViewCounterRequest, recordPageView } from './lib/analytics-view-counter.js';
 
 interface Env {
-    UMAMI_API_KEY?: string;
+    ARTICLE_VIEWS?: AnalyticsEngineDataset;
     HEALTH_CHECK_TOKEN?: string;
     WORKER_VERSION?: string;
     ASSETS?: {
@@ -73,10 +73,8 @@ async function handleHealthRequest(request: Request, env: Env): Promise<Response
 
     try {
         const health = await checkHealth({
-            umamiUrl: 'https://api.umami.is',
-            umamiApiKey: env.UMAMI_API_KEY,
+            analyticsEngine: env.ARTICLE_VIEWS,
             version: env.WORKER_VERSION || '0.0.1',
-            fetchFn: fetch,
         });
 
         if (!bearerToken) {
@@ -134,10 +132,25 @@ function logSecurityRequest(request: Request, url: URL, response: Response): voi
     logApiCallStats(url);
 }
 
+function getArticleSlugFromPath(pathname: string): string | null {
+    const prefix = '/articles/';
+    if (!pathname.startsWith(prefix)) {
+        return null;
+    }
+
+    const slug = pathname.slice(prefix.length).replace(/\/$/, '');
+    return slug || null;
+}
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
         let response: Response;
+
+        const articleSlug = getArticleSlugFromPath(url.pathname);
+        if (articleSlug) {
+            recordPageView(env, articleSlug);
+        }
 
         if (url.pathname === '/api/health') {
             response = await handleHealthRequest(request, env);

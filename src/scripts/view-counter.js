@@ -46,15 +46,27 @@ async function loadCounter(counter) {
         });
 
         if (!response.ok) {
-            counter.remove();
+            counter.textContent = t('viewCounter.unavailable');
+            counter.classList.remove('view-count--pending');
+            counter.classList.add('view-count--unavailable');
             return;
         }
 
         const data = await response.json();
+        
+        if (data.views === null || data.views === undefined) {
+            counter.textContent = t('viewCounter.noData');
+            counter.classList.remove('view-count--pending');
+            counter.classList.add('view-count--empty');
+            return;
+        }
+
         setCounterText(counter, data.views);
     } catch (error) {
         console.warn('View counter failed for slug:', slug, error);
-        counter.remove();
+        counter.textContent = t('viewCounter.error');
+        counter.classList.remove('view-count--pending');
+        counter.classList.add('view-count--error');
     }
 }
 

@@ -5,7 +5,7 @@
 
 ## OVERVIEW
 
-Astro v6 static personal site (blog, works, tools, updates). Cloudflare Worker proxies article view counts via Umami, exposes `/api/health`, and records basic security telemetry for API errors/rates. Article search uses a build-time MiniSearch index with `jieba-wasm` Chinese tokenization, result highlighting, history, debounce, and filters. `/works/tools/` has a scoped PWA Service Worker. UI text is internationalized with local JSON dictionaries. Content maintenance includes Obsidian → R2 publishing and a single-file metadata editor CLI. Deployed to GitHub Pages; Worker deploy remains manual.
+Astro v6 static personal site (blog, works, tools, updates). Cloudflare Worker uses Workers Analytics Engine for article view counts, exposes `/api/health`, and records basic security telemetry for API errors/rates. Article search uses a build-time MiniSearch index with `jieba-wasm` Chinese tokenization, result highlighting, history, debounce, and filters. `/works/tools/` has a scoped PWA Service Worker. UI text is internationalized with local JSON dictionaries. Content maintenance includes Obsidian → R2 publishing and a single-file metadata editor CLI. Deployed to GitHub Pages; Worker deploy remains manual.
 
 ## STRUCTURE
 
@@ -54,7 +54,7 @@ Calvin-Xia.github.io/
 | Metadata editor CLI | `scripts/edit-metadata.js` | Single Markdown frontmatter editor with Zod validation + atomic write |
 | Tests | `tests/*.test.js` | Node built-in runner |
 | CI workflows | `.github/workflows/` | 4 workflows |
-| Worker entry | `src/worker.ts` | Umami view counter proxy + `/api/health` + security logging |
+| Worker entry | `src/worker.ts` | Workers Analytics Engine view counter + `/api/health` + security logging |
 | Security logger | `src/lib/security-logger.js` | API rate/error tracking and alert callbacks |
 | Tool PWA | `public/manifest.json`, `public/sw-tools.js` | Scoped to `/works/tools/` only |
 | Design spec | `DESIGN.md` | Visual/interaction rules |
@@ -116,7 +116,7 @@ npm run edit-metadata -- <file>  # Edit one Markdown file's frontmatter
 npm run publish -- <dir> # Publish Obsidian post to Astro + R2
 npm run publish -- --dry-run <dir>  # Preview publish plan
 npx wrangler dev         # Local Worker dev (uses .dev.vars)
-npx wrangler secret put UMAMI_API_KEY  # Set Worker secret
+npx wrangler secret put HEALTH_CHECK_TOKEN  # Optional detailed health secret
 npx wrangler secret put HEALTH_CHECK_TOKEN  # Optional detailed health secret
 ```
 
@@ -126,7 +126,7 @@ npx wrangler secret put HEALTH_CHECK_TOKEN  # Optional detailed health secret
 
 **CDN proxy (dev)**: `/__cdn/content` and `/__cdn/assets` proxy to `content.calvin-xia.cn` and `assets.calvin-xia.cn`. Use `https://workers.calvin-xia.cn/` as Referer.
 
-**Secrets**: `.env` and `.dev.vars` are gitignored. Use `.dev.vars.example` as template. Never commit real credentials. Worker secrets: `UMAMI_API_KEY`, optional `HEALTH_CHECK_TOKEN`.
+**Secrets**: `.env` and `.dev.vars` are gitignored. Use `.dev.vars.example` as template. Never commit real credentials. Worker secrets: optional `HEALTH_CHECK_TOKEN`.
 
 **Legacy files**: `public/` contains pre-migration HTML files (about.html, Works.html, etc.). These bypass Astro — prefer Astro pages.
 
@@ -156,7 +156,7 @@ npm run publish -- --dry-run 20260429-multi-article-post
 
 **CI note**: `astro-build-check.yml` runs tests, coverage, content structure checks, ESLint, Astro type generation, TypeScript checks, build, and static output verification. `phase-2-content-check.yml` remains as the content-pipeline backup workflow. `metadata-editor-check.yml` is scoped to metadata editor file-operation changes. There is no `content-check.yml`.
 
-**Worker note**: Worker is not in CI. Deploys require manual `npx wrangler deploy`. If you update `src/worker.ts`, `src/lib/umami-view-counter.js`, or `src/lib/health-check.js`, remember to deploy and verify `/api/views/{slug}` and `/api/health`.
+**Worker note**: Worker is not in CI. Deploys require manual `npx wrangler deploy`. If you update `src/worker.ts` or `src/lib/health-check.js`, remember to deploy and verify `/api/views/{slug}` and `/api/health`.
 
 ## UI & CONTENT
 

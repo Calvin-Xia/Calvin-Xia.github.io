@@ -771,6 +771,13 @@ select:disabled {
     line-height: 1.65;
 }
 
+.view-count--empty,
+.view-count--unavailable,
+.view-count--error {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 .list-index {
     display: grid;
     gap: 0;

@@ -14,7 +14,8 @@ import {
 import {
     handleViewCounterRequest,
     isValidArticleSlug,
-} from '../src/lib/umami-view-counter.js';
+    recordPageView,
+} from '../src/lib/analytics-view-counter.js';
 
 const rootDir = path.resolve(import.meta.dirname, '..');
 
@@ -180,7 +181,7 @@ describe('Phase 6 article transitions', () => {
     });
 });
 
-describe('Phase 6 Umami view counter Worker', () => {
+describe('Phase 6 Analytics Engine view counter', () => {
     test('validates article slugs without rejecting Chinese filenames', () => {
         assert.equal(isValidArticleSlug('20260315-两小时，环线，慢行'), true);
         assert.equal(isValidArticleSlug('20260411-ai-reliance'), true);
@@ -190,96 +191,60 @@ describe('Phase 6 Umami view counter Worker', () => {
         assert.equal(isValidArticleSlug('nested%2Fpath'), false);
     });
 
-    test('returns views from Umami path metrics and keeps the API key server-side', async () => {
-        const calls = [];
+    test('records page view to Analytics Engine', async () => {
+        const writtenPoints = [];
+        const mockAnalytics = {
+            writeDataPoint: (point) => writtenPoints.push(point),
+            query: async () => ({ rows: [{ total_views: 42 }] }),
+        };
+
+        recordPageView({ ARTICLE_VIEWS: mockAnalytics }, '20260411-ai-reliance');
+
+        assert.equal(writtenPoints.length, 1);
+        assert.deepEqual(writtenPoints[0].blobs, ['/articles/20260411-ai-reliance/', '20260411-ai-reliance']);
+        assert.deepEqual(writtenPoints[0].doubles, [1]);
+    });
+
+    test('returns views from Analytics Engine', async () => {
+        const mockAnalytics = {
+            query: async () => ({ rows: [{ total_views: 1234 }] }),
+        };
+
         const response = await handleViewCounterRequest(
             new Request('https://calvin-xia.cn/api/views/20260411-ai-reliance'),
-            {
-                UMAMI_API_KEY: 'test-secret',
-                ASSETS: { fetch: () => new Response('asset') },
-            },
-            {
-                now: () => 1778112000000,
-                fetch: async (url, init) => {
-                    calls.push({ url: String(url), init });
-                    return Response.json([
-                        { x: '/articles/other/', y: 3 },
-                        { x: '/articles/20260411-ai-reliance/', y: 1234 },
-                    ]);
-                },
-            },
+            { ARTICLE_VIEWS: mockAnalytics, ASSETS: { fetch: () => new Response('asset') } },
         );
 
         assert.equal(response.status, 200);
-        assert.equal(response.headers.get('Cache-Control'), 'public, max-age=300');
         assert.deepEqual(await response.json(), {
             slug: '20260411-ai-reliance',
             views: 1234,
         });
-        assert.match(calls[0].url, /https:\/\/api\.umami\.is\/v1\/websites\/d5b9f90c-e82b-4b57-ade7-ff6a3e5d8062\/metrics/);
-        assert.match(calls[0].url, /type=path/);
-        assert.equal(calls[0].init.headers['x-umami-api-key'], 'test-secret');
     });
 
-    test('sums matching article path metrics after normalizing query strings and hashes', async () => {
-        const encodedSlug = '20260315-%E4%B8%A4%E5%B0%8F%E6%97%B6%EF%BC%8C%E7%8E%AF%E7%BA%BF%EF%BC%8C%E6%85%A2%E8%A1%8C';
+    test('returns null views when Analytics Engine is not configured', async () => {
         const response = await handleViewCounterRequest(
-            new Request(`https://calvin-xia.cn/api/views/${encodedSlug}`),
-            {
-                UMAMI_API_KEY: 'test-secret',
-                ASSETS: { fetch: () => new Response('asset') },
-            },
-            {
-                fetch: async () => Response.json([
-                    { x: `/articles/${encodedSlug}/`, y: 4 },
-                    { x: `/articles/${encodedSlug}/?utm_source=rss`, y: 5 },
-                    { x: '/articles/20260315-两小时，环线，慢行/#section', y: 6 },
-                    { x: '/articles/20260315-两小时，环线，慢行/?utm_source=feed#section', y: 7 },
-                    { x: '/articles/other/', y: 100 },
-                ]),
-            },
+            new Request('https://calvin-xia.cn/api/views/20260411-ai-reliance'),
+            { ASSETS: { fetch: () => new Response('asset') } },
         );
 
         assert.deepEqual(await response.json(), {
-            slug: '20260315-两小时，环线，慢行',
-            views: 22,
+            slug: '20260411-ai-reliance',
+            views: null,
         });
     });
 
-    test('degrades to null views when Umami is unavailable or the secret is missing', async () => {
-        const missingSecret = await handleViewCounterRequest(
-            new Request('https://calvin-xia.cn/api/views/post'),
-            { ASSETS: { fetch: () => new Response('asset') } },
-        );
-        const failedFetch = await handleViewCounterRequest(
-            new Request('https://calvin-xia.cn/api/views/post'),
-            { UMAMI_API_KEY: 'test-secret', ASSETS: { fetch: () => new Response('asset') } },
-            { fetch: async () => new Response('nope', { status: 503 }) },
-        );
-
-        assert.deepEqual(await missingSecret.json(), { slug: 'post', views: null });
-        assert.deepEqual(await failedFetch.json(), { slug: 'post', views: null });
-    });
-
-    test('logs only sanitized Umami error messages in the Worker', async (t) => {
-        const originalWarn = console.warn;
-        const warnings = [];
-
-        console.warn = (...args) => warnings.push(args);
-        t.after(() => {
-            console.warn = originalWarn;
-        });
+    test('returns null views when Analytics Engine query fails', async () => {
+        const mockAnalytics = {
+            query: async () => { throw new Error('Query failed'); },
+        };
 
         const response = await handleViewCounterRequest(
             new Request('https://calvin-xia.cn/api/views/post'),
-            { UMAMI_API_KEY: 'test-secret', ASSETS: { fetch: () => new Response('asset') } },
-            { fetch: async () => { throw new Error('network unavailable'); } },
+            { ARTICLE_VIEWS: mockAnalytics, ASSETS: { fetch: () => new Response('asset') } },
         );
 
         assert.deepEqual(await response.json(), { slug: 'post', views: null });
-        assert.deepEqual(warnings, [
-            ['Unable to load Umami article views.', 'network unavailable'],
-        ]);
     });
 
     test('logs failed browser view counter loads before hiding the counter', async (t) => {
@@ -287,15 +252,14 @@ describe('Phase 6 Umami view counter Worker', () => {
         const originalFetch = globalThis.fetch;
         const originalWarn = console.warn;
         const warnings = [];
+        const addedClasses = [];
+        const removedClasses = [];
         const counter = {
             dataset: { slug: 'post' },
-            removed: false,
-            remove() {
-                this.removed = true;
-            },
+            textContent: '',
             classList: {
-                add() {},
-                remove() {},
+                add(cls) { addedClasses.push(cls); },
+                remove(cls) { removedClasses.push(cls); },
             },
         };
         const documentRef = {
@@ -327,7 +291,9 @@ describe('Phase 6 Umami view counter Worker', () => {
         });
         await new Promise((resolve) => setImmediate(resolve));
 
-        assert.equal(counter.removed, true);
+        assert.equal(counter.textContent.includes('加载失败') || counter.textContent.includes('error'), true);
+        assert.ok(addedClasses.includes('view-count--error'));
+        assert.ok(removedClasses.includes('view-count--pending'));
         assert.equal(warnings.length, 1);
         assert.deepEqual(warnings[0].slice(0, 2), ['View counter failed for slug:', 'post']);
         assert.equal(warnings[0][2]?.message, 'fetch failed');
@@ -348,34 +314,14 @@ describe('Phase 6 Umami view counter Worker', () => {
         assert.equal(await asset.text(), 'asset-ok');
     });
 
-    test('wrangler config exposes the Worker entry and ASSETS binding only for API routes', () => {
+    test('wrangler config exposes the Worker entry, ASSETS binding, and Analytics Engine dataset', () => {
         const config = readSource('wrangler.jsonc');
 
         assert.match(config, /"main":\s*"src\/worker\.ts"/);
         assert.match(config, /"binding":\s*"ASSETS"/);
         assert.match(config, /"run_worker_first":\s*\[\s*"\/api\/\*"\s*\]/);
-        assert.match(config, /"required":\s*\[\s*"UMAMI_API_KEY"\s*\]/);
-    });
-
-    test('Umami API key is documented as a secret and excluded from git', () => {
-        const gitignore = readSource('.gitignore');
-        const devVarsExample = readSource('.dev.vars.example');
-        const envExample = readSource('.env.example');
-        const combinedSource = [
-            readSource('wrangler.jsonc'),
-            devVarsExample,
-            envExample,
-            readSource('src', 'lib', 'umami-view-counter.js'),
-            readSource('src', 'scripts', 'view-counter.js'),
-        ].join('\n');
-
-        assert.match(gitignore, /\.dev\.vars\*/);
-        assert.match(gitignore, /!\.dev\.vars\.example/);
-        assert.match(gitignore, /\.env\*/);
-        assert.match(gitignore, /!\.env\.example/);
-        assert.match(devVarsExample, /UMAMI_API_KEY=your-umami-api-key/);
-        assert.match(envExample, /wrangler secret put UMAMI_API_KEY/);
-        assert.doesNotMatch(combinedSource, /api_[A-Za-z0-9]{24,}/);
+        assert.match(config, /"binding":\s*"ARTICLE_VIEWS"/);
+        assert.match(config, /"dataset":\s*"article-views"/);
     });
 });
 

@@ -9,6 +9,12 @@
         "binding": "ASSETS",
         "run_worker_first": ["/api/*"]
     },
+    "analytics_engine_datasets": [
+        {
+            "binding": "ARTICLE_VIEWS",
+            "dataset": "article-views"
+        }
+    ],
     "observability": {
         "enabled": true,
         "head_sampling_rate": 1,
@@ -23,8 +29,5 @@
             "persist": true,
             "head_sampling_rate": 1
         }
-    },
-    "secrets": {
-        "required": ["UMAMI_API_KEY"]
     }
 }

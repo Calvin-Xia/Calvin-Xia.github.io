@@ -261,14 +261,6 @@ describe('Phase 5 SEO and comments', () => {
         assert.doesNotMatch(layoutSource, /prefers-color-scheme/);
     });
 
-    test('BaseLayout includes Umami Cloud tracker with explicit host URL', () => {
-        const layoutSource = readFile('src', 'layouts', 'BaseLayout.astro');
-
-        assert.match(layoutSource, /src=['"]https:\/\/cloud\.umami\.is\/script\.js['"]/);
-        assert.match(layoutSource, /data-website-id=['"]d5b9f90c-e82b-4b57-ade7-ff6a3e5d8062['"]/);
-        assert.match(layoutSource, /data-host-url=['"]https:\/\/cloud\.umami\.is['"]/);
-    });
-
     test('CSP allows external scripts, styles, fonts, and analytics requests used by the site', () => {
         const headersSource = readFile('public', '_headers');
         const csp = headersSource.match(/Content-Security-Policy:\s*(.+)/)?.[1] || '';
@@ -277,11 +269,9 @@ describe('Phase 5 SEO and comments', () => {
         const connectSrc = csp.match(/connect-src\s+([^;]+)/)?.[1] || '';
         const fontSrc = csp.match(/font-src\s+([^;]+)/)?.[1] || '';
 
-        assert.match(scriptSrc, /https:\/\/cloud\.umami\.is/);
         assert.match(scriptSrc, /https:\/\/giscus\.app/);
         assert.match(styleSrc, /https:\/\/fonts\.googleapis\.com/);
         assert.match(styleSrc, /https:\/\/giscus\.app/);
-        assert.match(connectSrc, /https:\/\/cloud\.umami\.is/);
         assert.match(connectSrc, /https:\/\/giscus\.app/);
         assert.match(fontSrc, /https:\/\/fonts\.gstatic\.com/);
     });
