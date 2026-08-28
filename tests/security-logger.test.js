@@ -122,7 +122,7 @@ describe('Worker security monitoring', () => {
         t.mock.method(globalThis, 'fetch', async () => ({ ok: true, status: 200 }));
 
         const env = {
-            UMAMI_API_KEY: 'test-key',
+            UMAMI_PASSWORD: 'test-key',
             HEALTH_CHECK_TOKEN: 'health-secret',
         };
 
@@ -152,7 +152,7 @@ describe('Worker security monitoring', () => {
         t.mock.method(globalThis, 'fetch', async () => ({ ok: true, status: 200 }));
 
         const env = {
-            UMAMI_API_KEY: 'test-key',
+            UMAMI_PASSWORD: 'test-key',
             HEALTH_CHECK_TOKEN: 'health-secret',
         };
 

@@ -9,12 +9,10 @@
         "binding": "ASSETS",
         "run_worker_first": ["/api/*"]
     },
-    "analytics_engine_datasets": [
-        {
-            "binding": "ARTICLE_VIEWS",
-            "dataset": "article-views"
-        }
-    ],
+    "vars": {
+        "UMAMI_HOST": "https://umami.calvin-xia.cn:10686",
+        "UMAMI_WEBSITE_ID": "82bd10b2-31aa-4c90-8d67-8a555a5c5592"
+    },
     "observability": {
         "enabled": true,
         "head_sampling_rate": 1,

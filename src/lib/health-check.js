@@ -1,8 +1,10 @@
-export async function checkHealth(options = {}) {
-    const { analyticsEngine, version = '0.0.1' } = options;
-    const timestamp = new Date().toISOString();
+import { getUmamiConfig, requestUmamiToken } from './umami-view-counter.js';
 
-    if (!analyticsEngine || typeof analyticsEngine.writeDataPoint !== 'function') {
+export async function checkHealth(env = {}, version = '0.0.1') {
+    const timestamp = new Date().toISOString();
+    const umami = getUmamiConfig(env);
+
+    if (!umami.configured) {
         return {
             status: 'degraded',
             version,
@@ -13,12 +15,27 @@ export async function checkHealth(options = {}) {
         };
     }
 
-    return {
-        status: 'healthy',
-        version,
-        timestamp,
-        dependencies: {
-            analytics: { status: 'healthy' },
-        },
-    };
+    try {
+        await requestUmamiToken(env);
+
+        return {
+            status: 'healthy',
+            version,
+            timestamp,
+            dependencies: {
+                analytics: { status: 'healthy' },
+            },
+        };
+    } catch (error) {
+        console.warn('Umami health probe failed:', error?.message || error);
+
+        return {
+            status: 'degraded',
+            version,
+            timestamp,
+            dependencies: {
+                analytics: { status: 'unreachable' },
+            },
+        };
+    }
 }

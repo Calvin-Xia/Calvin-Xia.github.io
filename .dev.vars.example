@@ -2,4 +2,6 @@
 # Copy this file to .dev.vars for `npx wrangler dev`.
 # Do not commit the real value.
 
+UMAMI_USERNAME=your-umami-username
+UMAMI_PASSWORD=your-umami-password
 HEALTH_CHECK_TOKEN=your-health-check-token

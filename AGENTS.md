@@ -1,181 +1,88 @@
-# PROJECT KNOWLEDGE BASE
+# Repository Guidelines
 
-**Generated:** 2026-06-04
-**Branch:** codex-phase-13-page-transitions
+## Project Structure & Module Organization
+This repository is a static website fully migrated to Astro from root-level HTML/CSS/vanilla JS.
+- Astro config and source: `package.json`, `astro.config.mjs`, `tsconfig.json`, `src/`.
+- Astro content collections: `src/content.config.ts`, `src/content/blog/`, `src/content/works/`, `src/content/tools/`, `src/content/updates/`.
+- Astro styles: `src/styles/global.css`.
+- Astro client scripts: `src/scripts/` (article runtime, view counter, timer, random-selector, markdown-renderer, page-animations, CDN proxy, etc.).
+- Workers runtime: `src/worker.ts` and `src/lib/umami-view-counter.js` proxy article view counts through the self-hosted Umami API (`UMAMI_HOST`/`UMAMI_WEBSITE_ID` are public vars in `wrangler.jsonc`; `UMAMI_USERNAME`/`UMAMI_PASSWORD` are Worker secrets); the detailed `/api/health` response uses the `HEALTH_CHECK_TOKEN` Worker secret.
+- Worker config: `wrangler.jsonc` (Worker entry, ASSETS binding), `.dev.vars.example` (local Worker secret template).
+- Astro static assets: `public/` mirrors deployable static assets such as `storage/`, `.well-known/`, `libs/mammoth/`, and old-URL redirect files.
+- Astro tool routes: `src/pages/works/tools.astro` (作品体系下的工具集), `src/pages/markdown-tool.astro` (Markdown 工具独立页), and `src/pages/articles/archive.astro` (文章归档).
+- RSS and SEO: `src/lib/site-seo.js` (shared SEO helpers), `src/pages/rss.xml.ts` (RSS 2.0 feed), `src/pages/robots.txt.ts`, `astro.config.mjs` (`@astrojs/sitemap` integration).
+- Comments: `src/components/GiscusComments.astro` (giscus + GitHub Discussions).
+- Article content: `src/lib/word-count.js` (字数 & 阅读时间), `src/lib/archive.js` (归档分组), `src/lib/article-enhancements/` (图片灯箱、标题锚点、目录、阅读进度、逐段渐显).
+- Publishing and local authoring scripts: `scripts/publish-post.js`, `scripts/post-utils.js`, `tools/api-server.js`.
+- Other assets: `storage/`, `.well-known/`.
+- CI/CD workflows: `.github/workflows/deploy.yml`, `astro-build-check.yml`, `phase-2-content-check.yml`, `metadata-editor-check.yml`.
 
-## OVERVIEW
+When adding new files, keep them in the existing folder conventions and use relative links.
 
-Astro v6 static personal site (blog, works, tools, updates). Cloudflare Worker uses Workers Analytics Engine for article view counts, exposes `/api/health`, and records basic security telemetry for API errors/rates. Article search uses a build-time MiniSearch index with `jieba-wasm` Chinese tokenization, result highlighting, history, debounce, and filters. `/works/tools/` has a scoped PWA Service Worker. UI text is internationalized with local JSON dictionaries. Content maintenance includes Obsidian → R2 publishing and a single-file metadata editor CLI. Deployed to GitHub Pages; Worker deploy remains manual.
+## Build, Test, and Development Commands
+- `npm install`: Install Astro and npm-managed libraries.
+- `npm run dev`: Start the Astro development server, usually at `http://localhost:4321`.
+- `npm run build`: Build the Astro static output into `dist/`.
+- `npm run preview`: Preview the Astro production build locally.
+- `npm test`: Run Node test suites for content migration, publishing, and local API behavior.
+- `npm run test:coverage`: Run the same tests with Node's experimental coverage report.
+- `npm run api`: Start the local new-post API server on `127.0.0.1:4322`.
+- `npm run publish -- --dry-run <obsidian-post-dir>`: Preview an Obsidian→R2 publish plan without writing files or uploading.
+- `npm run publish <obsidian-post-dir>`: Publish an Obsidian post copy into Astro content and upload assets to R2.
+- `npx wrangler secret put UMAMI_USERNAME` / `UMAMI_PASSWORD`: Configure the production Worker secrets for the self-hosted Umami API login used by article view counts.
+- `npx wrangler secret put HEALTH_CHECK_TOKEN`: Configure the production Worker secret for the detailed `/api/health` response.
+- `npx wrangler dev`: Start local Wrangler dev server to test the Worker API routes (uses `.dev.vars` for secrets).
 
-## STRUCTURE
+## Coding Style & Naming Conventions
+- Languages: Astro components, TypeScript modules, CSS3, vanilla JavaScript (ES6+).
+- Indentation: 4 spaces across all source files.
+- Naming: prefer `kebab-case` for asset files; keep existing page naming patterns.
+- Reuse CSS variables in `:root` before introducing one-off colors/spacings.
+- Keep JS organized by feature modules in `src/scripts/`.
 
-```
-Calvin-Xia.github.io/
-├── src/
-│   ├── components/       # Shared Astro components
-│   ├── content/          # blog/ works/ tools/ updates/ collections
-│   ├── content.config.ts # Collection schemas (Zod)
-│   ├── i18n/             # zh-CN / en-US UI translations
-│   ├── layouts/          # BaseLayout.astro (single layout for all pages)
-│   ├── lib/              # Utilities, SEO, search, i18n, remark plugins, article enhancements
-│   ├── pages/            # Astro routes + RSS + robots.txt + search-index
-│   ├── scripts/          # Client-side JS/TS (article runtime, view counter)
-│   ├── styles/           # global.css (design tokens + components)
-│   └── worker.ts         # Cloudflare Worker entry (view counter + health API)
-├── scripts/              # Publish pipeline + metadata editor CLI
-├── tests/                # Node built-in test runner (36 test files)
-├── tools/                # Local API server (new-post)
-├── public/               # Static assets, PWA manifest/SW, CDN content, legacy redirects
-├── .github/workflows/    # CI: deploy, astro-build-check, phase-2-content-check, metadata-editor-check
-├── astro.config.mjs      # Astro config (site, markdown, Vite proxy)
-├── wrangler.jsonc         # Cloudflare Worker config
-├── DESIGN.md             # Visual/interaction spec (1028 lines)
-└── AGENTS.md             # This file
-```
+## Testing Guidelines
+Before submitting changes:
+- Run `npm test` for code, content, publishing, or local API changes.
+- Run `npm run test:coverage` when modifying file operation features or review-driven test coverage.
+- Run `npm run build` for Astro changes.
+- Check layout and behavior on desktop and mobile widths.
+- Validate navigation and interactive components (for example timer/tool interactions).
+- Confirm browser console has no new errors.
+- For Astro blog updates, ensure `src/content/blog/*.md` frontmatter is valid.
 
-## WHERE TO LOOK
+## CI/CD Requirements
+When implementing or modifying file operation features (such as content pipelines, build scripts, data generators, or any logic that reads/writes project files), a corresponding CI/CD configuration and workflow must be provided alongside the implementation. These CI/CD components should:
+- Include automated validation steps that exercise the file operation features (for example running the pipeline script, verifying output files exist, and checking JSON validity).
+- Define clear success criteria in the workflow (exit code checks, file existence assertions, content format validation).
+- Contain appropriate test cases that cover normal operation, edge cases (empty input, missing files), and error handling paths.
+- Be placed under `.github/workflows/` and follow the naming convention `*-check.yml` or `*-ci.yml`.
+- Run on relevant events (push, pull request) for the branches affected by the file operation changes.
 
-| Task | Location | Notes |
-|------|----------|-------|
-| Add/edit blog post | `src/content/blog/[0-9]*.md` | YYYYMMDD-slug.md format |
-| Add/edit works/tools/updates | `src/content/{works,tools,updates}/*.json` | JSON collections |
-| Modify page layout | `src/layouts/BaseLayout.astro` | Single layout for all pages |
-| Add shared component | `src/components/*.astro` | PascalCase naming |
-| Edit page routes | `src/pages/*.astro` | File-based routing |
-| Client-side scripts | `src/scripts/` | article-runtime.js is main entry; page-transitions.js handles full-site ClientRouter transitions |
-| Article enhancements | `src/lib/article-enhancements/` | Lightbox, TOC, progress, reveals |
-| Search index | `src/lib/search-index-builder.ts`, `src/lib/search-client.ts`, `src/pages/search-index.json.ts` | Build-time MiniSearch JSON + jieba-wasm + lazy client loading |
-| Internationalization | `src/i18n/*.json`, `src/lib/i18n.ts` | UI translations only; content collections stay Chinese |
-| SEO/helpers | `src/lib/site-seo.js` | Sitemap, meta helpers |
-| Remark plugins | `src/lib/remark-*.js` | Markdown build-time transforms |
-| Content schema | `src/content.config.ts` | Zod validation |
-| Global styles | `src/styles/global.css` | CSS variables, design tokens |
-| Publish pipeline | `scripts/publish-post.js` | Obsidian → Astro + R2; blank tags default to `未分类` |
-| Metadata editor CLI | `scripts/edit-metadata.js` | Single Markdown frontmatter editor with Zod validation + atomic write |
-| Tests | `tests/*.test.js` | Node built-in runner |
-| CI workflows | `.github/workflows/` | 4 workflows |
-| Worker entry | `src/worker.ts` | Workers Analytics Engine view counter + `/api/health` + security logging |
-| Security logger | `src/lib/security-logger.js` | API rate/error tracking and alert callbacks |
-| Tool PWA | `public/manifest.json`, `public/sw-tools.js` | Scoped to `/works/tools/` only |
-| Design spec | `DESIGN.md` | Visual/interaction rules |
+## Commit & Pull Request Guidelines
+Recent history shows short, task-focused commit subjects (English or Chinese). Follow that style:
+- Use concise, imperative commit messages.
+- Keep one logical change per commit.
+- In PRs, include: summary of changes, affected files/pages, manual test notes, and screenshots for UI changes.
+- Link related issues when applicable.
 
-## CONVENTIONS
+## UI & Content Guidelines
+- Keep UI copy concise: prefer short labels, tooltips, and actionable text over lengthy descriptions. Avoid filler phrases and redundant explanatory paragraphs.
+- Every visible string should serve a clear purpose — guide the user, explain a necessary constraint, or provide a call to action.
 
-**Language mix**: `src/lib/` and `src/scripts/` are ~60% JavaScript, ~40% TypeScript. New code should prefer `.ts`.
+## Documentation Structure
+- Prefer smaller, focused documents over monolithic files. A single large document (spec, plan, or README) may be split into topic-specific pieces when it exceeds roughly 200 lines or covers multiple unrelated concerns.
+- Use descriptive filenames that reflect the document's scope (for example `phase-0-environment/spec.md` rather than `spec-phase0.md`).
 
-**Indentation**: 4 spaces everywhere.
+## Documentation Synchronization
+After completing a phased milestone or a significant feature:
+- Update affected spec files to reflect the new state (mark completed items, remove stale entries, add follow-up work).
+- If a plan document exists (under `.trae/documents/`), update its status and progress summary.
+- Review `AGENTS.md` and `README.md` and update them if the project structure, build commands, or conventions have changed.
+- For Astro blog or content changes, ensure `src/content/` entries match their collection schema and related phase docs are updated.
 
-**Naming**: `kebab-case` for files. PascalCase for `.astro` components.
-
-**CSS**: Reuse existing CSS variables in `:root` before adding new ones. No hardcoded hex in component CSS.
-
-**Content collections**: Blog uses `[0-9]*.md` glob. Works/tools/updates use `**/*.json`. Date format: `YYYY-MM-DD` string.
-
-**Client scripts**: Loaded in `BaseLayout.astro`. Initialize on `DOMContentLoaded` AND `astro:page-load` (View Transitions support). All internal links use ClientRouter via `page-transitions.js`; article list↔detail uses directional slide animations.
-
-**i18n**: UI text lives in `src/i18n/zh-CN.json` and `src/i18n/en-US.json`. Keep keys identical. Use `t()` server-side and `data-i18n*` attributes for runtime updates. Do not translate blog/work/tool/update collection content. Keep filing/record text in Chinese.
-
-**Theme**: Boot before first render (inline `<script>` in `<head>`). Default light. Validate both themes.
-
-**Language**: Boot before first render (inline `<script>` in `<head>`). Default `zh-CN`; persist preference in `localStorage` key `calvin-xia-lang`. Language switching must not reload the page.
-
-**Fonts**: Noto Serif SC (headings), Noto Sans SC + Inter (body), JetBrains Mono (code). NEVER: Orbitron, Caveat, Playfair Display.
-
-**Dependencies**: MiniSearch + jieba-wasm are used for search. gray-matter + prompts + Zod are used by the metadata editor CLI. No GSAP, ScrollTrigger, Lenis, Three.js, custom cursor. CSS + vanilla JS + IntersectionObserver only.
-
-**Accessibility**: Never hide focus rings. Touch targets ≥44px. Respect `prefers-reduced-motion`.
-
-## ANTI-PATTERNS (THIS PROJECT)
-
-**Forbidden:**
-- Warm orange/pink/teal glassmorphism
-- Full-bleed marketing hero sections
-- Card-inside-card layouts
-- Merge Markdown tool preview styles with article body styles
-- Explanatory frontend copy that describes how the design works
-- Store secrets in `/new-post`
-
-**Missing but acceptable (no action needed):**
-- No Prettier config — style is enforced via repo docs, ESLint warnings/errors, and strict TS
-- No `src/env.d.ts` — tsconfig extends `astro/tsconfigs/strict`
-- Single layout for all pages — intentional for this project size
-- Node `--test` instead of Vitest — works fine, no migration needed
-
-## COMMANDS
-
-```bash
-npm install              # Install dependencies
-npm run dev              # Dev server at http://localhost:4321
-npm run build            # Build to dist/
-npm run preview          # Preview production build
-npm test                 # Run tests (node --test tests/*.test.js)
-npm run test:coverage    # Tests with coverage
-npm run lint             # ESLint for src/ and tests/
-npm run api              # Local new-post API at 127.0.0.1:4322
-npm run edit-metadata -- <file>  # Edit one Markdown file's frontmatter
-npm run publish -- <dir> # Publish Obsidian post to Astro + R2
-npm run publish -- --dry-run <dir>  # Preview publish plan
-npx wrangler dev         # Local Worker dev (uses .dev.vars)
-npx wrangler secret put HEALTH_CHECK_TOKEN  # Optional detailed health secret
-npx wrangler secret put HEALTH_CHECK_TOKEN  # Optional detailed health secret
-```
-
-## NOTES
-
-**Dual deploy**: Static site → GitHub Pages (auto on push to main). Worker → Cloudflare (manual `npx wrangler deploy`).
-
-**CDN proxy (dev)**: `/__cdn/content` and `/__cdn/assets` proxy to `content.calvin-xia.cn` and `assets.calvin-xia.cn`. Use `https://workers.calvin-xia.cn/` as Referer.
-
-**Secrets**: `.env` and `.dev.vars` are gitignored. Use `.dev.vars.example` as template. Never commit real credentials. Worker secrets: optional `HEALTH_CHECK_TOKEN`.
-
-**Legacy files**: `public/` contains pre-migration HTML files (about.html, Works.html, etc.). These bypass Astro — prefer Astro pages.
-
-**Migration artifacts**: `move-to-astro/`, `blog/`, `UpdateLog/` at root are archives. No runtime purpose.
-
-**Search index**: `/search-index.json` is generated at build time from content collections. Client search must lazy-load it through `src/lib/search-client.ts`; do not re-embed the full searchable payload in `articles.astro`. Search supports Chinese tokenization, highlighted snippets, debounce, localStorage history, and category/tag filters.
-
-**Metadata editor**: `npm run edit-metadata -- <markdown-file>` edits one existing Markdown frontmatter block. The tool validates with Zod by default and writes atomically via temporary file + rename. Use `--skip-validation` only for deliberate schema bypasses.
-
-**Publish tags**: `npm run publish` prompts `标签 (逗号分隔) [未分类]:`; blank input must write `['未分类']`. The fallback chain in `scripts/post-utils.js` must also prevent empty `tags:` output.
-
-**Multi-md publish**: Folders with multiple `.md` files are supported. The tool shows an interactive multiselect (arrow keys to navigate, space to select, enter to confirm) letting you pick which files to publish. Selected files are published in selection order. Sequence numbering is conditional: single-md folders get no suffix (`slug.md`), multi-md folders get `-1`, `-2`, `-3` suffixes (`slug-1.md`, `slug-2.md`). All articles share the same `file/` assets directory. Single-md flow is unchanged.
-
-```bash
-# Folder with multiple .md files — interactive selection
-npm run publish -- 20260429-multi-article-post
-
-# Dry-run shows all plans for multi-md folders
-npm run publish -- --dry-run 20260429-multi-article-post
-```
-
-**Tool PWA**: `public/sw-tools.js` must only handle `/works/tools/` requests. Never broaden its scope to the whole site without a new design review.
-
-**Large files**: `articles.astro`, `markdown-renderer.ts`, and `src/lib/i18n.ts` are coordination-heavy. Handle with care.
-
-**Test patterns**: Source contract tests (read source, assert regex) are unique to this project. No shared test utilities — each file defines its own helpers.
-
-**CI note**: `astro-build-check.yml` runs tests, coverage, content structure checks, ESLint, Astro type generation, TypeScript checks, build, and static output verification. `phase-2-content-check.yml` remains as the content-pipeline backup workflow. `metadata-editor-check.yml` is scoped to metadata editor file-operation changes. There is no `content-check.yml`.
-
-**Worker note**: Worker is not in CI. Deploys require manual `npx wrangler deploy`. If you update `src/worker.ts` or `src/lib/health-check.js`, remember to deploy and verify `/api/views/{slug}` and `/api/health`.
-
-## UI & CONTENT
-
-- Keep UI copy concise: short labels, tooltips, actionable text. No filler.
-- Every visible string should serve a clear purpose.
-
-## CI/CD REQUIREMENTS
-
-When modifying file operation features (content pipelines, build scripts, data generators), add a corresponding CI workflow under `.github/workflows/`:
-- Naming: `*-check.yml` or `*-ci.yml`
-- Include: automated validation, success criteria, edge case tests
-- Trigger: push/PR for affected branches
-
-## COMMIT STYLE
-
-Short, task-focused subjects (English or Chinese). Imperative mood. One logical change per commit.
-
-## DOCUMENTATION
-
-- Prefer smaller, focused documents over monolithic files (>200 lines → split)
-- Use descriptive filenames reflecting scope (e.g. `phase-0-environment/spec.md`)
-- After milestones: update affected specs, review AGENTS.md and README.md
+## Security & Configuration Tips
+- Do not commit secrets or private credentials.
+- Keep real Worker secrets out of `.env.example`, `.dev.vars.example`, `wrangler.jsonc`, client scripts, and docs. Use `.dev.vars` for local `wrangler dev`; it is gitignored.
+- Modify `.well-known/` files only when domain/certificate verification requires it.
+- Keep the site-wide referrer meta policy at `strict-origin-when-cross-origin`; do not change it to `same-origin` because CDN requests need an origin Referer.
+- For local Astro dev CDN proxy routes (`/__cdn/content` and `/__cdn/assets`), use `https://workers.calvin-xia.cn/` as the proxy `Referer` so CDN assets remain accessible without leaking localhost.

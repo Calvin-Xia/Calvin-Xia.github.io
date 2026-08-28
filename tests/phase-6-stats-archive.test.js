@@ -12,10 +12,10 @@ import {
     stripReadableText,
 } from '../src/lib/word-count.js';
 import {
+    clearUmamiTokenCache,
     handleViewCounterRequest,
     isValidArticleSlug,
-    recordPageView,
-} from '../src/lib/analytics-view-counter.js';
+} from '../src/lib/umami-view-counter.js';
 
 const rootDir = path.resolve(import.meta.dirname, '..');
 
@@ -181,7 +181,7 @@ describe('Phase 6 article transitions', () => {
     });
 });
 
-describe('Phase 6 Analytics Engine view counter', () => {
+describe('Phase 6 Umami view counter', () => {
     test('validates article slugs without rejecting Chinese filenames', () => {
         assert.equal(isValidArticleSlug('20260315-两小时，环线，慢行'), true);
         assert.equal(isValidArticleSlug('20260411-ai-reliance'), true);
@@ -191,38 +191,118 @@ describe('Phase 6 Analytics Engine view counter', () => {
         assert.equal(isValidArticleSlug('nested%2Fpath'), false);
     });
 
-    test('records page view to Analytics Engine', async () => {
-        const writtenPoints = [];
-        const mockAnalytics = {
-            writeDataPoint: (point) => writtenPoints.push(point),
-            query: async () => ({ rows: [{ total_views: 42 }] }),
+    test('logs into self-hosted Umami and returns pageviews for the article path', async () => {
+        const originalFetch = globalThis.fetch;
+        const calls = [];
+        clearUmamiTokenCache();
+
+        globalThis.fetch = async (input, init = {}) => {
+            const url = String(input);
+            calls.push({ url, init, authorization: init?.headers?.Authorization || '' });
+
+            if (url.endsWith('/api/auth/login')) {
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ token: 'token-1' }),
+                };
+            }
+
+            return {
+                ok: true,
+                status: 200,
+                json: async () => ({ pageviews: 1234, visitors: 567 }),
+            };
         };
 
-        recordPageView({ ARTICLE_VIEWS: mockAnalytics }, '20260411-ai-reliance');
+        try {
+            const response = await handleViewCounterRequest(
+                new Request('https://calvin-xia.cn/api/views/20260411-ai-reliance'),
+                {
+                    UMAMI_HOST: 'https://umami.calvin-xia.cn:10686/',
+                    UMAMI_WEBSITE_ID: 'web-1',
+                    UMAMI_USERNAME: 'worker',
+                    UMAMI_PASSWORD: 'secret',
+                    ASSETS: { fetch: () => new Response('asset') },
+                },
+            );
 
-        assert.equal(writtenPoints.length, 1);
-        assert.deepEqual(writtenPoints[0].blobs, ['/articles/20260411-ai-reliance/', '20260411-ai-reliance']);
-        assert.deepEqual(writtenPoints[0].doubles, [1]);
+            assert.equal(response.status, 200);
+            assert.equal(response.headers.get('Cache-Control'), 'public, max-age=300');
+            assert.deepEqual(await response.json(), {
+                slug: '20260411-ai-reliance',
+                views: 1234,
+            });
+
+            const login = calls.find(({ url }) => url.endsWith('/api/auth/login'));
+            const stats = calls.find(({ url }) => url.includes('/api/websites/web-1/stats'));
+
+            assert.ok(login, 'expected a login call');
+            assert.equal(login.init.method, 'POST');
+            assert.deepEqual(JSON.parse(login.init.body), { username: 'worker', password: 'secret' });
+            assert.ok(stats, 'expected a stats call');
+            assert.match(stats.url, /startAt=0&endAt=\d+&path=%2Farticles%2F20260411-ai-reliance%2F/);
+            assert.equal(stats.authorization, 'Bearer token-1');
+        } finally {
+            clearUmamiTokenCache();
+            globalThis.fetch = originalFetch;
+        }
     });
 
-    test('returns views from Analytics Engine', async () => {
-        const mockAnalytics = {
-            query: async () => ({ rows: [{ total_views: 1234 }] }),
+    test('refreshes the token and retries once after an unauthorized stats response', async () => {
+        const originalFetch = globalThis.fetch;
+        let loginCalls = 0;
+        let statsCalls = 0;
+        clearUmamiTokenCache();
+
+        globalThis.fetch = async (input) => {
+            const url = String(input);
+
+            if (url.endsWith('/api/auth/login')) {
+                loginCalls += 1;
+
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ token: `token-${loginCalls}` }),
+                };
+            }
+
+            statsCalls += 1;
+
+            if (statsCalls === 1) {
+                return { ok: false, status: 401, json: async () => ({}) };
+            }
+
+            return {
+                ok: true,
+                status: 200,
+                json: async () => ({ pageviews: 7 }),
+            };
         };
 
-        const response = await handleViewCounterRequest(
-            new Request('https://calvin-xia.cn/api/views/20260411-ai-reliance'),
-            { ARTICLE_VIEWS: mockAnalytics, ASSETS: { fetch: () => new Response('asset') } },
-        );
+        try {
+            const response = await handleViewCounterRequest(
+                new Request('https://calvin-xia.cn/api/views/20260411-ai-reliance'),
+                {
+                    UMAMI_HOST: 'https://umami.example.com',
+                    UMAMI_WEBSITE_ID: 'web-1',
+                    UMAMI_USERNAME: 'worker',
+                    UMAMI_PASSWORD: 'secret',
+                    ASSETS: { fetch: () => new Response('asset') },
+                },
+            );
 
-        assert.equal(response.status, 200);
-        assert.deepEqual(await response.json(), {
-            slug: '20260411-ai-reliance',
-            views: 1234,
-        });
+            assert.deepEqual(await response.json(), { slug: '20260411-ai-reliance', views: 7 });
+            assert.equal(loginCalls, 2);
+            assert.equal(statsCalls, 2);
+        } finally {
+            clearUmamiTokenCache();
+            globalThis.fetch = originalFetch;
+        }
     });
 
-    test('returns null views when Analytics Engine is not configured', async () => {
+    test('returns null views when Umami is not configured', async () => {
         const response = await handleViewCounterRequest(
             new Request('https://calvin-xia.cn/api/views/20260411-ai-reliance'),
             { ASSETS: { fetch: () => new Response('asset') } },
@@ -234,17 +314,29 @@ describe('Phase 6 Analytics Engine view counter', () => {
         });
     });
 
-    test('returns null views when Analytics Engine query fails', async () => {
-        const mockAnalytics = {
-            query: async () => { throw new Error('Query failed'); },
-        };
+    test('returns null views when the Umami request fails', async () => {
+        const originalFetch = globalThis.fetch;
+        clearUmamiTokenCache();
 
-        const response = await handleViewCounterRequest(
-            new Request('https://calvin-xia.cn/api/views/post'),
-            { ARTICLE_VIEWS: mockAnalytics, ASSETS: { fetch: () => new Response('asset') } },
-        );
+        globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
 
-        assert.deepEqual(await response.json(), { slug: 'post', views: null });
+        try {
+            const response = await handleViewCounterRequest(
+                new Request('https://calvin-xia.cn/api/views/post'),
+                {
+                    UMAMI_HOST: 'https://umami.example.com',
+                    UMAMI_WEBSITE_ID: 'web-1',
+                    UMAMI_USERNAME: 'worker',
+                    UMAMI_PASSWORD: 'secret',
+                    ASSETS: { fetch: () => new Response('asset') },
+                },
+            );
+
+            assert.deepEqual(await response.json(), { slug: 'post', views: null });
+        } finally {
+            clearUmamiTokenCache();
+            globalThis.fetch = originalFetch;
+        }
     });
 
     test('logs failed browser view counter loads before hiding the counter', async (t) => {
@@ -314,14 +406,14 @@ describe('Phase 6 Analytics Engine view counter', () => {
         assert.equal(await asset.text(), 'asset-ok');
     });
 
-    test('wrangler config exposes the Worker entry, ASSETS binding, and Analytics Engine dataset', () => {
+    test('wrangler config exposes the Worker entry, ASSETS binding, and Umami vars', () => {
         const config = readSource('wrangler.jsonc');
 
         assert.match(config, /"main":\s*"src\/worker\.ts"/);
         assert.match(config, /"binding":\s*"ASSETS"/);
         assert.match(config, /"run_worker_first":\s*\[\s*"\/api\/\*"\s*\]/);
-        assert.match(config, /"binding":\s*"ARTICLE_VIEWS"/);
-        assert.match(config, /"dataset":\s*"article-views"/);
+        assert.match(config, /"UMAMI_HOST"/);
+        assert.match(config, /"UMAMI_WEBSITE_ID"/);
     });
 });
 

@@ -27,12 +27,12 @@ Astro 内容集合：
 
 Worker：
 
-- `src/worker.ts`：Cloudflare Worker 入口，代理 Umami API 实现文章浏览量
-- `src/lib/umami-view-counter.js`：Umami API 代理核心逻辑
+- `src/worker.ts`：Cloudflare Worker 入口，服务端代理自部署 Umami 实现文章浏览量
+- `src/lib/umami-view-counter.js`：Umami 登录、token 缓存与浏览量查询核心逻辑
 - `src/lib/health-check.js`：Worker `/api/health` 健康检查逻辑
 - `src/lib/security-logger.js`：API 调用频率、4xx/5xx 和高错误率告警记录
 - `wrangler.jsonc`：Wrangler 部署配置（Worker 入口、ASSETS binding）
-- `.dev.vars.example`：本地 Worker secret 占位模板（`UMAMI_API_KEY`、`HEALTH_CHECK_TOKEN`）
+- `.dev.vars.example`：本地 Worker secret 占位模板（`UMAMI_USERNAME`、`UMAMI_PASSWORD`、`HEALTH_CHECK_TOKEN`）
 
 文章增强辅助库（`src/lib/`）：
 
@@ -67,7 +67,7 @@ Worker：
   - 图片 `alt` 会渲染为灰色说明文字。
   - 图片灯箱、标题锚点、目录、阅读进度、逐段渐显、选择工具栏和 TeX 公式渲染由 `src/lib/article-enhancements/` 运行时增强。
   - 底部显示 giscus 评论区（基于 GitHub Discussions，懒加载）。
-  - 文章卡片底部显示 Umami 浏览量（Worker 代理）。
+  - 文章卡片底部显示自部署 Umami 统计的浏览量（Worker 代理）。
   - `/articles/` ↔ `/articles/{slug}/` 使用 Astro `ClientRouter`/View Transitions 方向性动画，返回时恢复滚动位置和搜索状态。
 - 文章归档 `/articles/archive/`
   - 按年份分组展示所有非草稿文章时间线，入口在 `/articles/` 内部。
@@ -198,7 +198,7 @@ npm run build
 - `NEW_POST_ALLOWED_ORIGINS`：本地 API 允许的额外精确 origin。
 - `.gitattributes`：源码文件统一 LF 行尾，减少 Windows/CI diff 噪声。
 - `wrangler.jsonc`：Worker 入口脚本（`main`）、ASSETS binding 和必要 secret 声明。Worker 路由 `/api/views/*` 由 `src/worker.ts` fetch handler 分发，非 API 请求透传给内置静态资产引擎。
-- `UMAMI_API_KEY`：生产环境通过 `npx wrangler secret put UMAMI_API_KEY` 注入，不写入仓库。本地调试时复制 `.dev.vars.example` 为 `.dev.vars` 并填入真实值，Wrangler dev 会自动读取。
+- `UMAMI_HOST` / `UMAMI_WEBSITE_ID`：`wrangler.jsonc` 中的公开 vars，指向自部署 Umami 实例与 Website ID。`UMAMI_USERNAME` / `UMAMI_PASSWORD`：生产环境通过 `npx wrangler secret put` 注入，不写入仓库。本地调试时复制 `.dev.vars.example` 为 `.dev.vars` 并填入真实值，Wrangler dev 会自动读取。
 - `HEALTH_CHECK_TOKEN`：生产环境通过 `npx wrangler secret put HEALTH_CHECK_TOKEN` 注入，用于 `/api/health` 详细响应的 Bearer Token。未传 token 的请求只返回公开状态。
 
 不要提交 `.env`、`.dev.vars` 或任何真实凭证。
@@ -240,15 +240,15 @@ npm run test:coverage
 
 ### 文章浏览量（Phase 6）
 
-需要维护 `UMAMI_API_KEY` secret。浏览量数据来源为 Umami Cloud API（已集成分析），Worker 在服务端代理请求：
+浏览量数据来源为自部署 Umami，Worker 在服务端登录后查询：
 
 - 前端 (`src/scripts/view-counter.js`) 请求 `/api/views/{slug}`
-- Worker (`src/worker.ts`) 拦截 `/api/views/*`，携带 `UMAMI_API_KEY` 调用 Umami
+- Worker (`src/worker.ts`) 拦截 `/api/views/*`，通过 `src/lib/umami-view-counter.js` 登录 Umami（`POST /api/auth/login`，凭证来自 `UMAMI_USERNAME`/`UMAMI_PASSWORD` secret）并缓存 token，再查询 `GET /api/websites/{websiteId}/stats?startAt=0&endAt={now}&path=/articles/{slug}/` 取 `pageviews`
 - 非 API 请求透传给内置静态资产引擎（`env.ASSETS.fetch`）
 - 缓存 5 分钟（`Cache-Control: public, max-age=300`）
-- Umami 不可用时返回 `views: null`，前端自动隐藏浏览量
+- 查询失败或无数据时返回 `views: null`，前端自动隐藏浏览量
 
-若浏览量不显示，检查 `npx wrangler secret list` 确认 `UMAMI_API_KEY` 已注入。
+若浏览量不显示，先用 `npx wrangler secret list` 确认 `UMAMI_USERNAME`/`UMAMI_PASSWORD` 已注入，再确认 `UMAMI_HOST`（当前 `https://umami.calvin-xia.cn:10686`）从 Worker 网络可达。注意 Cloudflare Workers 的出站 fetch 只支持有限端口（80、443、8080、8443 及 2052/2053/2082/2083/2086/2087/2095/2096），`10686` 不在其中；若部署后浏览量一直为空，优先把 Umami 迁到 443 或白名单端口并同步修改 `wrangler.jsonc` 的 `UMAMI_HOST`。
 
 ### 安全监控与代码质量（Phase 9）
 
@@ -257,9 +257,9 @@ Worker 安全监控集中在 `src/lib/security-logger.js` 和 `src/worker.ts`：
 - API 响应为 4xx/5xx 时记录经过清洗的错误信息
 - 每 100 次 API 调用输出一次统计
 - 错误率超过阈值时触发告警回调
-- 日志不得包含 `UMAMI_API_KEY`、`HEALTH_CHECK_TOKEN` 或请求鉴权 token
+- 日志不得包含 `UMAMI_USERNAME`、`UMAMI_PASSWORD`、`HEALTH_CHECK_TOKEN` 或请求鉴权 token
 
-代码质量检查集中在 `eslint.config.js`、`tsconfig.json` 和 `astro-build-check.yml`。常规开发可用 `npm run lint`、`npx astro sync`、`npx tsc --noEmit` 本地复现 CI 质量步骤。
+代码质量工具集中在 `eslint.config.js` 和 `tsconfig.json`。常规开发可用 `npm run lint`、`npx astro sync`、`npx tsc --noEmit` 做本地检查；CI 中 `phase-2-content-check.yml` 负责测试、覆盖率与内容结构检查，`astro-build-check.yml` 负责构建与静态输出验证。
 
 ### 搜索索引（Phase 7 / Phase 11）
 
@@ -279,9 +279,9 @@ Worker 暴露 `/api/health`：
 - 公开响应：`GET /api/health` 返回 `status` 和 `timestamp`
 - 详细响应：`GET /api/health` 加 `Authorization: Bearer <HEALTH_CHECK_TOKEN>` 返回版本、运行时间和依赖状态
 - 缓存：`GET /api/health?cache=30` 返回 `Cache-Control: public, max-age=30`
-- 降级：Umami 不可用或未配置 key 时返回 `degraded`，HTTP 仍为 200；代码异常才返回 503
+- 降级：Umami 配置缺失（`UMAMI_HOST`/`UMAMI_WEBSITE_ID`/`UMAMI_USERNAME`/`UMAMI_PASSWORD` 任一缺失）时返回 `degraded`（依赖状态 `not_configured`），Umami 不可达或登录失败时返回 `degraded`（`unreachable`），HTTP 仍为 200；代码异常才返回 503
 
-本地调试 Worker 时，`.dev.vars` 可同时配置 `UMAMI_API_KEY` 和 `HEALTH_CHECK_TOKEN`。
+本地调试 Worker 时，`.dev.vars` 可同时配置 `UMAMI_USERNAME`、`UMAMI_PASSWORD` 和 `HEALTH_CHECK_TOKEN`。
 
 ### 图标优化与工具页 PWA（Phase 7.5）
 
@@ -342,6 +342,6 @@ UI 国际化使用自定义轻量实现，不引入路由级 `/en`：
 ## CI
 
 - `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages
-- `astro-build-check.yml`：安装依赖，运行测试、覆盖率、内容结构检查、ESLint、Astro 类型生成、TypeScript 检查、构建和关键静态输出验证
+- `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出（首页标题与 `_headers` 安全头）
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 - `metadata-editor-check.yml`：当元数据编辑 CLI、测试或依赖变更时，运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口

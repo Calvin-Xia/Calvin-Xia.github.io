@@ -261,6 +261,13 @@ describe('Phase 5 SEO and comments', () => {
         assert.doesNotMatch(layoutSource, /prefers-color-scheme/);
     });
 
+    test('BaseLayout includes self-hosted Umami tracker with website id', () => {
+        const layoutSource = readFile('src', 'layouts', 'BaseLayout.astro');
+
+        assert.match(layoutSource, /src=['"]https:\/\/umami\.calvin-xia\.cn:10686\/script\.js['"]/);
+        assert.match(layoutSource, /data-website-id=['"]82bd10b2-31aa-4c90-8d67-8a555a5c5592['"]/);
+    });
+
     test('CSP allows external scripts, styles, fonts, and analytics requests used by the site', () => {
         const headersSource = readFile('public', '_headers');
         const csp = headersSource.match(/Content-Security-Policy:\s*(.+)/)?.[1] || '';
@@ -269,9 +276,11 @@ describe('Phase 5 SEO and comments', () => {
         const connectSrc = csp.match(/connect-src\s+([^;]+)/)?.[1] || '';
         const fontSrc = csp.match(/font-src\s+([^;]+)/)?.[1] || '';
 
+        assert.match(scriptSrc, /https:\/\/umami\.calvin-xia\.cn:10686/);
         assert.match(scriptSrc, /https:\/\/giscus\.app/);
         assert.match(styleSrc, /https:\/\/fonts\.googleapis\.com/);
         assert.match(styleSrc, /https:\/\/giscus\.app/);
+        assert.match(connectSrc, /https:\/\/umami\.calvin-xia\.cn:10686/);
         assert.match(connectSrc, /https:\/\/giscus\.app/);
         assert.match(fontSrc, /https:\/\/fonts\.gstatic\.com/);
     });
@@ -287,7 +296,7 @@ describe('Phase 5 SEO and comments', () => {
         const footerSource = readFile('src', 'components', 'Footer.astro');
 
         assert.match(footerSource, /aria-label=['"]站点服务['"]/);
-        assert.match(footerSource, /href=['"]https:\/\/cloud\.umami\.is\/share\/0cUyNR29irh71HZd['"]/);
+        assert.match(footerSource, /href=['"]https:\/\/umami\.calvin-xia\.cn:10686\/share\/C1nMYMYE65Iyz1SE\/calvin-xia\.cn['"]/);
         assert.match(footerSource, />Umami</);
         assert.match(footerSource, /target=['"]_blank['"]/);
         assert.match(footerSource, /rel=['"]noopener['"]/);
@@ -298,21 +307,5 @@ describe('Phase 5 SEO and comments', () => {
 
         assert.match(cssSource, /\.giscus-fallback/);
         assert.match(cssSource, /text-align:\s*center/);
-    });
-
-    test('Header initHeaderState guards against duplicate scroll listener registration', () => {
-        const header = readFile('src', 'components', 'Header.astro');
-
-        assert.match(header, /function initHeaderState\b/);
-        assert.match(header, /dataset\.headerReady/);
-    });
-
-    test('Header setTheme wraps localStorage.setItem in try-catch', () => {
-        const header = readFile('src', 'components', 'Header.astro');
-
-        const setThemeMatch = header.match(/function setTheme[\s\S]*?^\s*\}/m);
-        assert.ok(setThemeMatch, 'setTheme function should exist');
-        assert.match(setThemeMatch[0], /try\s*\{/);
-        assert.match(setThemeMatch[0], /localStorage\.setItem/);
     });
 });

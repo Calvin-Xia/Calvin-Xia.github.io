@@ -43,7 +43,8 @@ npm run api
 npm run edit-metadata -- <markdown-file>
 npm run publish -- --dry-run <obsidian-post-dir>
 npm run publish -- <obsidian-post-dir>
-npx wrangler secret put UMAMI_API_KEY
+npx wrangler secret put UMAMI_USERNAME
+npx wrangler secret put UMAMI_PASSWORD
 npx wrangler secret put HEALTH_CHECK_TOKEN
 ```
 
@@ -136,13 +137,11 @@ git diff --check
 npm run test:coverage
 ```
 
-首次部署或 Worker secret 变更后，确认生产环境已注入 `UMAMI_API_KEY`：
+首次部署或 Worker secret 变更后，确认生产环境已注入 `UMAMI_USERNAME`、`UMAMI_PASSWORD`（自部署 Umami 浏览量 API 登录）和 `HEALTH_CHECK_TOKEN`（`/api/health` 详细响应的 Bearer Token）：
 
 ```bash
 npx wrangler secret list
 ```
-
-如果需要查看 `/api/health` 的详细响应，也确认 `HEALTH_CHECK_TOKEN` 已注入。
 
 ## 6. 接下来读什么
 
