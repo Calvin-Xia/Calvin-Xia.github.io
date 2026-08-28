@@ -342,6 +342,6 @@ UI 国际化使用自定义轻量实现，不引入路由级 `/en`：
 ## CI
 
 - `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages
-- `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出（首页标题与 `_headers` 安全头）
+- `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出（首页品牌标记与 `_headers` 安全头）
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 - `metadata-editor-check.yml`：当元数据编辑 CLI、测试或依赖变更时，运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口
