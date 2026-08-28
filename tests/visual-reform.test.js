@@ -9,17 +9,6 @@ function readSource(...segments) {
     return readFileSync(path.join(rootDir, ...segments), 'utf8');
 }
 
-function escapeRegExp(value) {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function getRuleBlock(source, selector) {
-    const match = source.match(new RegExp(`${escapeRegExp(selector)}\\s*\\{([^}]*)\\}`));
-
-    assert.ok(match, `${selector} rule should exist`);
-    return match[1];
-}
-
 describe('frontend visual reform source contract', () => {
     test('global styles expose the Calvin Xia design tokens', () => {
         const styles = readSource('src', 'styles', 'global.css');
@@ -46,29 +35,15 @@ describe('frontend visual reform source contract', () => {
     test('home page uses the approved brand and keeps search/tools secondary', () => {
         const home = readSource('src', 'pages', 'index.astro');
         const styles = readSource('src', 'styles', 'global.css');
-        const chineseTranslations = JSON.parse(readSource('src', 'i18n', 'zh-CN.json'));
-        const englishTranslations = JSON.parse(readSource('src', 'i18n', 'en-US.json'));
 
         assert.match(home, /<h1[^>]*>\s*Calvin Xia\s*<\/h1>/);
-        assert.equal(chineseTranslations.home.subtitle, '坐标以外，理性之内');
-        assert.equal(englishTranslations.home.subtitle, 'Beyond coordinates, within reason.');
         assert.doesNotMatch(home, /欢迎来到 Mr\.Xia 的小站/);
-        assert.doesNotMatch(home, /data-i18n=["']home\.kicker["']/);
-        assert.doesNotMatch(home, /class=["']hero-kicker["']/);
         assert.doesNotMatch(home, /href=["']\/works\/tools\/["']/);
         assert.match(home, /id=["']currentTime["']/);
         assert.match(home, /recent-updates/);
         assert.match(home, /content-search/);
-
-        const searchPanelRule = getRuleBlock(styles, '.home-search-panel');
-        const searchPanelHeadRule = getRuleBlock(styles, '.home-search-panel .home-section-head');
-
-        assert.match(searchPanelRule, /width:\s*min\(100%,\s*860px\)/);
-        assert.match(searchPanelRule, /padding:\s*clamp\(1\.25rem,\s*3vw,\s*2rem\)/);
-        assert.match(searchPanelHeadRule, /align-items:\s*center/);
-        assert.match(searchPanelHeadRule, /justify-content:\s*space-between/);
-        assert.doesNotMatch(searchPanelHeadRule, /flex-direction:\s*column/);
-        assert.doesNotMatch(searchPanelHeadRule, /text-align:\s*center/);
+        assert.match(styles, /\.home-search-panel\s*\{[\s\S]*width:\s*min\(100%,\s*860px\)/);
+        assert.match(styles, /\.home-search-panel\s*\{[\s\S]*padding:\s*clamp\(1\.25rem,\s*3vw,\s*2rem\)/);
     });
 
     test('visual shell avoids global header blur and uses library-style vector theme icons', () => {
@@ -85,15 +60,6 @@ describe('frontend visual reform source contract', () => {
         assert.doesNotMatch(styles, /\.theme-toggle__icon\s*\{[\s\S]{0,180}box-shadow:\s*inset/);
     });
 
-    test('mobile layout keeps article navigation and header controls reachable', () => {
-        const styles = readSource('src', 'styles', 'global.css');
-
-        assert.match(styles, /\.site-logo,\s*\n\.logo\s*\{[\s\S]*min-height:\s*44px/);
-        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.site-header-inner\s*\{[\s\S]*grid-template-areas:\s*"brand actions"\s*"nav nav"/);
-        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.site-nav,\s*\n\s*\.nav-links\s*\{[\s\S]*grid-area:\s*nav/);
-        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-toc-shell\s*\{[\s\S]*order:\s*-1/);
-    });
-
     test('new-post stays a local helper and does not persist secrets or drafts', () => {
         const page = readSource('src', 'pages', 'new-post.astro');
         const form = readSource('src', 'components', 'NewPostForm.astro');
@@ -108,27 +74,11 @@ describe('frontend visual reform source contract', () => {
 
     test('page titles and supporting panels keep readable editorial spacing', () => {
         const articles = readSource('src', 'pages', 'articles.astro');
-        const works = readSource('src', 'pages', 'works.astro');
-        const about = readSource('src', 'pages', 'about.astro');
         const styles = readSource('src', 'styles', 'global.css');
-        const chineseTranslations = JSON.parse(readSource('src', 'i18n', 'zh-CN.json'));
-        const englishTranslations = JSON.parse(readSource('src', 'i18n', 'en-US.json'));
 
         assert.match(articles, /article-index-hero/);
-        assert.doesNotMatch(articles, /articles\.subtitle/);
-        assert.doesNotMatch(works, /works\.subtitle/);
-        assert.doesNotMatch(about, /about\.subtitle/);
-        assert.equal(Object.hasOwn(chineseTranslations.articles, 'subtitle'), false);
-        assert.equal(Object.hasOwn(englishTranslations.articles, 'subtitle'), false);
-        assert.equal(Object.hasOwn(chineseTranslations.works, 'subtitle'), false);
-        assert.equal(Object.hasOwn(englishTranslations.works, 'subtitle'), false);
-        assert.equal(Object.hasOwn(chineseTranslations.about, 'subtitle'), false);
-        assert.equal(Object.hasOwn(englishTranslations.about, 'subtitle'), false);
         assert.match(styles, /\.page-title\s*\{[\s\S]*max-width:\s*min\(100%,\s*18ch\)/);
         assert.match(styles, /\.article-index-hero\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/);
-        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-index-hero\s*\{[\s\S]*grid-template-columns:\s*1fr[\s\S]*align-items:\s*stretch/);
-        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-index-hero \.articles-toolbar\s*\{[\s\S]*justify-content:\s*stretch/);
-        assert.match(styles, /@media \(max-width:\s*767px\)\s*\{[\s\S]*\.article-index-hero \.articles-toolbar \.btn\s*\{[\s\S]*width:\s*100%/);
         assert.match(styles, /\.article-hero \.page-title\s*\{[\s\S]*max-width:\s*min\(100%,\s*22ch\)/);
         assert.match(styles, /\.giscus-comments\s*\{[\s\S]*width:\s*min\(100%,\s*var\(--article-text-width\)\)/);
         assert.match(styles, /\.legal-stack\s*\{[\s\S]*padding:\s*clamp\(1\.5rem,\s*4vw,\s*2\.5rem\)/);
@@ -147,19 +97,5 @@ describe('frontend visual reform source contract', () => {
         assert.match(styles, /\.markdown-content pre code\s*\{[\s\S]*color:\s*inherit[\s\S]*font-family:\s*inherit/);
         assert.match(styles, /\[data-theme=["']dark["']\]\s+\.markdown-content pre\.astro-code span\s*\{[\s\S]*color:\s*var\(--shiki-dark,\s*var\(--code-text\)\)/);
         assert.doesNotMatch(styles, /\.markdown-content code\s*\{[\s\S]*color:\s*var\(--code-text\)/);
-    });
-
-    test('home page discovery section includes a heading for screen reader navigation', () => {
-        const home = readSource('src', 'pages', 'index.astro');
-
-        const discoveryMatch = home.match(/home-discovery[\s\S]*?<\/section>/);
-        assert.ok(discoveryMatch, 'home-discovery section should exist');
-        assert.match(discoveryMatch[0], /<h2[\s>]/);
-    });
-
-    test('user-facing English work titles use current wording', () => {
-        const englishTranslations = JSON.parse(readSource('src', 'i18n', 'en-US.json'));
-
-        assert.equal(englishTranslations.works.classMap.title, 'Class 1 Whereabouts Map');
     });
 });

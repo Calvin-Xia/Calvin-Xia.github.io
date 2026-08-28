@@ -13,7 +13,6 @@ import 'highlight.js/styles/github.min.css';
 import katex from 'katex';
 import renderMathInElement from 'katex/contrib/auto-render';
 import 'katex/dist/katex.min.css';
-import { t } from '../lib/i18n.ts';
 
 type MarkdownRendererElements = Partial<{
     inputElement: HTMLTextAreaElement | null;
@@ -40,17 +39,8 @@ declare global {
     }
 }
 
-function emptyStateHtml(key: string): string {
-    return `<p style="text-align: center; color: var(--text-secondary);">${t(key)}</p>`;
-}
-
-function emptyPreviewHtml(): string {
-    return emptyStateHtml('markdownTool.emptyPreview');
-}
-
-function emptyInputHtml(): string {
-    return emptyStateHtml('markdownTool.emptyInput');
-}
+const EMPTY_PREVIEW_HTML = '<p style="text-align: center; color: var(--text-secondary);">预览区域</p>';
+const EMPTY_INPUT_HTML = '<p style="text-align: center; color: var(--text-secondary);">请输入Markdown内容</p>';
 const WECHAT_BASE_STYLE = 'font-size: 15px; line-height: 1.8; color: #18201f; letter-spacing: 0;';
 const MARKDOWN_STORAGE_KEY = 'calvin-xia-markdown-tool-input';
 const BLOCK_TAGS = new Set([
@@ -104,19 +94,50 @@ const markExtension: TokenizerAndRendererExtension = {
             return undefined;
         }
 
-        const text = match[1] ?? '';
-
         return {
             type: 'mark',
             raw: match[0],
-            text,
-            tokens: this.lexer.inlineTokens(text),
+            text: match[1],
+            tokens: this.lexer.inlineTokens(match[1]),
         };
     },
     renderer(token) {
         return `<mark>${this.parser.parseInline(token.tokens ?? [])}</mark>`;
     },
 };
+
+const sampleMarkdown = `# 春日短记
+
+今天把一段草稿整理成可以发布的版本。标题、引用、列表和代码块都保留在正文里，用来检查公众号粘贴后的层级和留白。
+
+## 观察
+
+- **节奏**：段落之间需要有空气。
+- **重点**：粗体和链接不能抢走标题的重量。
+- **表格**：边框要轻，但信息要稳。
+
+> 文章不是把句子堆起来，而是让读者愿意继续往下走。
+
+## 代码片段
+
+\`\`\`javascript
+function publishDraft(title) {
+    return title + ' is ready';
+}
+\`\`\`
+
+## 表格
+
+| 模块 | 检查点 |
+|------|--------|
+| 标题 | 层级清楚 |
+| 正文 | 行高舒适 |
+| 引用 | 边界明确 |
+
+---
+
+**结论**：复制到公众号前，先让预览变成发布形态。
+`;
 
 hljs.registerLanguage('bash', bash);
 hljs.registerLanguage('css', css);
@@ -414,10 +435,10 @@ export const MarkdownRenderer = {
         );
 
         if (!this.outputElement.innerHTML.trim()) {
-            this.outputElement.innerHTML = emptyPreviewHtml();
+            this.outputElement.innerHTML = EMPTY_PREVIEW_HTML;
         }
 
-        this.setWeChatCopyStatus('markdownTool.idleStatus');
+        this.setWeChatCopyStatus('富文本剪贴板待复制');
     },
 
     persistInput() {
@@ -441,7 +462,6 @@ export const MarkdownRenderer = {
             const saved = localStorage.getItem(MARKDOWN_STORAGE_KEY);
             if (saved) {
                 this.inputElement.value = saved;
-                this.render();
             }
         } catch {
             // Ignore storage failures; the editor remains fully usable.
@@ -491,8 +511,8 @@ export const MarkdownRenderer = {
 
         const markdownText = this.inputElement.value;
         if (!markdownText.trim()) {
-            this.outputElement.innerHTML = emptyInputHtml();
-            this.setWeChatCopyStatus('markdownTool.enterBeforeCopy', 'error');
+            this.outputElement.innerHTML = EMPTY_INPUT_HTML;
+            this.setWeChatCopyStatus('请输入 Markdown 后再复制', 'error');
             return;
         }
 
@@ -510,7 +530,7 @@ export const MarkdownRenderer = {
             this.showExpanded();
         }
 
-        this.showLoading('markdownTool.rendered', 1000);
+        this.showLoading('渲染完成', 1000);
     },
 
     generateCollapsedPreview() {
@@ -519,7 +539,7 @@ export const MarkdownRenderer = {
         let firstImageAdded = false;
 
         for (let index = 0; index < lines.length; index += 1) {
-            const line = lines[index] ?? '';
+            const line = lines[index];
             if (line.startsWith('#')) {
                 previewContent += `${line}\n`;
                 if (index < 3) {
@@ -549,7 +569,7 @@ export const MarkdownRenderer = {
         this.outputElement.classList.add('collapsed');
         this.outputElement.classList.remove('expanded', 'markdown-content--wechat');
         if (this.toggleBtn) {
-            this.setToggleButtonLabel();
+            this.toggleBtn.textContent = '展开';
         }
 
         this.renderMath();
@@ -566,7 +586,7 @@ export const MarkdownRenderer = {
         this.outputElement.classList.remove('collapsed', 'markdown-content--wechat');
         this.outputElement.classList.add('expanded');
         if (this.toggleBtn) {
-            this.setToggleButtonLabel();
+            this.toggleBtn.textContent = '折叠';
         }
 
         this.renderMath();
@@ -599,14 +619,12 @@ export const MarkdownRenderer = {
         }
     },
 
-    processImages(element?: HTMLElement | null) {
-        const targetElement = element ?? this.outputElement;
-
-        if (!targetElement) {
+    processImages(element = this.outputElement) {
+        if (!element) {
             return;
         }
 
-        const flexWrappers = targetElement.querySelectorAll<HTMLElement>('div[style*="flex"]');
+        const flexWrappers = element.querySelectorAll<HTMLElement>('div[style*="flex"]');
         flexWrappers.forEach((wrapper) => {
             wrapper.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
                 const altText = image.getAttribute('alt');
@@ -638,7 +656,7 @@ export const MarkdownRenderer = {
             });
         });
 
-        targetElement.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
+        element.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
             if (image.closest('[style*="flex"]')) {
                 return;
             }
@@ -669,34 +687,34 @@ export const MarkdownRenderer = {
     exportHTML() {
         const markdownText = this.inputElement?.value ?? '';
         if (!markdownText.trim()) {
-            window.alert(t('markdownTool.enterMarkdown'));
+            window.alert('请先输入Markdown内容');
             return;
         }
 
         const processedHTML = this.mode === 'wechat' ? this.renderWeChat(false) : this.renderToProcessedHTML(markdownText);
         downloadHTML('markdown-output.html', this.generateFullHTML(processedHTML));
-        this.showLoading('markdownTool.exported', 1000);
+        this.showLoading('导出成功', 1000);
     },
 
     async copyHTML() {
         const markdownText = this.inputElement?.value ?? '';
         if (!markdownText.trim()) {
-            window.alert(t('markdownTool.enterMarkdown'));
+            window.alert('请先输入Markdown内容');
             return;
         }
 
         const html = this.mode === 'wechat' ? this.renderWeChat(false) : parseMarkdown(markdownText);
         try {
             await copyToClipboard(html);
-            this.showLoading('markdownTool.copied', 1000);
+            this.showLoading('复制成功', 1000);
         } catch (error) {
-            window.alert(t('markdownTool.copyFailed', { error: String(error) }));
+            window.alert(`复制失败: ${error}`);
         }
     },
 
-    formatHTML(html?: string) {
+    formatHTML(html = this.outputElement?.innerHTML ?? '') {
         const template = document.createElement('template');
-        template.innerHTML = (html ?? this.outputElement?.innerHTML ?? '').trim();
+        template.innerHTML = html.trim();
         const lines: string[] = [];
         template.content.childNodes.forEach((node) => {
             lines.push(...formatNode(node, 0));
@@ -707,20 +725,20 @@ export const MarkdownRenderer = {
     exportFormattedHTML() {
         const markdownText = this.inputElement?.value ?? '';
         if (!markdownText.trim()) {
-            window.alert(t('markdownTool.enterMarkdown'));
+            window.alert('请先输入Markdown内容');
             return;
         }
 
         const html = this.mode === 'wechat' ? this.renderWeChat(false) : this.renderToProcessedHTML(markdownText);
         const formattedHTML = this.formatHTML(html);
         downloadHTML('markdown-output-formatted.html', this.generateFullHTML(formattedHTML));
-        this.showLoading('markdownTool.formattedExported', 1000);
+        this.showLoading('格式化导出成功', 1000);
     },
 
     async copyFormattedHTML() {
         const markdownText = this.inputElement?.value ?? '';
         if (!markdownText.trim()) {
-            window.alert(t('markdownTool.enterMarkdown'));
+            window.alert('请先输入Markdown内容');
             return;
         }
 
@@ -728,9 +746,9 @@ export const MarkdownRenderer = {
         const formattedHTML = this.formatHTML(html);
         try {
             await copyToClipboard(formattedHTML);
-            this.showLoading('markdownTool.formattedCopied', 1000);
+            this.showLoading('格式化 HTML 已复制', 1000);
         } catch (error) {
-            window.alert(t('markdownTool.copyFailed', { error: String(error) }));
+            window.alert(`复制失败: ${error}`);
         }
     },
 
@@ -738,7 +756,7 @@ export const MarkdownRenderer = {
         const markdownText = this.inputElement?.value ?? this.fullContent;
         if (!markdownText.trim()) {
             if (updatePreview && this.outputElement) {
-                this.outputElement.innerHTML = emptyInputHtml();
+                this.outputElement.innerHTML = EMPTY_INPUT_HTML;
             }
             return '';
         }
@@ -758,9 +776,9 @@ export const MarkdownRenderer = {
             this.outputElement.innerHTML = this.weChatHTML;
             this.outputElement.classList.remove('collapsed', 'expanded');
             this.outputElement.classList.add('markdown-content--wechat');
-            this.setToggleButtonLabel();
-            this.setWeChatCopyStatus('markdownTool.wechatGenerated');
-            this.showLoading('markdownTool.wechatRendered', 1000);
+            this.toggleBtn && (this.toggleBtn.textContent = '折叠');
+            this.setWeChatCopyStatus('公众号格式已生成');
+            this.showLoading('微信格式已渲染', 1000);
         }
 
         return this.weChatHTML;
@@ -769,8 +787,8 @@ export const MarkdownRenderer = {
     async copyWeChatHTML() {
         const markdownText = this.inputElement?.value ?? '';
         if (!markdownText.trim()) {
-            this.setWeChatCopyStatus('markdownTool.enterBeforeCopy', 'error');
-            window.alert(t('markdownTool.enterMarkdown'));
+            this.setWeChatCopyStatus('请输入 Markdown 后再复制', 'error');
+            window.alert('请先输入Markdown内容');
             return;
         }
 
@@ -778,22 +796,22 @@ export const MarkdownRenderer = {
             this.mode = 'wechat';
             if (this.weChatButton) {
                 this.weChatButton.setAttribute('aria-pressed', 'true');
-                this.setWeChatButtonLabel();
+                this.weChatButton.textContent = '普通预览';
             }
 
             const html = this.renderWeChat(true);
             const result = await copyRichHTMLToClipboard(html);
             if (result === 'rich') {
-                this.setWeChatCopyStatus('markdownTool.wechatRichCopied', 'success');
-                this.showLoading('markdownTool.wechatCopied', 1000);
+                this.setWeChatCopyStatus('已复制富文本格式，可粘贴到微信公众平台编辑器', 'success');
+                this.showLoading('公众号格式已复制', 1000);
                 return;
             }
 
-            this.setWeChatCopyStatus('markdownTool.htmlOnly', 'fallback');
-            this.showLoading('markdownTool.htmlSourceCopied', 1000);
+            this.setWeChatCopyStatus('当前浏览器只允许复制 HTML 源码', 'fallback');
+            this.showLoading('HTML 源码已复制', 1000);
         } catch (error) {
-            this.setWeChatCopyStatus('markdownTool.copyRetry', 'error');
-            window.alert(t('markdownTool.copyFailed', { error: String(error) }));
+            this.setWeChatCopyStatus('复制失败，请重试', 'error');
+            window.alert(`复制失败: ${error}`);
         }
     },
 
@@ -801,7 +819,7 @@ export const MarkdownRenderer = {
         this.mode = this.mode === 'wechat' ? 'normal' : 'wechat';
         if (this.weChatButton) {
             this.weChatButton.setAttribute('aria-pressed', String(this.mode === 'wechat'));
-            this.setWeChatButtonLabel();
+            this.weChatButton.textContent = this.mode === 'wechat' ? '普通预览' : '公众号预览';
         }
         this.render();
     },
@@ -811,19 +829,19 @@ export const MarkdownRenderer = {
             return;
         }
 
-        if (window.confirm(t('markdownTool.confirmClear'))) {
+        if (window.confirm('确定要清空输入内容吗？')) {
             this.inputElement.value = '';
             this.clearPersistedInput();
-            this.outputElement.innerHTML = emptyPreviewHtml();
+            this.outputElement.innerHTML = EMPTY_PREVIEW_HTML;
             this.fullContent = '';
             this.collapsedContent = '';
             this.weChatHTML = '';
             this.mode = 'normal';
             if (this.weChatButton) {
+                this.weChatButton.textContent = '公众号预览';
                 this.weChatButton.setAttribute('aria-pressed', 'false');
-                this.setWeChatButtonLabel();
             }
-            this.setWeChatCopyStatus('markdownTool.idleStatus');
+            this.setWeChatCopyStatus('富文本剪贴板待复制');
         }
     },
 
@@ -832,7 +850,7 @@ export const MarkdownRenderer = {
             return;
         }
 
-        this.inputElement.value = t('markdownTool.sampleMarkdown');
+        this.inputElement.value = sampleMarkdown;
         this.persistInput();
         this.render();
     },
@@ -843,7 +861,7 @@ export const MarkdownRenderer = {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${t('markdownTool.exportTitle')}</title>
+    <title>Markdown渲染结果</title>
     <link rel="stylesheet" href="${HLJS_STYLE_CDN}">
     <link rel="stylesheet" href="${KATEX_STYLE_CDN}">
     <style>
@@ -890,75 +908,26 @@ ${content}
 </html>`;
     },
 
-    setToggleButtonLabel() {
-        if (!this.toggleBtn) {
-            return;
-        }
-
-        const key = this.isCollapsed ? 'markdownTool.expand' : 'markdownTool.collapse';
-        this.toggleBtn.textContent = t(key);
-        this.toggleBtn.setAttribute('data-i18n', key);
-    },
-
-    setWeChatButtonLabel() {
-        if (!this.weChatButton) {
-            return;
-        }
-
-        const key = this.mode === 'wechat' ? 'markdownTool.normalPreview' : 'markdownTool.wechatPreview';
-        this.weChatButton.textContent = t(key);
-        this.weChatButton.setAttribute('data-i18n', key);
-    },
-
-    refreshLanguageLabels() {
-        this.setToggleButtonLabel();
-        this.setWeChatButtonLabel();
-
-        if (this.weChatCopyStatus) {
-            const key = this.weChatCopyStatus.getAttribute('data-i18n') || 'markdownTool.idleStatus';
-            const vars = this.weChatCopyStatus.getAttribute('data-i18n-vars');
-            let parsedVars: Record<string, string | number> | undefined;
-            try {
-                parsedVars = vars ? JSON.parse(vars) : undefined;
-            } catch {
-                parsedVars = undefined;
-            }
-            this.weChatCopyStatus.textContent = t(key, parsedVars);
-        }
-
-        const outputElement = this.outputElement;
-        if (outputElement && (outputElement.textContent === t('markdownTool.emptyPreview') || !outputElement.innerHTML.trim())) {
-            outputElement.innerHTML = emptyPreviewHtml();
-        }
-    },
-
-    setWeChatCopyStatus(key: string, state = 'idle', vars?: Record<string, string | number>) {
+    setWeChatCopyStatus(message: string, state = 'idle') {
         if (!this.weChatCopyStatus) {
             return;
         }
 
-        this.weChatCopyStatus.textContent = t(key, vars);
-        this.weChatCopyStatus.setAttribute('data-i18n', key);
-        if (vars) {
-            this.weChatCopyStatus.setAttribute('data-i18n-vars', JSON.stringify(vars));
-        } else {
-            this.weChatCopyStatus.removeAttribute('data-i18n-vars');
-        }
+        this.weChatCopyStatus.textContent = message;
         if (state === 'idle') {
             this.weChatCopyStatus.removeAttribute('data-state');
             return;
         }
 
-        this.weChatCopyStatus.dataset['state'] = state;
+        this.weChatCopyStatus.dataset.state = state;
     },
 
-    showLoading(key: string, duration = 2000) {
+    showLoading(text: string, duration = 2000) {
         if (!this.loadingIndicator || !this.loadingText) {
             return;
         }
 
-        this.loadingText.textContent = t(key);
-        this.loadingText.setAttribute('data-i18n', key);
+        this.loadingText.textContent = text;
         this.loadingIndicator.classList.add('active');
         window.setTimeout(() => {
             this.loadingIndicator?.classList.remove('active');
@@ -978,7 +947,6 @@ function exposeMarkdownRenderer(): void {
     window.copyHTML = () => MarkdownRenderer.copyHTML();
     window.clearEditor = () => MarkdownRenderer.clearEditor();
     window.loadSample = () => MarkdownRenderer.loadSample();
-    window.addEventListener('calvin-lang-change', () => MarkdownRenderer.refreshLanguageLabels());
 }
 
 exposeMarkdownRenderer();

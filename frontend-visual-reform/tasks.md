@@ -1,6 +1,6 @@
 # Tasks
 
-> Sync 2026-05-23: 阶段 1-6 的主要实现已落地。追补主题切换图标、标题换行、Markdown `==...==` 高亮、Astro/Shiki 代码块 light/dark 可读性与 Giscus 消息目标校验后，又完成 code review 发现的 4 项修复（Header scroll 监听器去重、localStorage try-catch、Markdown 工具 restoreInput 渲染、首页发现区 heading 语义）。`npm test` 155/155 通过，`npm run build` 成功生成 19 pages。阶段 7 中完整多视口、键盘路径与 legacy preview 仍需继续验收。
+> Sync 2026-05-22: 阶段 1-6 的主要实现已落地，追补主题切换图标、标题换行、Markdown `==...==` 高亮、Astro/Shiki 代码块 light/dark 可读性与 Giscus 消息目标校验；`npm test` 151/151 通过，`npm run build` 成功生成 19 pages。阶段 7 中完整多视口、键盘路径与 legacy preview 仍需继续验收。
 
 - [x] Task 0: 阶段 0 - 基线审计与范围固化
   - [x] SubTask 0.1: 核对 `DESIGN.md`、`move-to-astro/visual-style-refactor-complete-report.md` 和本目录 spec，确认执行口径统一为 `Calvin Xia`
@@ -8,7 +8,7 @@
   - [x] SubTask 0.3: 建立状态清单：空状态、加载、搜索建议、无结果、评论加载、图片灯箱、移动端导航、工具 tab、表单错误、localStorage 恢复、reduced-motion
   - [x] SubTask 0.4: 标记非改动范围：Worker、RSS、SEO、content schema、publish 流程、R2 上传、local CDN proxy、`.well-known/`
   - [x] SubTask 0.5: 记录阶段回退边界：每个阶段以页面族群和可见 UI 行为为回退单位，不以单个 CSS 片段为回退单位
-  - [x] SubTask 0.6: 运行 `npm test` 和 `npm run build`，记录重构前基线结果（`npm test`: 141/141 → 当前 155/155；`npm run build`: 19 pages）
+  - [x] SubTask 0.6: 运行 `npm test` 和 `npm run build`，记录重构前基线结果（`npm test`: 141/141；`npm run build`: 19 pages）
 
 - [x] Task 1: 阶段 1 - 设计系统与主题基础
   - [x] SubTask 1.1: 在 `src/styles/global.css` 建立 token 区段，覆盖 `DESIGN.md` 中 light / dark 的背景、表面、边框、文字、强调色、语义色、代码块、引用、mark、RGB helper、圆角、阴影、focus ring、motion token
@@ -90,12 +90,8 @@
   - [ ] SubTask 6.6: 运行 `npm run build`，并抽查 legacy 路径在本地预览中的跳转或兼容行为
 
 - [ ] Task 7: 阶段 7 - 全站质量验证
-  - [x] SubTask 7.1: 运行 `npm test`（155/155 通过）
-  - [x] SubTask 7.2: 运行 `npm run build`（19 pages）
-  - [x] SubTask 7.11: Code review — 修复 Header `initHeaderState` scroll 监听器重复注册，添加 `dataset.headerReady` 去重守卫
-  - [x] SubTask 7.12: Code review — 修复 Header `setTheme` 中 `localStorage.setItem` 缺少 try-catch 保护，与 BaseLayout 和 MarkdownRenderer 保持一致
-  - [x] SubTask 7.13: Code review — 修复 Markdown 工具 `restoreInput()` 恢复内容后未触发 `this.render()`，导致预览区空白
-  - [x] SubTask 7.14: Code review — 修复首页 home-discovery section 缺少 `<h2>` 标题，补齐屏幕阅读器导航层级
+  - [x] SubTask 7.1: 运行 `npm test`
+  - [x] SubTask 7.2: 运行 `npm run build`
   - [ ] SubTask 7.3: 在桌面宽度检查首页、文章列表、文章正文、归档、作品页、工具页、Markdown 独立页、关于页、更新日志、`/new-post`、404
   - [ ] SubTask 7.4: 在 `375px`、`480px`、`768px`、`1024px` 检查同一批页面没有横向滚动、遮挡、文字挤压或按钮过小
   - [ ] SubTask 7.5: 分别在 light 和 dark 主题检查正文、链接、按钮、输入框、标签、代码块、表格、Giscus、灯箱和工具界面

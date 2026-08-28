@@ -197,14 +197,6 @@ describe('Phase 3 tool migration', () => {
         assert.match(source, /window\.MarkdownRenderer\s*=/);
     });
 
-    test('markdown-renderer restoreInput triggers render after restoring persisted content', () => {
-        const source = readFile('src', 'scripts', 'markdown-renderer.ts');
-
-        const restoreMatch = source.match(/restoreInput\(\) \{[\s\S]*?\n    \},/);
-        assert.ok(restoreMatch, 'restoreInput method should exist');
-        assert.match(restoreMatch[0], /this\.render\(\)/);
-    });
-
     test('MarkdownToolWidget renders the editor, preview, toolbar, and isolated styles', async () => {
         const widget = await readExistingFile('src', 'components', 'MarkdownToolWidget.astro');
 

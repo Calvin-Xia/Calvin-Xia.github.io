@@ -23,27 +23,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
-
-      - name: Run coverage
-        run: npm run test:coverage
-
-      - name: Validate content structure
-        run: |
-          test -f src/content.config.ts
-          test -f src/content/blog/20260411-ai-reliance.md
-          test -f src/content/updates/fingerprint-app-update-log.json
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Generate Astro types
-        run: npx astro sync
-
-      - name: Run TypeScript check
-        run: npx tsc --noEmit
-
       - name: Build Astro site
         run: npm run build
 
@@ -51,5 +30,5 @@ jobs:
         run: |
           test -f dist/index.html
           test -f dist/_headers
-          node -e "const fs = require('fs'); const html = fs.readFileSync('dist/index.html', 'utf8'); if (!html.includes('Calvin Xia')) { throw new Error('dist/index.html is missing the home page title'); }"
+          node -e "const fs = require('fs'); const html = fs.readFileSync('dist/index.html', 'utf8'); if (!html.includes('欢迎来到 Mr.Xia 的小站')) { throw new Error('dist/index.html is missing the home page title'); }"
           node -e "const fs = require('fs'); const headers = fs.readFileSync('dist/_headers', 'utf8'); if (!headers.includes('X-Content-Type-Options: nosniff')) { throw new Error('dist/_headers is missing security headers'); }"

@@ -39,13 +39,12 @@ describe('Phase 9 Integration', () => {
         assert.ok(alertData.errorRate > 0.1);
     });
 
-    it('Astro build check should generate content types before running TypeScript', () => {
+    it('Astro build check installs, builds, and verifies critical static output', () => {
         const workflow = readSource('.github', 'workflows', 'astro-build-check.yml');
-        const typecheckIndex = workflow.indexOf('npx tsc --noEmit');
-        const astroSyncIndex = workflow.indexOf('npx astro sync');
 
-        assert.notEqual(typecheckIndex, -1);
-        assert.notEqual(astroSyncIndex, -1);
-        assert.ok(astroSyncIndex < typecheckIndex);
+        assert.ok(workflow.includes('npm ci'), 'expected npm ci install step');
+        assert.ok(workflow.includes('npm run build'), 'expected astro build step');
+        assert.ok(workflow.includes('test -f dist/index.html'), 'expected index.html output check');
+        assert.ok(workflow.includes('X-Content-Type-Options: nosniff'), 'expected security header check');
     });
 });

@@ -1,6 +1,6 @@
 # 前端视觉重构检查清单
 
-> Sync 2026-05-23: 源码重构与自动验证已同步到本清单。追补主题切换图标、标题换行、Markdown `==...==` 高亮、Astro/Shiki 代码块 light/dark 可读性与 Giscus 消息目标校验后，又完成 code review 发现的 4 项修复（Header scroll 监听器去重、localStorage try-catch、Markdown 工具 restoreInput 渲染、首页发现区 heading 语义）。`npm test` 155/155 通过，`npm run build` 成功生成 19 pages。完整多视口、键盘路径和 legacy preview 项仍保持未完成。
+> Sync 2026-05-22: 源码重构与自动验证已同步到本清单。追补主题切换图标、标题换行、Markdown `==...==` 高亮、Astro/Shiki 代码块 light/dark 可读性与 Giscus 消息目标校验后，`npm test` 151/151 通过，`npm run build` 成功生成 19 pages。完整多视口、键盘路径和 legacy preview 项仍保持未完成。
 
 ## 阶段 0 - 基线审计与范围固化
 - [x] 已确认 `DESIGN.md` 是最终视觉口径来源
@@ -163,12 +163,8 @@
 - [x] `npm run build` 通过
 
 ## 阶段 7 - 全站质量验证
-- [x] `npm test` 通过（155/155）
-- [x] `npm run build` 通过（19 pages）
-- [x] Header `initHeaderState` scroll 监听器不重复注册（`dataset.headerReady` 去重）
-- [x] Header `setTheme` 中 `localStorage.setItem` 包裹 try-catch
-- [x] Markdown 工具 `restoreInput()` 恢复内容后触发 `this.render()`
-- [x] 首页 home-discovery section 包含 `<h2>` 标题，屏幕阅读器可导航
+- [x] `npm test` 通过
+- [x] `npm run build` 通过
 - [ ] 桌面宽度：首页检查通过
 - [ ] 桌面宽度：文章列表检查通过
 - [ ] 桌面宽度：文章正文检查通过
@@ -231,4 +227,4 @@
 - [ ] legacy 跳转兼容没有被破坏
 - [ ] 移动端没有横向滚动、遮挡、文字挤压或按钮过小
 - [ ] 键盘焦点、aria 状态、skip link 和 focus ring 不退步
-- [x] `npm test` 与 `npm run build` 通过（155/155 tests, 19 pages）
+- [x] `npm test` 与 `npm run build` 通过
