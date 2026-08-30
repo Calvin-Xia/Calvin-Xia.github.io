@@ -264,8 +264,8 @@ describe('Phase 5 SEO and comments', () => {
     test('BaseLayout includes self-hosted Umami tracker with website id', () => {
         const layoutSource = readFile('src', 'layouts', 'BaseLayout.astro');
 
-        assert.match(layoutSource, /src=['"]https:\/\/umami\.calvin-xia\.cn:10686\/script\.js['"]/);
-        assert.match(layoutSource, /data-website-id=['"]82bd10b2-31aa-4c90-8d67-8a555a5c5592['"]/);
+        assert.match(layoutSource, /src=['"]https:\/\/umami\.calvin-xia\.cn\/script\.js['"]/);
+        assert.match(layoutSource, /data-website-id=['"]48c8309d-6ae9-4050-ac2c-cc5b127950a8['"]/);
     });
 
     test('CSP allows external scripts, styles, fonts, and analytics requests used by the site', () => {
@@ -276,11 +276,11 @@ describe('Phase 5 SEO and comments', () => {
         const connectSrc = csp.match(/connect-src\s+([^;]+)/)?.[1] || '';
         const fontSrc = csp.match(/font-src\s+([^;]+)/)?.[1] || '';
 
-        assert.match(scriptSrc, /https:\/\/umami\.calvin-xia\.cn:10686/);
+        assert.match(scriptSrc, /https:\/\/umami\.calvin-xia\.cn/);
         assert.match(scriptSrc, /https:\/\/giscus\.app/);
         assert.match(styleSrc, /https:\/\/fonts\.googleapis\.com/);
         assert.match(styleSrc, /https:\/\/giscus\.app/);
-        assert.match(connectSrc, /https:\/\/umami\.calvin-xia\.cn:10686/);
+        assert.match(connectSrc, /https:\/\/umami\.calvin-xia\.cn/);
         assert.match(connectSrc, /https:\/\/giscus\.app/);
         assert.match(fontSrc, /https:\/\/fonts\.gstatic\.com/);
     });
@@ -296,7 +296,7 @@ describe('Phase 5 SEO and comments', () => {
         const footerSource = readFile('src', 'components', 'Footer.astro');
 
         assert.match(footerSource, /aria-label=['"]站点服务['"]/);
-        assert.match(footerSource, /href=['"]https:\/\/umami\.calvin-xia\.cn:10686\/share\/C1nMYMYE65Iyz1SE\/calvin-xia\.cn['"]/);
+        assert.match(footerSource, /href=['"]https:\/\/umami\.calvin-xia\.cn\/share\/lNt93B7R5tgNLaMf\/calvin-xia\.cn['"]/);
         assert.match(footerSource, />Umami</);
         assert.match(footerSource, /target=['"]_blank['"]/);
         assert.match(footerSource, /rel=['"]noopener['"]/);

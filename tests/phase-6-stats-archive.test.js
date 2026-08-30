@@ -219,7 +219,7 @@ describe('Phase 6 Umami view counter', () => {
             const response = await handleViewCounterRequest(
                 new Request('https://calvin-xia.cn/api/views/20260411-ai-reliance'),
                 {
-                    UMAMI_HOST: 'https://umami.calvin-xia.cn:10686/',
+                    UMAMI_HOST: 'https://umami.calvin-xia.cn/',
                     UMAMI_WEBSITE_ID: 'web-1',
                     UMAMI_USERNAME: 'worker',
                     UMAMI_PASSWORD: 'secret',

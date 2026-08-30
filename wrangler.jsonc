@@ -10,8 +10,8 @@
         "run_worker_first": ["/api/*"]
     },
     "vars": {
-        "UMAMI_HOST": "https://umami.calvin-xia.cn:10686",
-        "UMAMI_WEBSITE_ID": "82bd10b2-31aa-4c90-8d67-8a555a5c5592"
+        "UMAMI_HOST": "https://umami.calvin-xia.cn",
+        "UMAMI_WEBSITE_ID": "48c8309d-6ae9-4050-ac2c-cc5b127950a8"
     },
     "observability": {
         "enabled": true,

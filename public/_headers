@@ -1,5 +1,5 @@
 /*
-    Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: https://content.calvin-xia.cn https://assets.calvin-xia.cn; script-src 'self' 'unsafe-inline' https://giscus.app https://umami.calvin-xia.cn:10686; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://giscus.app; connect-src 'self' https://giscus.app https://umami.calvin-xia.cn:10686; font-src 'self' data: https://fonts.gstatic.com; frame-src https://giscus.app; form-action 'self'; upgrade-insecure-requests
+    Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: https://content.calvin-xia.cn https://assets.calvin-xia.cn; script-src 'self' 'unsafe-inline' https://giscus.app https://umami.calvin-xia.cn; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://giscus.app; connect-src 'self' https://giscus.app https://umami.calvin-xia.cn; font-src 'self' data: https://fonts.gstatic.com; frame-src https://giscus.app; form-action 'self'; upgrade-insecure-requests
     X-Frame-Options: DENY
     X-Content-Type-Options: nosniff
     Referrer-Policy: strict-origin-when-cross-origin

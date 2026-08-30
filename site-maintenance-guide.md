@@ -248,7 +248,7 @@ npm run test:coverage
 - 缓存 5 分钟（`Cache-Control: public, max-age=300`）
 - 查询失败或无数据时返回 `views: null`，前端自动隐藏浏览量
 
-若浏览量不显示，先用 `npx wrangler secret list` 确认 `UMAMI_USERNAME`/`UMAMI_PASSWORD` 已注入，再确认 `UMAMI_HOST`（当前 `https://umami.calvin-xia.cn:10686`）从 Worker 网络可达。注意 Cloudflare Workers 的出站 fetch 只支持有限端口（80、443、8080、8443 及 2052/2053/2082/2083/2086/2087/2095/2096），`10686` 不在其中；若部署后浏览量一直为空，优先把 Umami 迁到 443 或白名单端口并同步修改 `wrangler.jsonc` 的 `UMAMI_HOST`。
+若浏览量不显示，先用 `npx wrangler secret list` 确认 `UMAMI_USERNAME`/`UMAMI_PASSWORD` 已注入，再确认 `UMAMI_HOST`（当前 `https://umami.calvin-xia.cn`，标准 443）从 Worker 网络可达。注意 Cloudflare Workers 的出站 fetch 只支持有限端口（80、443、8080、8443 及 2052/2053/2082/2083/2086/2087/2095/2096）；Umami 已迁移到 443，若未来调整端口必须落在白名单内，并同步修改 `wrangler.jsonc` 的 `UMAMI_HOST`。
 
 ### 安全监控与代码质量（Phase 9）
 
