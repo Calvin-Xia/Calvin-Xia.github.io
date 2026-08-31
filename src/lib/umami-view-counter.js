@@ -100,12 +100,12 @@ export async function fetchArticleViews(env = {}, slug, fetchImpl = globalThis.f
     }
 
     const articlePath = normalizeArticlePath(slug);
-    const statsUrl = `${config.host}/api/websites/${config.websiteId}/stats`
-        + `?startAt=0&endAt=${Date.now()}&path=${encodeURIComponent(articlePath)}`;
+    const metricsUrl = `${config.host}/api/websites/${config.websiteId}/metrics`
+        + `?type=url&startAt=0&endAt=${Date.now()}&url=${encodeURIComponent(articlePath)}`;
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
         const token = await requestUmamiToken(env, { forceRefresh: attempt > 0, fetchImpl });
-        const response = await fetchImpl(statsUrl, {
+        const response = await fetchImpl(metricsUrl, {
             headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -114,11 +114,12 @@ export async function fetchArticleViews(env = {}, slug, fetchImpl = globalThis.f
         }
 
         if (!response.ok) {
-            throw new Error(`umami stats request failed with status ${response.status}`);
+            throw new Error(`umami metrics request failed with status ${response.status}`);
         }
 
         const data = await response.json();
-        const views = Number(data?.pageviews);
+        const row = Array.isArray(data) ? data[0] : null;
+        const views = Number(row?.y);
 
         return Number.isFinite(views) && views >= 0 ? Math.round(views) : 0;
     }

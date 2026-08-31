@@ -211,7 +211,7 @@ describe('Phase 6 Umami view counter', () => {
             return {
                 ok: true,
                 status: 200,
-                json: async () => ({ pageviews: 1234, visitors: 567 }),
+                json: async () => [{ x: '/articles/20260411-ai-reliance/', y: 1234 }],
             };
         };
 
@@ -235,14 +235,14 @@ describe('Phase 6 Umami view counter', () => {
             });
 
             const login = calls.find(({ url }) => url.endsWith('/api/auth/login'));
-            const stats = calls.find(({ url }) => url.includes('/api/websites/web-1/stats'));
+            const metrics = calls.find(({ url }) => url.includes('/api/websites/web-1/metrics'));
 
             assert.ok(login, 'expected a login call');
             assert.equal(login.init.method, 'POST');
             assert.deepEqual(JSON.parse(login.init.body), { username: 'worker', password: 'secret' });
-            assert.ok(stats, 'expected a stats call');
-            assert.match(stats.url, /startAt=0&endAt=\d+&path=%2Farticles%2F20260411-ai-reliance%2F/);
-            assert.equal(stats.authorization, 'Bearer token-1');
+            assert.ok(metrics, 'expected a metrics call');
+            assert.match(metrics.url, /type=url&startAt=0&endAt=\d+&url=%2Farticles%2F20260411-ai-reliance%2F/);
+            assert.equal(metrics.authorization, 'Bearer token-1');
         } finally {
             clearUmamiTokenCache();
             globalThis.fetch = originalFetch;
@@ -277,7 +277,7 @@ describe('Phase 6 Umami view counter', () => {
             return {
                 ok: true,
                 status: 200,
-                json: async () => ({ pageviews: 7 }),
+                json: async () => [{ x: '/articles/20260411-ai-reliance/', y: 7 }],
             };
         };
 

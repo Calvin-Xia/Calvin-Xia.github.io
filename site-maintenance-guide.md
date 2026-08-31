@@ -243,7 +243,7 @@ npm run test:coverage
 浏览量数据来源为自部署 Umami，Worker 在服务端登录后查询：
 
 - 前端 (`src/scripts/view-counter.js`) 请求 `/api/views/{slug}`
-- Worker (`src/worker.ts`) 拦截 `/api/views/*`，通过 `src/lib/umami-view-counter.js` 登录 Umami（`POST /api/auth/login`，凭证来自 `UMAMI_USERNAME`/`UMAMI_PASSWORD` secret）并缓存 token，再查询 `GET /api/websites/{websiteId}/stats?startAt=0&endAt={now}&path=/articles/{slug}/` 取 `pageviews`
+- Worker (`src/worker.ts`) 拦截 `/api/views/*`，通过 `src/lib/umami-view-counter.js` 登录 Umami（`POST /api/auth/login`，凭证来自 `UMAMI_USERNAME`/`UMAMI_PASSWORD` secret）并缓存 token，再查询 `GET /api/websites/{websiteId}/metrics?type=url&startAt=0&endAt={now}&url=/articles/{slug}/`，取返回数组首项的 `y` 作为阅读量（Umami 2.10 的路径过滤参数是 `url` 而非 `path`；无浏览记录时返回 `[]`，按 0 处理）
 - 非 API 请求透传给内置静态资产引擎（`env.ASSETS.fetch`）
 - 缓存 5 分钟（`Cache-Control: public, max-age=300`）
 - 查询失败或无数据时返回 `views: null`，前端自动隐藏浏览量
