@@ -2388,6 +2388,13 @@ html[data-astro-transition='back']::view-transition-old(site-main) {
     animation: fadeInUp var(--duration-slow) var(--ease-out) both;
 }
 
+/* PageAnimations 的入场动画初始态：先隐藏再由 JS 补 fade-in-up，避免「已渲染→闪没→再淡入」二次闪烁。
+   仅首页/styleguide 生效（BaseLayout 内联脚本按路径标记 data-anim-root），无 JS 环境不标记、内容照常显示。 */
+html[data-anim-root] main > section:not(.fade-in-up),
+html[data-anim-root] .shadowbox:not(.markdown-container):not(.fade-in-up) {
+    opacity: 0;
+}
+
 #page-transition-indicator {
     position: fixed;
     right: 1rem;
@@ -2826,7 +2833,9 @@ html[data-astro-transition='back']::view-transition-old(site-main) {
     .stagger-reveal > *,
     .hero-title,
     .article-section-reveal,
-    .article-section-reveal:not(.is-visible) {
+    .article-section-reveal:not(.is-visible),
+    html[data-anim-root] main > section,
+    html[data-anim-root] .shadowbox:not(.markdown-container) {
         opacity: 1 !important;
         transform: none !important;
     }
