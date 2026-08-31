@@ -547,7 +547,6 @@ export const MarkdownRenderer = {
                 }
             } else if (line.includes('<img') || line.includes('![')) {
                 previewContent += `${line}\n`;
-                firstImageAdded = true;
                 break;
             } else if (line.trim() && !firstImageAdded) {
                 previewContent += `${line}\n`;

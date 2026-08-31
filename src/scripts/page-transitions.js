@@ -180,7 +180,7 @@ export function restoreArticleListScrollPosition(windowRef = window) {
         return false;
     }
 
-    let storedScrollY = null;
+    let storedScrollY;
 
     try {
         storedScrollY = windowRef.sessionStorage?.getItem(ARTICLE_LIST_SCROLL_KEY) ?? null;
