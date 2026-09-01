@@ -195,6 +195,8 @@ async function confirmPlan() {
     }
 }
 
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 export async function promptForPostMetadata(dirName, {
     createInterface: openInterface = createInterface,
     logger = console,
@@ -205,7 +207,17 @@ export async function promptForPostMetadata(dirName, {
         logger.log('\n请输入文章元数据：');
         const title = (await rl.question('标题: ')).trim();
         if (!title) throw new Error('标题不能为空');
-        const date = (await rl.question(`日期 [${derivedDate}]: `)).trim() || derivedDate;
+
+        const dateHint = DATE_PATTERN.test(derivedDate) ? derivedDate : 'YYYY-MM-DD';
+        let date = '';
+        while (!DATE_PATTERN.test(date)) {
+            const answer = (await rl.question(`日期 [${dateHint}]: `)).trim();
+            date = answer || (DATE_PATTERN.test(dateHint) ? dateHint : '');
+            if (!DATE_PATTERN.test(date)) {
+                logger.log('日期不能为空，且必须为 YYYY-MM-DD 格式（如 2026-06-03）');
+            }
+        }
+
         const excerpt = (await rl.question('摘要: ')).trim();
         const category = (await rl.question('分类 [未分类]: ')).trim() || '未分类';
         const tagsInput = (await rl.question('标签 (逗号分隔) [未分类]: ')).trim();

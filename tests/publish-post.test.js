@@ -161,6 +161,24 @@ describe('publish post uploads', () => {
         assert.equal(prompts[4], '标签 (逗号分隔) [未分类]: ');
     });
 
+    test('re-asks the date prompt until it is a valid YYYY-MM-DD date', async () => {
+        const logs = [];
+        const answers = ['新文章', '2026/06/03', '', '2026-06-05', '摘要', '', ''];
+
+        const metadata = await promptForPostMetadata('no-date-prefix', {
+            createInterface: () => ({
+                async question() {
+                    return answers.shift();
+                },
+                close() {},
+            }),
+            logger: { log: (message) => logs.push(message) },
+        });
+
+        assert.equal(metadata.date, '2026-06-05');
+        assert.ok(logs.some((message) => message.includes('YYYY-MM-DD')));
+    });
+
     test('retries transient R2 upload failures before succeeding', async () => {
         const assetPath = await createTempAsset('cover.PNG');
         const attempts = [];
