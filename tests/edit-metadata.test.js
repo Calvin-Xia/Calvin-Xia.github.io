@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, test } from 'node:test';
@@ -212,6 +212,34 @@ describe('edit metadata CLI helpers', () => {
 
         assert.equal(removed.length, 1);
         assert.ok(removed[0].startsWith(`${filePath}.tmp-`));
+    });
+
+    test('removes stale temp files left by a previous crashed run before writing', async () => {
+        const filePath = await createTempPost([
+            '---',
+            'title: "旧标题"',
+            'date: "2026-06-01"',
+            'excerpt: "旧摘要"',
+            'category: "随笔"',
+            'tags: []',
+            '---',
+            '',
+            '# 正文',
+            '',
+        ].join('\n'));
+        const stalePath = `${filePath}.tmp-stale`;
+        await writeFile(stalePath, 'junk from a crashed run', 'utf8');
+
+        await writePostMetadataAtomic(filePath, {
+            title: '新标题',
+            date: '2026-06-02',
+            excerpt: '新摘要',
+            category: '记录',
+            tags: ['新标签'],
+        });
+
+        await assert.rejects(() => access(stalePath), { code: 'ENOENT' });
+        assert.match(await readFile(filePath, 'utf8'), /title: 新标题/);
     });
 
     test('collects interactive edits with defaults and confirmation state', async () => {

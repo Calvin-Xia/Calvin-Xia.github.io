@@ -1,4 +1,4 @@
-import { readFile as defaultReadFile, rename as defaultRename, unlink as defaultUnlink, writeFile as defaultWriteFile } from 'node:fs/promises';
+import { readFile as defaultReadFile, readdir as defaultReaddir, rename as defaultRename, unlink as defaultUnlink, writeFile as defaultWriteFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -155,6 +155,27 @@ function createTempPath(filePath) {
     return `${filePath}.tmp-${suffix}`;
 }
 
+async function cleanupStaleTempFiles(filePath, {
+    readdir = defaultReaddir,
+    unlink = defaultUnlink,
+} = {}) {
+    const dir = path.dirname(filePath);
+    const prefix = `${path.basename(filePath)}.tmp-`;
+
+    let entries;
+    try {
+        entries = await readdir(dir);
+    } catch {
+        return;
+    }
+
+    await Promise.all(
+        entries
+            .filter((name) => name.startsWith(prefix))
+            .map((name) => unlink(path.join(dir, name)).catch(() => {})),
+    );
+}
+
 function createValidationError(errors) {
     const error = new Error('Metadata validation failed');
     error.errors = errors;
@@ -163,6 +184,7 @@ function createValidationError(errors) {
 
 export async function writePostMetadataAtomic(filePath, metadata, {
     readFile = defaultReadFile,
+    readdir = defaultReaddir,
     writeFile = defaultWriteFile,
     rename = defaultRename,
     unlink = defaultUnlink,
@@ -178,6 +200,9 @@ export async function writePostMetadataAtomic(filePath, metadata, {
     }
 
     const markdown = matter.stringify(current.content, validation.value);
+
+    // Self-heal leftovers from a crashed run between writeFile and rename.
+    await cleanupStaleTempFiles(filePath, { readdir, unlink });
 
     await writeFile(tempPath, markdown, 'utf8');
 
