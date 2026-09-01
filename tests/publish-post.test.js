@@ -91,6 +91,51 @@ describe('publish post uploads', () => {
         assert.ok(logs.some((message) => message.includes('Dry run only')));
     });
 
+    test('uploads assets before writing markdown so failures never leave half-published files', async () => {
+        const calls = [];
+        const logs = [];
+        const plan = {
+            destinationMarkdownPath: path.join(os.tmpdir(), 'upload-order-output.md'),
+            assets: [{ relativePath: 'a.png', key: 'p/a.png' }],
+        };
+
+        await executePublishPlan(plan, {
+            dryRun: false,
+            logger: { log: (message) => logs.push(message) },
+            mkdir: async () => calls.push('mkdir'),
+            writeFile: async () => calls.push('writeFile'),
+            uploadAssets: async () => calls.push('upload'),
+            readTransformedMarkdown: async () => 'markdown',
+        });
+
+        assert.deepEqual(calls, ['upload', 'mkdir', 'writeFile']);
+        assert.ok(logs.some((message) => message.includes('Copied markdown')));
+    });
+
+    test('does not write markdown when asset uploads fail', async () => {
+        const calls = [];
+        const plan = {
+            destinationMarkdownPath: path.join(os.tmpdir(), 'upload-fail-output.md'),
+            assets: [{ relativePath: 'a.png', key: 'p/a.png' }],
+        };
+
+        await assert.rejects(
+            () => executePublishPlan(plan, {
+                dryRun: false,
+                logger: { log: () => {} },
+                mkdir: async () => calls.push('mkdir'),
+                writeFile: async () => calls.push('writeFile'),
+                uploadAssets: async () => {
+                    throw new Error('R2 unavailable');
+                },
+                readTransformedMarkdown: async () => 'markdown',
+            }),
+            /R2 unavailable/,
+        );
+
+        assert.ok(!calls.includes('writeFile'), 'markdown must not be written when uploads fail');
+    });
+
     test('metadata prompt shows the default tag and uses it when tags are blank', async () => {
         const prompts = [];
         const answers = ['新文章', '', '摘要', '', ''];

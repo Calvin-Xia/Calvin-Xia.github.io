@@ -157,13 +157,14 @@ export async function executePublishPlan(plan, {
         return;
     }
 
-    await makeDir(outputDir, { recursive: true });
-
     const transformedMarkdown = await readMarkdown(plan);
+
+    // Upload before writing: a failed upload must never leave markdown behind with dead R2 links.
+    await uploadPlanAssets(plan);
+
+    await makeDir(outputDir, { recursive: true });
     await writeMarkdown(plan.destinationMarkdownPath, transformedMarkdown, 'utf8');
     logger.log(`Copied markdown -> ${path.relative(rootDir, plan.destinationMarkdownPath)}`);
-
-    await uploadPlanAssets(plan);
     logger.log('Replaced markdown asset links in copied file.');
 }
 
@@ -306,8 +307,11 @@ async function main() {
             }
         }
 
+        // Every plan shares the same asset set (same assetSlug); upload once so N files do not re-upload it.
+        await uploadAssets(orderedPlans[0]);
+
         for (const p of orderedPlans) {
-            await executePublishPlan(p, { dryRun: false });
+            await executePublishPlan(p, { dryRun: false, uploadAssets: async () => {} });
         }
         console.log('Publish complete.');
         return;
