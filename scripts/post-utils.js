@@ -1,6 +1,7 @@
 import { constants as fsConstants } from 'node:fs';
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import matter from 'gray-matter';
 import {
     buildMarkdownDocument,
     encodeUrlPath,
@@ -13,38 +14,11 @@ function compactDate(date) {
     return String(date || '').replaceAll('-', '');
 }
 
-function extractYamlFrontmatter(markdown) {
-    const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
-    if (!match) return { frontmatterStr: null, body: markdown };
-    return { frontmatterStr: match[1], body: markdown.slice(match[0].length) };
-}
-
-function parseSimpleYaml(yamlStr) {
-    if (!yamlStr) return {};
-    const result = {};
-    const lines = yamlStr.split('\n');
-    let currentKey = null;
-
-    for (const line of lines) {
-        const keyMatch = line.match(/^(\w+):\s*(.*)/);
-        if (keyMatch) {
-            currentKey = keyMatch[1];
-            const value = keyMatch[2].trim();
-            const unquoted = value.replace(/^["']|["']$/g, '');
-            if (unquoted) {
-                result[currentKey] = unquoted;
-            } else {
-                result[currentKey] = [];
-            }
-        } else if (currentKey && Array.isArray(result[currentKey])) {
-            const itemMatch = line.match(/^\s*-\s*(.*)/);
-            if (itemMatch) {
-                result[currentKey].push(itemMatch[1].trim().replace(/^["']|["']$/g, ''));
-            }
-        }
+function toIsoDate(value) {
+    if (value instanceof Date) {
+        return value.toISOString().slice(0, 10);
     }
-
-    return result;
+    return String(value || '').trim();
 }
 
 export function deriveDateFromDirName(dirName) {
@@ -189,10 +163,10 @@ export async function buildPublishPlan({ vaultDir, dirName, outputDir, publicUrl
 
 export async function readTransformedMarkdown(plan) {
     const markdown = await readFile(plan.sourceMarkdownPath, 'utf8');
-    const { frontmatterStr, body } = extractYamlFrontmatter(markdown);
-    const sourceMeta = parseSimpleYaml(frontmatterStr);
+    const parsed = matter(markdown);
+    const sourceMeta = parsed.data || {};
 
-    const transformedBody = transformMarkdownAssetLinks(body, {
+    const transformedBody = transformMarkdownAssetLinks(parsed.content, {
         publicUrl: plan.publicUrl,
         assetSlug: plan.assetSlug,
     });
@@ -201,7 +175,7 @@ export async function readTransformedMarkdown(plan) {
 
     const post = {
         title: userMeta.title || sourceMeta.title || plan.dirName,
-        date: userMeta.date || sourceMeta.date || deriveDateFromDirName(plan.dirName),
+        date: toIsoDate(userMeta.date || sourceMeta.date) || deriveDateFromDirName(plan.dirName),
         excerpt: userMeta.excerpt || sourceMeta.excerpt || '',
         category: userMeta.category || sourceMeta.category || '未分类',
         tags: tagsWithDefault(userMeta.tags || sourceMeta.tags || ['未分类']),

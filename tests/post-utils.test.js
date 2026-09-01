@@ -384,4 +384,36 @@ describe('post utility functions', () => {
         assert.match(result, /  - "a"/);
         assert.match(result, /  - "b"/);
     });
+
+    test('readTransformedMarkdown handles YAML edges: empty excerpt, unquoted date, multiline excerpt', async () => {
+        const vaultDir = await createTempDir();
+        const postDir = path.join(vaultDir, '20260503-my-post');
+        await mkdir(postDir, { recursive: true });
+        await writeFile(path.join(postDir, 'draft.md'), [
+            '---',
+            'title: "My Title"',
+            'date: 2026-04-01',
+            'excerpt: ""',
+            'tags:',
+            '  - t1',
+            '---',
+            '',
+            '# Hello',
+            '',
+        ].join('\n'), 'utf8');
+
+        const plan = {
+            sourceMarkdownPath: path.join(postDir, 'draft.md'),
+            dirName: '20260503-my-post',
+            publicUrl: 'https://content.example.com',
+            assetSlug: 'my-post',
+        };
+
+        const result = await readTransformedMarkdown(plan);
+
+        assert.match(result, /excerpt: ""/, 'empty excerpt must stay an empty string, not become an array');
+        assert.match(result, /date: "2026-04-01"/, 'unquoted ISO date parsed as Date must serialize back to YYYY-MM-DD');
+        assert.match(result, /  - "t1"/);
+        assert.match(result, /# Hello/);
+    });
 });
