@@ -158,6 +158,22 @@ describe('post utility functions', () => {
         assert.equal(getContentType('image.HEIC'), 'image/heic');
     });
 
+    test('buildPublishPlan reports a friendly error when the post directory does not exist', async () => {
+        const vaultDir = await createTempDir();
+        const outputDir = await createTempDir();
+
+        await assert.rejects(
+            () => buildPublishPlan({
+                vaultDir,
+                dirName: '20260429-missing',
+                outputDir,
+                publicUrl: 'https://content.example.com',
+            }),
+            (error) => error.message.includes('目录不存在')
+                && error.message.includes('20260429-missing'),
+        );
+    });
+
     test('buildPublishPlan reads the vault source without mutating it', async () => {
         const vaultDir = await createTempDir();
         const outputDir = await createTempDir();

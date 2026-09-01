@@ -116,7 +116,15 @@ async function walkFiles(dirPath, baseDir = dirPath) {
 
 export async function buildPublishPlan({ vaultDir, dirName, outputDir, publicUrl }) {
     const postDir = path.resolve(vaultDir, dirName);
-    const entries = await readdir(postDir, { withFileTypes: true });
+    let entries;
+    try {
+        entries = await readdir(postDir, { withFileTypes: true });
+    } catch (error) {
+        if (error?.code === 'ENOENT') {
+            throw new Error(`目录不存在: ${dirName}（已按 vault 根解析为 ${postDir}）`);
+        }
+        throw error;
+    }
     const markdownFiles = entries
         .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.md'))
         .map((entry) => path.join(postDir, entry.name));
