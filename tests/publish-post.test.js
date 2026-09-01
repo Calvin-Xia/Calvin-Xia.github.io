@@ -32,10 +32,26 @@ describe('publish post uploads', () => {
         assert.deepEqual(parsePublishArgs(['--dry-run', '20260429-my-post']), {
             dirName: '20260429-my-post',
             dryRun: true,
+            help: false,
+            unknownFlags: [],
         });
         assert.deepEqual(parsePublishArgs(['20260429-my-post']), {
             dirName: '20260429-my-post',
             dryRun: false,
+            help: false,
+            unknownFlags: [],
+        });
+        assert.deepEqual(parsePublishArgs(['--help']), {
+            dirName: '',
+            dryRun: false,
+            help: true,
+            unknownFlags: [],
+        });
+        assert.deepEqual(parsePublishArgs(['--dryrun', '20260429-my-post']), {
+            dirName: '20260429-my-post',
+            dryRun: false,
+            help: false,
+            unknownFlags: ['--dryrun'],
         });
     });
 

@@ -170,10 +170,27 @@ export async function executePublishPlan(plan, {
 
 export function parsePublishArgs(argv = process.argv.slice(2)) {
     const args = argv.map((arg) => arg.trim()).filter(Boolean);
+    const knownFlags = new Set(['--dry-run', '--help']);
+    const help = args.includes('--help');
     const dryRun = args.includes('--dry-run');
-    const dirName = args.find((arg) => arg !== '--dry-run') || '';
+    const unknownFlags = args.filter((arg) => arg.startsWith('-') && !knownFlags.has(arg));
+    const dirName = args.find((arg) => !arg.startsWith('-')) || '';
 
-    return { dirName, dryRun };
+    return { dirName, dryRun, help, unknownFlags };
+}
+
+function printPublishUsage(logger = console) {
+    logger.log([
+        'Usage: npm run publish -- [--dry-run] <obsidian-post-dir>',
+        '',
+        'Options:',
+        '  --dry-run    预览发布计划，不写 markdown、不上传 R2',
+        '  --help       显示本帮助',
+        '',
+        'Examples:',
+        '  npm run publish -- --dry-run 20260429-my-new-post',
+        '  npm run publish -- 20260429-my-new-post',
+    ].join('\n'));
 }
 
 async function promptForDirName() {
@@ -270,7 +287,14 @@ export async function promptForFileSelection(markdownFiles, {
 async function main() {
     console.log('Obsidian Post Publisher');
 
-    const { dirName: directDirName, dryRun } = parsePublishArgs();
+    const { dirName: directDirName, dryRun, help, unknownFlags } = parsePublishArgs();
+    if (help) {
+        printPublishUsage();
+        return;
+    }
+    if (unknownFlags.length > 0) {
+        console.warn(`忽略未知参数: ${unknownFlags.join(', ')}（支持的 flag: --dry-run、--help）`);
+    }
     validatePublishEnvs({ dryRun });
     const dirName = directDirName || await promptForDirName();
     if (!dirName) {
