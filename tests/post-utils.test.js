@@ -49,10 +49,13 @@ describe('post utility functions', () => {
         assert.doesNotMatch(source, /export\s+function\s+getContentType/);
     });
 
-    test('slugifyTitle keeps latin words and converts supported Chinese characters to pinyin initials', () => {
+    test('slugifyTitle keeps latin words and converts any Chinese character to pinyin initials via pinyin-pro', () => {
         assert.equal(slugifyTitle('From Nervousness to Growth: A Reflection'), 'from-nervousness-to-growth-a-reflection');
         assert.equal(slugifyTitle('返校宣讲 破局·成长'), 'fxxj-pjcz');
         assert.equal(slugifyTitle('新建文章'), 'xjwz');
+        assert.equal(slugifyTitle('记录每一次思考'), 'jlmycsk');
+        assert.equal(slugifyTitle('初见神经网络'), 'cjsjwl');
+        assert.equal(slugifyTitle(''), 'post');
     });
 
     test('validatePostPayload reports missing required fields and normalizes valid payloads', () => {
