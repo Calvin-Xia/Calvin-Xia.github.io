@@ -9,6 +9,7 @@ import {
     promptForFileSelection,
     promptForPostMetadata,
     uploadAssets,
+    validatePublishEnvs,
 } from '../scripts/publish-post.js';
 
 const tempDirs = [];
@@ -36,6 +37,32 @@ describe('publish post uploads', () => {
             dirName: '20260429-my-post',
             dryRun: false,
         });
+    });
+
+    test('validates vault env vars for dry-run and R2 credentials only for real publish', () => {
+        const vaultOnly = { OKP_VAULT: 'vault', R2_PUBLIC_URL: 'https://content.example.com' };
+
+        assert.doesNotThrow(() => validatePublishEnvs({ dryRun: true, env: vaultOnly }));
+        assert.throws(
+            () => validatePublishEnvs({ dryRun: false, env: vaultOnly }),
+            (error) => error.message.includes('R2_ENDPOINT')
+                && error.message.includes('R2_BUCKET')
+                && error.message.includes('R2_SECRET_ACCESS_KEY'),
+        );
+
+        const fullEnv = {
+            ...vaultOnly,
+            R2_ENDPOINT: 'https://r2.example.com',
+            R2_ACCESS_KEY_ID: 'id',
+            R2_SECRET_ACCESS_KEY: 'secret',
+            R2_BUCKET: 'bucket',
+        };
+        assert.doesNotThrow(() => validatePublishEnvs({ dryRun: false, env: fullEnv }));
+
+        assert.throws(
+            () => validatePublishEnvs({ dryRun: true, env: {} }),
+            (error) => error.message.includes('OKP_VAULT') && error.message.includes('R2_PUBLIC_URL'),
+        );
     });
 
     test('dry-run prints the publish plan without writing markdown or uploading assets', async () => {

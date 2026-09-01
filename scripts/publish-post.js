@@ -24,6 +24,20 @@ export function requireEnv(name) {
     return value;
 }
 
+export function validatePublishEnvs({ dryRun = false, env = process.env } = {}) {
+    const required = ['OKP_VAULT', 'R2_PUBLIC_URL'];
+    if (!dryRun) {
+        required.push('R2_ENDPOINT', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET');
+    }
+
+    const missing = required.filter((name) => !env[name]);
+    if (missing.length > 0) {
+        throw new Error(`Missing required env var(s): ${missing.join(', ')}`);
+    }
+
+    return required;
+}
+
 export function createR2Client() {
     return new S3Client({
         region: 'auto',
@@ -244,6 +258,7 @@ async function main() {
     console.log('Obsidian Post Publisher');
 
     const { dirName: directDirName, dryRun } = parsePublishArgs();
+    validatePublishEnvs({ dryRun });
     const dirName = directDirName || await promptForDirName();
     if (!dirName) {
         throw new Error('Post directory name is required');
