@@ -130,40 +130,54 @@ const blogPostingJsonLd = JSON.stringify(buildBlogPostingJsonLd({
                 const shareTitle = button.dataset.shareTitle || document.title;
                 const shareUrl = window.location.href;
 
+                const setLabel = (key) => {
+                    const label = button.querySelector('span');
+                    if (label) {
+                        const original = label.textContent;
+                        label.textContent = t(key);
+                        window.setTimeout(() => {
+                            label.textContent = original;
+                        }, 2000);
+                    }
+                };
+
                 try {
-                    // Prefer sharing the OG card as an image file (richer share targets).
-                    if (button.dataset.shareImage && navigator.canShare) {
+                    // Fetch the OG card so sharing/copying carries the actual image.
+                    let imageFile = null;
+                    if (button.dataset.shareImage) {
                         try {
                             const response = await fetch(new URL(button.dataset.shareImage, window.location.origin));
                             const blob = await response.blob();
-                            const fileName = `${(button.dataset.shareImage.split('/').pop() || 'share').replace(/\.[a-z0-9]+$/i, '')}.png`;
-                            const file = new File([blob], fileName, { type: blob.type || 'image/png' });
-                            if (file.size > 0 && navigator.canShare({ files: [file] })) {
-                                await navigator.share({ files: [file], title: shareTitle, text: shareTitle });
-                                return;
+                            if (response.ok && blob.type.startsWith('image/') && blob.size > 0) {
+                                const fileName = `${(button.dataset.shareImage.split('/').pop() || 'share').replace(/\.[a-z0-9]+$/i, '')}.png`;
+                                imageFile = new File([blob], fileName, { type: blob.type });
                             }
-                        } catch (error) {
-                            if (error?.name === 'AbortError') {
-                                return;
-                            }
-                            // Fall through to link sharing.
+                        } catch {
+                            imageFile = null;
                         }
                     }
 
+                    // 1. Rich share: hand the image file to the OS share sheet.
+                    if (imageFile && navigator.share && navigator.canShare?.({ files: [imageFile] })) {
+                        await navigator.share({ files: [imageFile], title: shareTitle, text: shareTitle });
+                        return;
+                    }
+
+                    // 2. Copy the image itself so it can be pasted into chat apps.
+                    if (imageFile && typeof ClipboardItem === 'function' && navigator.clipboard?.write) {
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': imageFile })]);
+                        setLabel('articleDetail.imageCopied');
+                        return;
+                    }
+
+                    // 3. Link share, then 4. copy the link.
                     if (navigator.share) {
                         await navigator.share({ title: shareTitle, url: shareUrl });
                         return;
                     }
 
                     await navigator.clipboard.writeText(shareUrl);
-                    const label = button.querySelector('span');
-                    if (label) {
-                        const original = label.textContent;
-                        label.textContent = t('articleDetail.shareCopied');
-                        window.setTimeout(() => {
-                            label.textContent = original;
-                        }, 2000);
-                    }
+                    setLabel('articleDetail.shareCopied');
                 } catch (error) {
                     if (error?.name !== 'AbortError') {
                         console.error('Share failed:', error);
