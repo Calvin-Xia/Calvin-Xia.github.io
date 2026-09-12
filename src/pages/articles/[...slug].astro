@@ -41,6 +41,20 @@ const heroImage = post.data.hero ? heroImages[`../../assets/hero/${post.data.her
             </a>
         </div>
 
+        {heroImage && (
+            <figure class="article-cover">
+                <img
+                    src={heroImage.src}
+                    width={heroImage.width}
+                    height={heroImage.height}
+                    alt={post.data.title}
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                />
+            </figure>
+        )}
+
         <header class="page-intro article-hero">
             <p class="section-kicker">{post.data.category}</p>
             <h1 class="page-title">{post.data.title}</h1>
@@ -59,20 +73,6 @@ const heroImage = post.data.hero ? heroImages[`../../assets/hero/${post.data.her
                 </span>
             </div>
         </header>
-
-        {heroImage && (
-            <figure class="article-cover">
-                <img
-                    src={heroImage.src}
-                    width={heroImage.width}
-                    height={heroImage.height}
-                    alt={post.data.title}
-                    loading="eager"
-                    fetchpriority="high"
-                    decoding="async"
-                />
-            </figure>
-        )}
 
         <div class="article-reading-layout">
             <section class="markdown-container" aria-label={t('articleDetail.bodyAria')} data-i18n-aria-label="articleDetail.bodyAria">

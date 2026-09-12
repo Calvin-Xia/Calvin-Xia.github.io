@@ -1,4 +1,5 @@
 ---
+import { getImage } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import LicenseBadge from '../components/LicenseBadge.astro';
 import PageIntro from '../components/PageIntro.astro';
@@ -20,11 +21,27 @@ const [blogEntries, workEntries, toolEntries] = await Promise.all([
 
 const articles = blogEntries.map(blogEntryToItem).sort(compareContentItems);
 const searchableTypes = ['article', 'work', 'tool'];
+
+const heroImages = import.meta.glob('../assets/hero/*.webp', { eager: true, import: 'default' });
+const heroThumbs = {};
+for (const [key, image] of Object.entries(heroImages)) {
+    const slug = key.split('/').pop().replace(/\.webp$/, '');
+    const { src } = await getImage({ src: image, width: 480, height: 270, fit: 'cover', format: 'webp' });
+    heroThumbs[slug] = src;
+}
+
+function heroThumbFor(item) {
+    const slug = String(item.filePath || '').replace(/^\/articles\//, '').replace(/\/$/, '');
+    return heroThumbs[slug] || null;
+}
+
+const articlesWithThumbs = articles.map((item) => ({ ...item, thumb: heroThumbFor(item) }));
 const categories = getUniqueValues(articles.map((item) => item.category));
 const tags = getUniqueValues(articles.flatMap((item) => item.tags));
 
 const payload = {
-    articles,
+    articles: articlesWithThumbs,
+    heroThumbs,
     searchableTypes,
 };
 ---
@@ -126,9 +143,20 @@ const payload = {
             ))}
         </div>
         <div id="content-results" class="content-results">
-            {articles.map((article, index) => (
+            {articlesWithThumbs.map((article, index) => (
                 <article class="blog-card content-card-enter" style={`--stagger-index: ${index}`}>
                     <a href={article.filePath} class="blog-card-link">
+                        {article.thumb && (
+                            <img
+                                class="blog-card-thumb"
+                                src={article.thumb}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                width="480"
+                                height="270"
+                            />
+                        )}
                         <h2 class="blog-card-title">{article.title}</h2>
                         <p class="blog-card-excerpt">{article.excerpt}</p>
                     </a>
@@ -214,6 +242,12 @@ const payload = {
             tool: 'contentTypes.tool',
             'update-log': 'contentTypes.update-log',
         };
+        const heroThumbs = payload.heroThumbs || {};
+
+        function heroThumbFor(item) {
+            const slug = String(item.filePath || '').replace(/^\/articles\//, '').replace(/\/$/, '');
+            return item.thumb || heroThumbs[slug] || null;
+        }
 
         function contentTypeLabel(type) {
             const key = contentTypeKeys[type] ? `${contentTypeKeys[type]}.label` : '';
@@ -367,6 +401,19 @@ const payload = {
             const link = document.createElement('a');
             link.href = item.filePath;
             link.className = 'blog-card-link';
+
+            const thumbSource = heroThumbFor(item);
+            if (thumbSource) {
+                const thumb = document.createElement('img');
+                thumb.className = 'blog-card-thumb';
+                thumb.src = thumbSource;
+                thumb.alt = '';
+                thumb.loading = 'lazy';
+                thumb.decoding = 'async';
+                thumb.width = 480;
+                thumb.height = 270;
+                link.append(thumb);
+            }
 
             const title = document.createElement('h2');
             title.className = `blog-card-title${highlighted ? ' search-result-title' : ''}`;
