@@ -1,3 +1,5 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
+import { accessSync, constants as fsConstants } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import process from 'node:process';
@@ -68,7 +70,7 @@ export function buildCorsHeaders(request) {
     const headers = {
         'Content-Type': 'application/json; charset=utf-8',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
         Vary: 'Origin',
     };
     const origin = request.headers.origin || '';
@@ -171,9 +173,28 @@ export function readRequestBody(request) {
     });
 }
 
+function safeTokenEqual(expected, provided) {
+    const expectedHash = createHash('sha256').update(expected).digest();
+    const providedHash = createHash('sha256').update(provided).digest();
+    return timingSafeEqual(expectedHash, providedHash);
+}
+
 function isAuthorized(request, secret) {
-    const header = request.headers.authorization || '';
-    return Boolean(secret) && header === `Bearer ${secret}`;
+    if (!secret) {
+        return false;
+    }
+
+    const match = /^Bearer (.+)$/.exec(request.headers.authorization || '');
+    return Boolean(match) && safeTokenEqual(secret, match[1]);
+}
+
+function isContentDirWritable(dir) {
+    try {
+        accessSync(dir, fsConstants.W_OK);
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 export function createNewPostServer({
@@ -191,6 +212,15 @@ export function createNewPostServer({
 
         if (request.method === 'OPTIONS') {
             sendJson(request, response, 204, {});
+            return;
+        }
+
+        if (request.method === 'GET' && url.pathname === '/api/health') {
+            sendJson(request, response, 200, {
+                status: 'ok',
+                uptimeSeconds: Math.round(process.uptime()),
+                contentDirWritable: isContentDirWritable(contentDir),
+            });
             return;
         }
 

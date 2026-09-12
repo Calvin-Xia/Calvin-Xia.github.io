@@ -60,6 +60,35 @@ async function close(server) {
     });
 }
 
+function requestJson(port, requestPath, method = 'GET') {
+    return new Promise((resolve, reject) => {
+        const request = http.request(
+            {
+                hostname: '127.0.0.1',
+                port,
+                path: requestPath,
+                method,
+            },
+            (response) => {
+                let responseBody = '';
+                response.setEncoding('utf8');
+                response.on('data', (chunk) => {
+                    responseBody += chunk;
+                });
+                response.on('end', () => {
+                    resolve({
+                        statusCode: response.statusCode,
+                        body: responseBody ? JSON.parse(responseBody) : {},
+                    });
+                });
+            },
+        );
+
+        request.on('error', reject);
+        request.end();
+    });
+}
+
 function postJson(port, payload, { token = 'dev-secret' } = {}) {
     const body = JSON.stringify(payload);
 
@@ -201,6 +230,62 @@ describe('new-post API CORS policy', () => {
             const markdown = await readFile(path.join(contentDir, '20260502-http-integration-test.md'), 'utf8');
             assert.match(markdown, /title: "HTTP Integration Test"/);
             assert.match(markdown, /正文内容/);
+        } finally {
+            await close(server);
+        }
+    });
+});
+
+describe('new-post API health and auth hardening', () => {
+    test('serves GET /api/health with status and content dir writability', async () => {
+        const contentDir = await createTempContentDir();
+        const server = createNewPostServer({
+            secret: 'dev-secret',
+            contentDir,
+            logger: { error() {} },
+        });
+        const port = await listen(server);
+
+        try {
+            const response = await requestJson(port, '/api/health');
+
+            assert.equal(response.statusCode, 200);
+            assert.equal(response.body.status, 'ok');
+            assert.equal(response.body.contentDirWritable, true);
+            assert.equal(typeof response.body.uptimeSeconds, 'number');
+        } finally {
+            await close(server);
+        }
+    });
+
+    test('keeps method mismatches and unknown routes at 404', async () => {
+        const contentDir = await createTempContentDir();
+        const server = createNewPostServer({ secret: 'dev-secret', contentDir, logger: { error() {} } });
+        const port = await listen(server);
+
+        try {
+            const wrongMethod = await requestJson(port, '/api/health', 'POST');
+            assert.equal(wrongMethod.statusCode, 404);
+
+            const unknownRoute = await requestJson(port, '/api/nope');
+            assert.equal(unknownRoute.statusCode, 404);
+        } finally {
+            await close(server);
+        }
+    });
+
+    test('rejects wrong bearer tokens without leaking the secret', async () => {
+        const contentDir = await createTempContentDir();
+        const server = createNewPostServer({ secret: 'dev-secret', contentDir, logger: { error() {} } });
+        const port = await listen(server);
+
+        try {
+            const wrongToken = await postJson(port, { title: '测试' }, { token: 'wrong-secret' });
+            assert.equal(wrongToken.statusCode, 401);
+            assert.deepEqual(wrongToken.body, { error: 'Unauthorized' });
+
+            const malformed = await postJson(port, { title: '测试' }, { token: 'dev-secret extra' });
+            assert.equal(malformed.statusCode, 401);
         } finally {
             await close(server);
         }
