@@ -1,0 +1,76 @@
+name: CLI Commands Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/**
+      - tools/**
+      - tests/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/cli-commands-check.yml
+  pull_request:
+    paths:
+      - scripts/**
+      - tools/**
+      - tests/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/cli-commands-check.yml
+
+jobs:
+  validate-cli-commands:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run CLI test suites
+        run: node --test tests/publish-post.test.js tests/post-utils.test.js tests/api-server.test.js tests/check-posts.test.js tests/post-stats.test.js tests/list-posts.test.js tests/new-post-cli.test.js
+
+      - name: Verify --help and --version entries
+        run: |
+          npm run publish -- --help
+          npm run publish -- --version
+          npm run edit-metadata -- --help
+          npm run check -- --help
+          npm run stats -- --help
+          npm run list-posts -- --help
+          npm run new-post -- --help
+
+      - name: Run content check against repository content
+        run: npm run check
+
+      - name: Smoke test stats and list commands
+        run: |
+          npm run stats
+          npm run list-posts
+
+      - name: Smoke test new-post CLI in a temp dir
+        run: |
+          SMOKE_DIR="${RUNNER_TEMP}/new-post-smoke"
+          npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --excerpt "smoke" --category "ci" --tags "ci,smoke" --content-dir "$SMOKE_DIR"
+          test -n "$(find "$SMOKE_DIR" -name '20260101-*.md' -print -quit)"
+          if npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --content-dir "$SMOKE_DIR"; then
+            echo "duplicate creation must fail" >&2
+            exit 1
+          fi
+
+      - name: Unknown publish flags must fail fast
+        run: |
+          if npm run publish -- --bogus-flag 2>/dev/null; then
+            echo "unknown flags must be rejected" >&2
+            exit 1
+          fi
