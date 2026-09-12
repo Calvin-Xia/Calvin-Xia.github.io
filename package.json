@@ -9,7 +9,8 @@
     },
     "scripts": {
         "dev": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro dev",
-        "build": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro build",
+        "build": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro build && node scripts/generate-og-images.mjs",
+        "og": "node scripts/generate-og-images.mjs",
         "preview": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro preview",
         "astro": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro",
         "api": "node tools/api-server.js",
@@ -41,6 +42,8 @@
     "devDependencies": {
         "@aws-sdk/client-s3": "^3.1039.0",
         "@eslint/js": "^10.0.1",
+        "@fontsource/noto-serif-sc": "^5.3.0",
+        "@resvg/resvg-js": "^2.6.2",
         "@typescript-eslint/eslint-plugin": "^8.60.0",
         "@typescript-eslint/parser": "^8.60.0",
         "cross-env": "^10.1.0",
@@ -49,6 +52,7 @@
         "gray-matter": "^4.0.3",
         "pinyin-pro": "^3.29.3",
         "prompts": "^2.4.2",
+        "satori": "^0.33.4",
         "sharp": "^0.35.4",
         "typescript": "^5.9.3",
         "zod": "^4.3.6"

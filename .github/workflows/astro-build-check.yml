@@ -32,3 +32,10 @@ jobs:
           test -f dist/_headers
           node -e "const fs = require('fs'); const html = fs.readFileSync('dist/index.html', 'utf8'); if (!html.includes('Calvin Xia')) { throw new Error('dist/index.html is missing the home page brand title'); }"
           node -e "const fs = require('fs'); const headers = fs.readFileSync('dist/_headers', 'utf8'); if (!headers.includes('X-Content-Type-Options: nosniff')) { throw new Error('dist/_headers is missing security headers'); }"
+
+      - name: Verify social meta and OG cards
+        run: |
+          node -e "const fs = require('fs'); const home = fs.readFileSync('dist/index.html', 'utf8'); for (const needle of ['property=\"og:title\"', 'property=\"og:image\"', 'rel=\"canonical\"', 'application/ld+json']) { if (!home.includes(needle)) { throw new Error('dist/index.html is missing ' + needle); } }"
+          node -e "const fs = require('fs'); const article = fs.readFileSync('dist/articles/20260411-ai-reliance/index.html', 'utf8'); for (const needle of ['\"@type\":\"BlogPosting\"', 'article:published_time', 'og:image']) { if (!article.includes(needle)) { throw new Error('article page is missing ' + needle); } }"
+          test -f dist/og/default.png
+          node -e "const fs = require('fs'); const cards = fs.readdirSync('dist/og').filter((f) => f.endsWith('.png')); if (cards.length < 5) { throw new Error('expected at least 5 OG cards, found ' + cards.length); }"

@@ -7,6 +7,7 @@ import Header from '../components/Header.astro';
 import SkipLink from '../components/SkipLink.astro';
 import TransitionIndicator from '../components/TransitionIndicator.astro';
 import { t } from '../lib/i18n.ts';
+import { buildSocialMeta, buildWebSiteJsonLd } from '../lib/site-seo.js';
 import localCdnProxyScriptUrl from '../scripts/local-cdn-proxy.js?url';
 
 interface Props {
@@ -15,6 +16,9 @@ interface Props {
     description?: string;
     descriptionKey?: string;
     currentPage?: string;
+    ogImage?: string;
+    ogType?: 'website' | 'article';
+    publishedTime?: string;
 }
 
 const {
@@ -23,7 +27,20 @@ const {
     description = t('home.description'),
     descriptionKey,
     currentPage = '',
+    ogImage = '',
+    ogType = 'website',
+    publishedTime = '',
 } = Astro.props;
+
+const socialMeta = buildSocialMeta({
+    title,
+    description,
+    path: Astro.url.pathname,
+    image: ogImage,
+    type: ogType,
+    publishedTime,
+});
+const websiteJsonLd = currentPage === 'home' ? JSON.stringify(buildWebSiteJsonLd()) : null;
 
 const enableLocalCdnProxy = import.meta.env.DEV;
 ---
@@ -42,6 +59,11 @@ const enableLocalCdnProxy = import.meta.env.DEV;
         <meta name="description" content={description} data-i18n-content={descriptionKey} />
         <meta name="keywords" content={t('home.keywords')} data-i18n-content="home.keywords" />
         <meta name="author" content="Calvin Xia" />
+        <link rel="canonical" href={socialMeta.canonical} />
+        {socialMeta.tags.map((tag) => tag.property
+            ? <meta property={tag.property} content={tag.content} />
+            : <meta name={tag.name} content={tag.content} />)}
+        {websiteJsonLd && <script type="application/ld+json" set:html={websiteJsonLd} />}
         <link rel="alternate" type="application/rss+xml" title="Calvin Xia RSS" href="/rss.xml" />
         <script is:inline defer src="https://umami.calvin-xia.cn/script.js" data-website-id="48c8309d-6ae9-4050-ac2c-cc5b127950a8"></script>
         <title data-i18n={titleKey}>{title}</title>

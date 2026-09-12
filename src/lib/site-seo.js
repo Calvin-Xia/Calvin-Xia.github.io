@@ -2,6 +2,8 @@ import { parseDateValue } from './shared-content.js';
 
 export const SITE_LANGUAGE = 'zh-CN';
 export const SITEMAP_INDEX_PATH = '/sitemap-index.xml';
+export const SITE_NAME = 'Calvin Xia';
+export const DEFAULT_OG_IMAGE_PATH = '/og/default.png';
 
 const defaultSiteUrl = 'https://calvin-xia.cn';
 const excludedSitemapRoots = ['/new-post', '/styleguide'];
@@ -81,6 +83,71 @@ export function buildRobotsTxt(site = defaultSiteUrl) {
         `Sitemap: ${sitemapUrl}`,
         '',
     ].join('\n');
+}
+
+export function buildCanonicalUrl(path = '/', { siteUrl = defaultSiteUrl } = {}) {
+    return new URL(path || '/', siteUrl).toString();
+}
+
+export function buildSocialMeta({
+    title,
+    description,
+    path = '/',
+    image = '',
+    type = 'website',
+    publishedTime = '',
+} = {}, { siteUrl = defaultSiteUrl } = {}) {
+    const canonical = buildCanonicalUrl(path, { siteUrl });
+    const ogImage = new URL(image || DEFAULT_OG_IMAGE_PATH, siteUrl).toString();
+    const tags = [
+        { property: 'og:site_name', content: SITE_NAME },
+        { property: 'og:type', content: type },
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:url', content: canonical },
+        { property: 'og:image', content: ogImage },
+        { property: 'og:locale', content: SITE_LANGUAGE },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        { name: 'twitter:image', content: ogImage },
+    ];
+
+    if (publishedTime) {
+        tags.push({ property: 'article:published_time', content: publishedTime });
+    }
+
+    return { canonical, ogImage, tags };
+}
+
+export function buildBlogPostingJsonLd({
+    title,
+    description,
+    canonical,
+    image,
+    datePublished,
+    author = SITE_NAME,
+} = {}) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: title,
+        description,
+        image,
+        datePublished,
+        author: { '@type': 'Person', name: author },
+        publisher: { '@type': 'Person', name: author },
+        mainEntityOfPage: canonical,
+    };
+}
+
+export function buildWebSiteJsonLd({ siteUrl = defaultSiteUrl, name = SITE_NAME } = {}) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name,
+        url: buildCanonicalUrl('/', { siteUrl }),
+    };
 }
 
 function getRssCategories(data) {
