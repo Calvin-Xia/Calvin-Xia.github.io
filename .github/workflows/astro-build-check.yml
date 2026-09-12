@@ -39,21 +39,21 @@ jobs:
           node -e "const fs = require('fs'); const article = fs.readFileSync('dist/articles/20260411-ai-reliance/index.html', 'utf8'); for (const needle of ['\"@type\":\"BlogPosting\"', 'article:published_time', 'og:image']) { if (!article.includes(needle)) { throw new Error('article page is missing ' + needle); } }"
           test -f dist/og/default.png
           node --input-type=module -e "
-import { readdirSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
-import matter from 'gray-matter';
-import { listPostFiles } from './scripts/blog-posts.js';
-const files = await listPostFiles('src/content/blog');
-let titled = 0;
-for (const file of files) {
-    const data = matter(await readFile(file, 'utf8')).data || {};
-    if (String(data.title || '').trim()) titled += 1;
-}
-const cards = readdirSync('dist/og').filter((name) => name.endsWith('.png')).length;
-if (cards !== titled + 1) {
-    throw new Error('OG card count mismatch: expected ' + (titled + 1) + ' (titled posts + default), found ' + cards);
-}
-console.log('OG card check ok: ' + cards + ' cards = ' + titled + ' posts + default');
-"
+          import { readdirSync } from 'node:fs';
+          import { readFile } from 'node:fs/promises';
+          import matter from 'gray-matter';
+          import { listPostFiles } from './scripts/blog-posts.js';
+          const files = await listPostFiles('src/content/blog');
+          let titled = 0;
+          for (const file of files) {
+              const data = matter(await readFile(file, 'utf8')).data || {};
+              if (String(data.title || '').trim()) titled += 1;
+          }
+          const cards = readdirSync('dist/og').filter((name) => name.endsWith('.png')).length;
+          if (cards !== titled + 1) {
+              throw new Error('OG card count mismatch: expected ' + (titled + 1) + ' (titled posts + default), found ' + cards);
+          }
+          console.log('OG card check ok: ' + cards + ' cards = ' + titled + ' posts + default');
+          "
           node -e "const fs = require('fs'); const rss = fs.readFileSync('dist/rss.xml', 'utf8'); if (!rss.includes('content:encoded') || rss.length < 20000) { throw new Error('dist/rss.xml is missing full-text content:encoded entries'); }"
           node -e "const fs = require('fs'); if (fs.existsSync('dist/articles/00010101-test-assignment')) { throw new Error('dist must not contain the removed test article route'); }"
