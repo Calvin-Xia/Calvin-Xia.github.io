@@ -9,7 +9,9 @@ import { fileURLToPath } from 'node:url';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
 import prompts from 'prompts';
+import sharp from 'sharp';
 import { getContentType } from './content-types.js';
+import { isSupportedImage, probeImageFile } from './image-dimensions.js';
 import { buildPublishPlan, deriveDateFromDirName, readTransformedMarkdown } from './post-utils.js';
 
 dotenv.config({ quiet: true });
@@ -19,6 +21,7 @@ const { version: publishCliVersion } = require('../package.json');
 
 const rootDir = path.resolve(import.meta.dirname, '..');
 const outputDir = path.join(rootDir, 'src', 'content', 'blog');
+const defaultHeroDir = path.join(rootDir, 'src', 'assets', 'hero');
 
 export function requireEnv(name) {
     const value = process.env[name];
@@ -311,6 +314,101 @@ export async function promptForFileSelection(markdownFiles, {
     return files;
 }
 
+export async function collectImageDimensions(assets, {
+    assetSlug,
+    logger = console,
+    probe = probeImageFile,
+} = {}) {
+    const entries = [];
+
+    for (const asset of assets) {
+        if (!isSupportedImage(asset.path)) {
+            continue;
+        }
+        try {
+            const dimensions = await probe(asset.path);
+            if (dimensions) {
+                entries.push({
+                    path: `${assetSlug}/${asset.relativePath}`,
+                    width: dimensions.width,
+                    height: dimensions.height,
+                });
+            } else {
+                logger.warn?.(`No dimensions parsed for ${asset.relativePath}; skipping manifest entry.`);
+            }
+        } catch (error) {
+            logger.warn?.(`Failed to probe dimensions for ${asset.relativePath}: ${error.message}`);
+        }
+    }
+
+    return entries;
+}
+
+export async function promptForHeroSelection(assets, {
+    prompts: promptUser = prompts,
+} = {}) {
+    const imageChoices = assets.filter((asset) => isSupportedImage(asset.path));
+    if (!imageChoices.length) {
+        return null;
+    }
+
+    const { hero } = await promptUser({
+        type: 'select',
+        name: 'hero',
+        message: '选择头图（长边将降采样为 1600px 的 webp；方向键选择，回车确认）：',
+        choices: [
+            { title: '（不设头图）', value: '' },
+            ...imageChoices.map((asset) => ({ title: asset.relativePath, value: asset.relativePath })),
+        ],
+    });
+
+    return hero || null;
+}
+
+export async function processHeroImage({
+    sourcePath,
+    destinationPath,
+    sharpImpl = sharp,
+    logger = console,
+} = {}) {
+    await sharpImpl(sourcePath)
+        .rotate()
+        .resize({ width: 1600, withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toFile(destinationPath);
+    logger.log(`Hero image -> ${path.relative(rootDir, destinationPath)}`);
+}
+
+export async function attachHeroAndDimensions(plan, {
+    logger = console,
+    sharpImpl = sharp,
+    prompts: promptUser = prompts,
+    probe = probeImageFile,
+    heroDir = defaultHeroDir,
+} = {}) {
+    plan.metadata.imageDimensions = await collectImageDimensions(plan.assets, {
+        assetSlug: plan.assetSlug,
+        logger,
+        probe,
+    });
+
+    const heroRelative = await promptForHeroSelection(plan.assets, { prompts: promptUser });
+    if (!heroRelative) {
+        return;
+    }
+
+    const heroAsset = plan.assets.find((asset) => asset.relativePath === heroRelative);
+    const heroFileName = `${path.basename(plan.destinationMarkdownPath, '.md')}.webp`;
+    await mkdir(heroDir, { recursive: true });
+    await processHeroImage({
+        sourcePath: heroAsset.path,
+        destinationPath: path.join(heroDir, heroFileName),
+        sharpImpl,
+        logger,
+    });
+    plan.metadata.hero = heroFileName;
+}
+
 async function main() {
     const { dirName: directDirName, dryRun, force, version, help, unknownFlags } = parsePublishArgs();
     if (help) {
@@ -364,6 +462,7 @@ async function main() {
 
         for (const p of orderedPlans) {
             p.metadata = await promptForPostMetadata(p.dirName);
+            await attachHeroAndDimensions(p);
         }
 
         if (!directDirName) {
@@ -389,6 +488,7 @@ async function main() {
 
     if (!dryRun) {
         plan.metadata = await promptForPostMetadata(plan.dirName);
+        await attachHeroAndDimensions(plan);
     }
 
     if (!directDirName) {

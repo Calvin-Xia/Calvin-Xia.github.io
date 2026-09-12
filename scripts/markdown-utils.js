@@ -25,6 +25,19 @@ export function buildMarkdownDocument(post) {
         ...tags.map((tag) => `  - ${yamlString(tag)}`),
     ];
 
+    if (post.hero) {
+        frontmatter.push(`hero: ${yamlString(post.hero)}`);
+    }
+
+    if (Array.isArray(post.imageDimensions) && post.imageDimensions.length > 0) {
+        frontmatter.push('imageDimensions:');
+        for (const item of post.imageDimensions) {
+            frontmatter.push(`  - path: ${yamlString(item.path)}`);
+            frontmatter.push(`    width: ${Number(item.width)}`);
+            frontmatter.push(`    height: ${Number(item.height)}`);
+        }
+    }
+
     if (post.featured !== undefined) {
         frontmatter.push(`featured: ${Boolean(post.featured)}`);
     }

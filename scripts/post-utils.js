@@ -192,6 +192,8 @@ export async function readTransformedMarkdown(plan) {
         author: userMeta.author || sourceMeta.author,
         readTime: userMeta.readTime || sourceMeta.readTime,
         status: userMeta.status || sourceMeta.status,
+        hero: userMeta.hero ?? sourceMeta.hero,
+        imageDimensions: userMeta.imageDimensions ?? sourceMeta.imageDimensions,
     };
 
     return buildMarkdownDocument(post);
