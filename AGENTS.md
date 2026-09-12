@@ -82,7 +82,6 @@ Recent history shows short, task-focused commit subjects (English or Chinese). F
 ## Documentation Synchronization
 After completing a phased milestone or a significant feature:
 - Update affected spec files to reflect the new state (mark completed items, remove stale entries, add follow-up work).
-- If a plan document exists (under `.trae/documents/`), update its status and progress summary.
 - Review `AGENTS.md` and `README.md` and update them if the project structure, build commands, or conventions have changed.
 - For Astro blog or content changes, ensure `src/content/` entries match their collection schema and related phase docs are updated.
 
