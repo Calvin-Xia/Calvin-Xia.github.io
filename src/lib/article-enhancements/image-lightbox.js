@@ -1,12 +1,9 @@
 import { t } from '../i18n.ts';
+import { trustedImageHosts as TRUSTED_IMAGE_HOSTS } from '../cdn-hosts.js';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
 const SCALE_STEP = 0.5;
-const TRUSTED_IMAGE_HOSTS = new Set([
-    'assets.calvin-xia.cn',
-    'content.calvin-xia.cn',
-]);
 
 function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));

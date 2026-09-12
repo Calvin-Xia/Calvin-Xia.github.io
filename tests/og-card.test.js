@@ -55,7 +55,6 @@ describe('og card rendering', () => {
     });
 
     test('embeds the hero thumbnail when a buffer is given', async () => {
-        const dir = await mkdtemp(path.join(os.tmpdir(), 'og-thumb-'));
         // 1x1 PNG: exercises the sharp thumbnail pipeline.
         const png1x1 = Buffer.from(
             'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',

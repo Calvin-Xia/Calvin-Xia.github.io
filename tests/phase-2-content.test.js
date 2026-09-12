@@ -138,8 +138,12 @@ describe('Phase 2 content collections', () => {
         assert.match(layout, /local-cdn-proxy\.js\?url/);
         assert.doesNotMatch(layout, /new MutationObserver/);
         assert.doesNotMatch(layout, /__cdn\/content/);
-        assert.match(proxyScript, /__cdn\/content/);
-        assert.match(proxyScript, /__cdn\/assets/);
+        assert.match(proxyScript, /from\s+['"].*\/lib\/cdn-hosts\.js['"]/);
+        const cdnHosts = readFileSync(projectPath('src', 'lib', 'cdn-hosts.js'), 'utf8');
+        assert.match(cdnHosts, /__cdn\/content/);
+        assert.match(cdnHosts, /__cdn\/assets/);
+        assert.match(cdnHosts, /content\.calvin-xia\.cn/);
+        assert.match(cdnHosts, /assets\.calvin-xia\.cn/);
         assert.match(proxyScript, /if\s*\(\s*images\.length\s*===\s*0\s*\)\s*\{\s*return;/s);
         assert.match(proxyScript, /new MutationObserver/);
     });

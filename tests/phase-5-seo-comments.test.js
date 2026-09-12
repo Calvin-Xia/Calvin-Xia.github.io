@@ -268,7 +268,7 @@ describe('Phase 5 SEO and comments', () => {
         assert.match(layoutSource, /data-website-id=['"]48c8309d-6ae9-4050-ac2c-cc5b127950a8['"]/);
     });
 
-    test('CSP allows external scripts, styles, fonts, and analytics requests used by the site', () => {
+    test('CSP allows external scripts, styles, and analytics requests used by the site', () => {
         const headersSource = readFile('public', '_headers');
         const csp = headersSource.match(/Content-Security-Policy:\s*(.+)/)?.[1] || '';
         const scriptSrc = csp.match(/script-src\s+([^;]+)/)?.[1] || '';
@@ -278,11 +278,13 @@ describe('Phase 5 SEO and comments', () => {
 
         assert.match(scriptSrc, /https:\/\/umami\.calvin-xia\.cn/);
         assert.match(scriptSrc, /https:\/\/giscus\.app/);
-        assert.match(styleSrc, /https:\/\/fonts\.googleapis\.com/);
         assert.match(styleSrc, /https:\/\/giscus\.app/);
         assert.match(connectSrc, /https:\/\/umami\.calvin-xia\.cn/);
         assert.match(connectSrc, /https:\/\/giscus\.app/);
-        assert.match(fontSrc, /https:\/\/fonts\.gstatic\.com/);
+        // Fonts are self-hosted via @fontsource (phase 18); no Google Fonts origins allowed.
+        assert.doesNotMatch(styleSrc, /fonts\.googleapis\.com/);
+        assert.doesNotMatch(fontSrc, /fonts\.gstatic\.com/);
+        assert.match(fontSrc, /'self'/);
     });
 
     test('Footer hides sitemap link in dev mode via import.meta.env.PROD', () => {

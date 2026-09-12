@@ -1,12 +1,9 @@
+import { cdnProxyPaths as CDN_PROXY_HOSTS } from '../lib/cdn-hosts.js';
+
 const CDN_IMAGE_SELECTOR = [
     'img[src^="https://content.calvin-xia.cn/"]',
     'img[src^="https://assets.calvin-xia.cn/"]',
 ].join(', ');
-
-const CDN_PROXY_HOSTS = new Map([
-    ['content.calvin-xia.cn', '/__cdn/content'],
-    ['assets.calvin-xia.cn', '/__cdn/assets'],
-]);
 
 function proxyCdnUrl(value) {
     try {

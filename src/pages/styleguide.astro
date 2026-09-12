@@ -110,16 +110,8 @@ import { t } from '../lib/i18n.ts';
 
 <script>
     import { initButtonRipples, PageAnimations } from '../scripts/page-animations';
-    import { t } from '../lib/i18n.ts';
+    import { safeInit } from '../scripts/safe-init.js';
     import { TimeDisplay } from '../scripts/time-display';
-
-    function safeInit(moduleName: string, initFn: () => void): void {
-        try {
-            initFn();
-        } catch (error) {
-            console.error(`[${t('common.moduleInitError')}] ${moduleName}:`, error);
-        }
-    }
 
     function initStyleguidePage(): void {
         safeInit('TimeDisplay', () => TimeDisplay.init());

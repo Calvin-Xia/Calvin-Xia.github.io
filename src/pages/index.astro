@@ -174,15 +174,8 @@ const homepageUpdates = getHomepageUpdates([
 
 <script>
     import { initButtonRipples, PageAnimations } from '../scripts/page-animations';
+    import { safeInit } from '../scripts/safe-init.js';
     import { TimeDisplay } from '../scripts/time-display';
-
-    function safeInit(moduleName: string, initFn: () => void): void {
-        try {
-            initFn();
-        } catch (error) {
-            console.error(`[模块初始化错误] ${moduleName}:`, error);
-        }
-    }
 
     const homePageModules = [
         { name: 'TimeDisplay', init: () => TimeDisplay.init() },

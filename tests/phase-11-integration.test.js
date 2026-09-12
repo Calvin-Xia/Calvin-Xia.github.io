@@ -121,12 +121,14 @@ describe('Phase 11 search enhancement integration', () => {
 
     test('article page integrates debounced search, history, result display, and filters', () => {
         const source = readFileSync(projectPath('src', 'pages', 'articles.astro'), 'utf8');
+        const cardsModule = readFileSync(projectPath('src', 'scripts', 'articles-index', 'cards.js'), 'utf8');
 
         assert.match(source, /debounce\(\(\)\s*=>\s*{\s*void performSearch\(\);[\s\S]*},\s*300\)/);
         assert.match(source, /addToSearchHistory\(query\)/);
         assert.match(source, /renderSearchHistory\(/);
         assert.match(source, /formatSearchResult\(result,\s*query\)/);
         assert.match(source, /search-history-container/);
-        assert.match(source, /search-result/);
+        // search-result card styling lives in the cards module since phase 18 split.
+        assert.match(cardsModule, /search-result/);
     });
 });

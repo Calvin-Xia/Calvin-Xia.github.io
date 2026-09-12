@@ -1,4 +1,5 @@
 import MiniSearch, { type AsPlainObject, type SearchOptions, type SearchResult as MiniSearchResult } from 'minisearch';
+import { escapeRegExp } from './escape-regexp.js';
 import { searchIndexOptions } from './search-index-options.ts';
 import { tokenizeSearchText } from './search-tokenizer.ts';
 import type { SearchEntry } from './search-types.ts';
@@ -41,10 +42,6 @@ function escapeHtml(value: string): string {
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
-}
-
-function escapeRegExp(value: string): string {
-    return value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 }
 
 function normalizeFilterValue(value?: string): string {

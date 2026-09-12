@@ -209,10 +209,25 @@ const payload = {
         search as searchContent,
     } from '../lib/search-client.ts';
     import { isFreshDate } from '../lib/shared-content.js';
+    import { createContentCard, renderNoResults, showSkeletonThen } from '../scripts/articles-index/cards.js';
+    import {
+        getFilteredArticles,
+        resetFilterButtons,
+        selectFilterButton,
+        setActiveFilter,
+        setFilterVisibility,
+    } from '../scripts/articles-index/filters.js';
+    import { contentTypeLabel, heroThumbFor, parseContentSearchPayload } from '../scripts/articles-index/payload.js';
+    import {
+        createSuggestionElement,
+        hideSearchHistory,
+        hideSuggestions as clearSuggestions,
+        setSearchStatus,
+        updateSuggestionSelection,
+    } from '../scripts/articles-index/search.js';
 
     (() => {
-        const payloadElement = document.getElementById('content-search-data');
-        const payload = JSON.parse(payloadElement?.textContent || '{"articles":[],"searchableTypes":[]}');
+        const payload = parseContentSearchPayload();
         const searchableTypes = new Set(payload.searchableTypes || []);
         const state = {
             currentCategory: 'all',
@@ -244,96 +259,12 @@ const payload = {
         };
         const heroThumbs = payload.heroThumbs || {};
 
-        function heroThumbFor(item) {
-            const slug = String(item.filePath || '').replace(/^\/articles\//, '').replace(/\/$/, '');
-            return item.thumb || heroThumbs[slug] || null;
-        }
-
-        function contentTypeLabel(type) {
-            const key = contentTypeKeys[type] ? `${contentTypeKeys[type]}.label` : '';
-            return key ? t(key) : t('common.contentFallback');
-        }
-
-        function escapeRegExp(value) {
-            return String(value).replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
-        }
-
-        function highlightedFragment(value, query) {
-            const fragment = document.createDocumentFragment();
-            const source = String(value || '');
-            const normalizedQuery = String(query || '').trim();
-
-            if (!normalizedQuery) {
-                fragment.append(document.createTextNode(source));
-                return fragment;
-            }
-
-            const pattern = new RegExp(escapeRegExp(normalizedQuery), 'gi');
-            let lastIndex = 0;
-
-            for (const match of source.matchAll(pattern)) {
-                const matchIndex = match.index ?? 0;
-                if (matchIndex > lastIndex) {
-                    fragment.append(document.createTextNode(source.slice(lastIndex, matchIndex)));
-                }
-
-                const mark = document.createElement('mark');
-                mark.className = 'search-highlight';
-                mark.textContent = match[0];
-                fragment.append(mark);
-                lastIndex = matchIndex + match[0].length;
-            }
-
-            if (lastIndex < source.length) {
-                fragment.append(document.createTextNode(source.slice(lastIndex)));
-            }
-
-            return fragment;
-        }
-
         async function getSearchResults(query, options = {}) {
             const index = await loadSearchIndex();
             return searchContent(index, query, {
                 types: Array.from(searchableTypes),
                 ...options,
             });
-        }
-
-        function setSearchStatus(message) {
-            if (searchStatus) {
-                searchStatus.textContent = message;
-            }
-        }
-
-        function setFilterVisibility(isVisible) {
-            if (!filterNav) {
-                return;
-            }
-
-            if (!isVisible && filterNav.contains(document.activeElement)) {
-                searchInput?.focus();
-            }
-
-            filterNav.classList.toggle('is-hidden', !isVisible);
-            filterNav.setAttribute('aria-hidden', String(!isVisible));
-        }
-
-        function setActiveFilter(container, value) {
-            let normalizedValue = 'all';
-
-            container?.querySelectorAll('.filter-tag').forEach((button) => {
-                if (button.dataset.filter === value) {
-                    normalizedValue = value;
-                }
-            });
-
-            container?.querySelectorAll('.filter-tag').forEach((button) => {
-                const active = button.dataset.filter === normalizedValue;
-                button.classList.toggle('active', active);
-                button.setAttribute('aria-pressed', String(active));
-            });
-
-            return normalizedValue;
         }
 
         function updateUrlFromState() {
@@ -360,128 +291,6 @@ const payload = {
             history.replaceState(history.state, '', nextUrl);
         }
 
-        function showSkeletonThen(renderFn) {
-            if (!resultsContainer || !skeletons) {
-                renderFn();
-                return;
-            }
-
-            resultsContainer.innerHTML = '';
-            skeletons.hidden = false;
-
-            window.setTimeout(() => {
-                skeletons.hidden = true;
-                renderFn();
-            }, reducedMotion ? 0 : 160);
-        }
-
-        function createTypeBadge(type) {
-            const badge = document.createElement('span');
-            badge.className = `content-type-badge content-type-badge--${type}`;
-            badge.textContent = contentTypeLabel(type);
-            return badge;
-        }
-
-        function appendReadingStats(container, item) {
-            if (!item.readingStats) {
-                return;
-            }
-
-            const stats = document.createElement('span');
-            stats.className = 'blog-card-reading-stats';
-            stats.textContent = `${item.readingStats.wordCountDisplay} · ${item.readingStats.readTimeDisplay}`;
-            container.append(stats);
-        }
-
-        function createContentCard(item, { mixed = false, index = 0, highlighted = false } = {}) {
-            const card = document.createElement('article');
-            card.className = `blog-card content-card-enter${mixed ? ' blog-card--mixed' : ''}${highlighted ? ' search-result' : ''}`;
-            card.style.setProperty('--stagger-index', String(index));
-
-            const link = document.createElement('a');
-            link.href = item.filePath;
-            link.className = 'blog-card-link';
-
-            const thumbSource = heroThumbFor(item);
-            if (thumbSource) {
-                const thumb = document.createElement('img');
-                thumb.className = 'blog-card-thumb';
-                thumb.src = thumbSource;
-                thumb.alt = '';
-                thumb.loading = 'lazy';
-                thumb.decoding = 'async';
-                thumb.width = 480;
-                thumb.height = 270;
-                link.append(thumb);
-            }
-
-            const title = document.createElement('h2');
-            title.className = `blog-card-title${highlighted ? ' search-result-title' : ''}`;
-            if (highlighted && item.highlightedTitle) {
-                title.innerHTML = item.highlightedTitle;
-            } else {
-                title.textContent = item.title;
-            }
-
-            const excerpt = document.createElement('p');
-            excerpt.className = `blog-card-excerpt${highlighted ? ' search-result-excerpt' : ''}`;
-            if (highlighted && item.highlightedExcerpt) {
-                excerpt.innerHTML = item.highlightedExcerpt;
-            } else {
-                excerpt.textContent = item.excerpt;
-            }
-
-            link.append(title, excerpt);
-            card.append(link);
-
-            const meta = document.createElement('div');
-            meta.className = `blog-card-meta${highlighted ? ' search-result-meta' : ''}`;
-
-            if (mixed) {
-                meta.append(createTypeBadge(item.type));
-            }
-
-            if (isFreshDate(item.date)) {
-                const freshBadge = document.createElement('span');
-                freshBadge.className = 'content-type-badge content-type-badge--new';
-                freshBadge.textContent = t('common.new');
-                meta.append(freshBadge);
-            }
-
-            if (item.category) {
-                const category = document.createElement('span');
-                category.className = 'blog-card-category';
-                category.textContent = item.category;
-                meta.append(category);
-            }
-
-            item.tags.slice(0, mixed ? 3 : item.tags.length).forEach((tag) => {
-                const tagNode = document.createElement('span');
-                tagNode.className = 'blog-card-tag';
-                tagNode.textContent = tag;
-                meta.append(tagNode);
-            });
-
-            const dateElement = document.createElement('div');
-            dateElement.className = `blog-card-date blog-card-date-row${highlighted ? ' search-result-date' : ''}`;
-
-            const dateText = document.createElement('span');
-            dateText.textContent = item.date;
-            dateElement.append(dateText);
-            appendReadingStats(dateElement, item);
-
-            card.append(meta, dateElement);
-            return card;
-        }
-
-        function getFilteredArticles() {
-            return payload.articles.filter((item) => {
-                const categoryMatch = state.currentCategory === 'all' || item.category === state.currentCategory;
-                const tagMatch = state.currentTag === 'all' || item.tags.includes(state.currentTag);
-                return categoryMatch && tagMatch;
-            });
-        }
-
         function renderCards(items, options = {}) {
             if (!resultsContainer) {
                 return;
@@ -489,15 +298,13 @@ const payload = {
 
             resultsContainer.innerHTML = '';
             items.forEach((item, index) => {
-                resultsContainer.append(createContentCard(item, { ...options, index }));
-            });
-        }
-
-        function resetFilterButtons(container) {
-            container?.querySelectorAll('.filter-tag').forEach((button) => {
-                const active = button.dataset.filter === 'all';
-                button.classList.toggle('active', active);
-                button.setAttribute('aria-pressed', String(active));
+                resultsContainer.append(createContentCard(item, {
+                    ...options,
+                    index,
+                    fresh: isFreshDate(item.date),
+                    thumbSource: heroThumbFor(item, heroThumbs),
+                    typeLabel: contentTypeLabel(item.type, contentTypeKeys),
+                }));
             });
         }
 
@@ -517,7 +324,7 @@ const payload = {
                 historyContainer,
                 (query) => {
                     searchInput.value = query;
-                    hideSearchHistory();
+                    hideSearchHistory(historyContainer);
                     void performSearch();
                 },
                 {
@@ -527,54 +334,19 @@ const payload = {
             );
         }
 
-        function hideSearchHistory() {
-            if (historyContainer) {
-                historyContainer.innerHTML = '';
-            }
-        }
-
-        function renderNoResults() {
-            if (!resultsContainer) {
-                return;
-            }
-
-            resultsContainer.innerHTML = '';
-
-            const wrapper = document.createElement('div');
-            wrapper.className = 'no-results';
-
-            const title = document.createElement('p');
-            title.textContent = t('articles.noResultsTitle');
-
-            const description = document.createElement('p');
-            description.className = 'text-small';
-            description.textContent = t('articles.noResultsDescription');
-
-            const actions = document.createElement('div');
-            actions.className = 'no-results-actions';
-
-            const resetButton = document.createElement('button');
-            resetButton.type = 'button';
-            resetButton.className = 'btn btn-outline';
-            resetButton.textContent = t('articles.resetFilters');
-            resetButton.addEventListener('click', () => {
-                searchInput.value = '';
-                state.currentCategory = 'all';
-                state.currentTag = 'all';
-                resetFilterButtons(categoryContainer);
-                resetFilterButtons(tagContainer);
-                restoreArticleView();
-            });
-
-            actions.append(resetButton);
-            wrapper.append(title, description, actions);
-            resultsContainer.append(wrapper);
+        function resetAllFilters() {
+            searchInput.value = '';
+            state.currentCategory = 'all';
+            state.currentTag = 'all';
+            resetFilterButtons(categoryContainer);
+            resetFilterButtons(tagContainer);
+            restoreArticleView();
         }
 
         function renderArticleList() {
-            const filtered = getFilteredArticles();
+            const filtered = getFilteredArticles(payload.articles, state);
             if (!filtered.length) {
-                renderNoResults();
+                renderNoResults(resultsContainer, { onReset: resetAllFilters });
                 return;
             }
 
@@ -585,16 +357,16 @@ const payload = {
             state.searchRequestId += 1;
             state.isSearchMode = false;
             state.searchQuery = '';
-            setFilterVisibility(true);
-            setSearchStatus('');
+            setFilterVisibility(filterNav, true, searchInput);
+            setSearchStatus(searchStatus, '');
             updateUrlFromState();
-            showSkeletonThen(renderArticleList);
+            showSkeletonThen(resultsContainer, skeletons, renderArticleList, reducedMotion);
         }
 
         async function performSearch({ updateUrl = true } = {}) {
             const query = searchInput.value.trim();
             hideSuggestions();
-            hideSearchHistory();
+            hideSearchHistory(historyContainer);
             state.searchQuery = query;
             const requestId = ++state.searchRequestId;
 
@@ -604,8 +376,8 @@ const payload = {
             }
 
             state.isSearchMode = true;
-            setFilterVisibility(true);
-            setSearchStatus(t('articles.searching'));
+            setFilterVisibility(filterNav, true, searchInput);
+            setSearchStatus(searchStatus, t('articles.searching'));
             addToSearchHistory(query);
 
             if (updateUrl) {
@@ -622,8 +394,8 @@ const payload = {
                 }
 
                 console.warn('Unable to load search index.', error);
-                setSearchStatus(t('articles.searchUnavailable'));
-                renderNoResults();
+                setSearchStatus(searchStatus, t('articles.searchUnavailable'));
+                renderNoResults(resultsContainer, { onReset: resetAllFilters });
                 return;
             }
 
@@ -633,16 +405,16 @@ const payload = {
 
             const formattedResults = results.map((result) => formatSearchResult(result, query));
 
-            setSearchStatus(t('articles.searchResultCount', { query, count: formattedResults.length }));
+            setSearchStatus(searchStatus, t('articles.searchResultCount', { query, count: formattedResults.length }));
 
-            showSkeletonThen(() => {
+            showSkeletonThen(resultsContainer, skeletons, () => {
                 if (!formattedResults.length) {
-                    renderNoResults();
+                    renderNoResults(resultsContainer, { onReset: resetAllFilters });
                     return;
                 }
 
                 renderCards(formattedResults, { mixed: true, highlighted: true });
-            });
+            }, reducedMotion);
         }
 
         async function showSuggestions(query) {
@@ -672,23 +444,11 @@ const payload = {
             }
 
             state.suggestionItems = suggestions.map((item, index) => {
-                const suggestion = document.createElement('div');
-                suggestion.className = 'suggestion-item';
-                suggestion.id = `suggestion-${item.id}`;
-                suggestion.dataset.index = String(index);
-                suggestion.setAttribute('role', 'option');
-
-                const title = document.createElement('div');
-                title.className = 'suggestion-title';
-                title.append(highlightedFragment(item.title, query));
-
-                const meta = document.createElement('div');
-                meta.className = 'suggestion-meta';
-                meta.textContent = [contentTypeLabel(item.type), item.category, item.date].filter(Boolean).join(' · ');
-
-                suggestion.append(title, meta);
-                suggestion.addEventListener('click', () => {
-                    window.location.href = item.filePath;
+                const suggestion = createSuggestionElement(item, index, query, {
+                    label: contentTypeLabel(item.type, contentTypeKeys),
+                    onNavigate: () => {
+                        window.location.href = item.filePath;
+                    },
                 });
                 suggestionsContainer.append(suggestion);
                 return suggestion;
@@ -700,13 +460,7 @@ const payload = {
         }
 
         function hideSuggestions() {
-            state.suggestionRequestId += 1;
-            suggestionsContainer.classList.remove('active');
-            suggestionsContainer.innerHTML = '';
-            state.suggestionItems = [];
-            state.selectedSuggestionIndex = -1;
-            searchInput.setAttribute('aria-expanded', 'false');
-            searchInput.removeAttribute('aria-activedescendant');
+            clearSuggestions(state, suggestionsContainer, searchInput);
         }
 
         const debouncedPerformSearch = debounce(() => {
@@ -717,31 +471,13 @@ const payload = {
             void showSuggestions(query);
         }, 180);
 
-        function updateSuggestionSelection() {
-            state.suggestionItems.forEach((item, index) => {
-                const selected = index === state.selectedSuggestionIndex;
-                item.classList.toggle('is-selected', selected);
-                item.setAttribute('aria-selected', String(selected));
-
-                if (selected) {
-                    searchInput.setAttribute('aria-activedescendant', item.id);
-                }
-            });
-        }
-
         function handleFilterClick(event) {
             const button = event.currentTarget;
             const filterValue = button.dataset.filter;
             const filterType = button.dataset.type;
             const container = filterType === 'category' ? categoryContainer : tagContainer;
 
-            container?.querySelectorAll('.filter-tag').forEach((tag) => {
-                tag.classList.remove('active');
-                tag.setAttribute('aria-pressed', 'false');
-            });
-
-            button.classList.add('active');
-            button.setAttribute('aria-pressed', 'true');
+            selectFilterButton(container, button);
 
             if (filterType === 'category') {
                 state.currentCategory = filterValue;
@@ -756,7 +492,7 @@ const payload = {
                 return;
             }
 
-            showSkeletonThen(renderArticleList);
+            showSkeletonThen(resultsContainer, skeletons, renderArticleList, reducedMotion);
         }
 
         function restoreStateFromUrl() {
@@ -788,7 +524,7 @@ const payload = {
 
             searchInput.addEventListener('input', (event) => {
                 const query = event.target.value.trim();
-                hideSearchHistory();
+                hideSearchHistory(historyContainer);
 
                 if (!query) {
                     debouncedShowSuggestions.cancel();
@@ -818,11 +554,11 @@ const payload = {
                 if (event.key === 'ArrowDown') {
                     event.preventDefault();
                     state.selectedSuggestionIndex = Math.min(state.selectedSuggestionIndex + 1, state.suggestionItems.length - 1);
-                    updateSuggestionSelection();
+                    updateSuggestionSelection(state, searchInput);
                 } else if (event.key === 'ArrowUp') {
                     event.preventDefault();
                     state.selectedSuggestionIndex = Math.max(state.selectedSuggestionIndex - 1, 0);
-                    updateSuggestionSelection();
+                    updateSuggestionSelection(state, searchInput);
                 } else if (event.key === 'Enter' && state.selectedSuggestionIndex >= 0) {
                     event.preventDefault();
                     state.suggestionItems[state.selectedSuggestionIndex].click();
@@ -854,7 +590,7 @@ const payload = {
                     && !historyContainer?.contains(event.target)
                 ) {
                     hideSuggestions();
-                    hideSearchHistory();
+                    hideSearchHistory(historyContainer);
                 }
             });
         }

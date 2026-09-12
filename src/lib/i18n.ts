@@ -1,3 +1,4 @@
+import { escapeRegExp } from './escape-regexp.js';
 import zhCN from '../i18n/zh-CN.json' with { type: 'json' };
 import enUS from '../i18n/en-US.json' with { type: 'json' };
 
@@ -56,10 +57,6 @@ export function setLang(lang: Lang): void {
         document.documentElement.lang = nextLang;
         document.documentElement.dataset['lang'] = nextLang;
     }
-}
-
-function escapeRegExp(value: string): string {
-    return value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
 }
 
 function getNestedValue(tree: TranslationTree, key: string): string | undefined {

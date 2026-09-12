@@ -70,7 +70,6 @@ export async function fetchTrendingArticles(env = {}, {
 }
 
 export async function handleTrendingRequest(request, env = {}, {
-    cacheTtlSeconds = 600,
     fetchImpl = globalThis.fetch,
     cachesImpl = globalThis.caches,
 } = {}) {
