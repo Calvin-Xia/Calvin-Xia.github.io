@@ -81,6 +81,8 @@ npm run build
 npm run preview
 npm test
 npm run test:coverage
+npm run lint
+npm run lint:fix
 npm run api
 npx wrangler secret put UMAMI_USERNAME
 npx wrangler secret put UMAMI_PASSWORD
@@ -90,6 +92,7 @@ npm run publish -- <obsidian-post-dir>
 ```
 
 - `npm run api` 启动本地 new-post API，默认监听 `127.0.0.1:4322`
+- `npm run lint` / `npm run lint:fix` 运行 ESLint 检查或自动修复
 - `npx wrangler secret put UMAMI_USERNAME` / `UMAMI_PASSWORD` 注入自部署 Umami 的服务端账号（浏览量 API 登录用）；`HEALTH_CHECK_TOKEN` 用于 `/api/health` 详细响应
 - `npm run publish -- --dry-run <dir>` 只打印 Obsidian→R2 发布计划，不写文件、不上传
 - `npm run publish -- <dir>` 复制 Obsidian Markdown 到 `src/content/blog/`，上传 `file/` 资源到 R2，并替换副本中的资源 URL
