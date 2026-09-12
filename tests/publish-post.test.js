@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { afterEach, describe, test } from 'node:test';
 import {
     executePublishPlan,
@@ -11,6 +13,9 @@ import {
     uploadAssets,
     validatePublishEnvs,
 } from '../scripts/publish-post.js';
+
+const execFileAsync = promisify(execFile);
+const repoRoot = path.resolve(import.meta.dirname, '..');
 
 const tempDirs = [];
 
@@ -32,27 +37,43 @@ describe('publish post uploads', () => {
         assert.deepEqual(parsePublishArgs(['--dry-run', '20260429-my-post']), {
             dirName: '20260429-my-post',
             dryRun: true,
+            force: false,
+            version: false,
             help: false,
             unknownFlags: [],
         });
         assert.deepEqual(parsePublishArgs(['20260429-my-post']), {
             dirName: '20260429-my-post',
             dryRun: false,
+            force: false,
+            version: false,
             help: false,
             unknownFlags: [],
         });
         assert.deepEqual(parsePublishArgs(['--help']), {
             dirName: '',
             dryRun: false,
+            force: false,
+            version: false,
             help: true,
             unknownFlags: [],
         });
         assert.deepEqual(parsePublishArgs(['--dryrun', '20260429-my-post']), {
             dirName: '20260429-my-post',
             dryRun: false,
+            force: false,
+            version: false,
             help: false,
             unknownFlags: ['--dryrun'],
         });
+    });
+
+    test('parses --force and --version flags', () => {
+        const parsed = parsePublishArgs(['--force', '--version']);
+
+        assert.equal(parsed.force, true);
+        assert.equal(parsed.version, true);
+        assert.deepEqual(parsed.unknownFlags, []);
     });
 
     test('validates vault env vars for dry-run and R2 credentials only for real publish', () => {
@@ -274,6 +295,79 @@ describe('publish post uploads', () => {
 
         assert.equal(attemptsByKey.get('my-post/fail.png'), 3);
         assert.equal(attemptsByKey.get('my-post/ok.jpeg'), 1);
+    });
+});
+
+describe('publish overwrite protection', () => {
+    test('rejects publishing when the destination markdown already exists without --force', async () => {
+        const calls = [];
+        const plan = {
+            destinationMarkdownPath: path.join(os.tmpdir(), 'exists-output.md'),
+            assets: [],
+        };
+
+        await assert.rejects(
+            () => executePublishPlan(plan, {
+                dryRun: false,
+                logger: { log: () => {} },
+                fileExists: async () => true,
+                mkdir: async () => calls.push('mkdir'),
+                writeFile: async () => calls.push('writeFile'),
+                uploadAssets: async () => calls.push('upload'),
+                readTransformedMarkdown: async () => 'markdown',
+            }),
+            /--force/,
+        );
+
+        assert.deepEqual(calls, [], 'must fail before uploading or writing anything');
+    });
+
+    test('overwrites an existing destination only with --force', async () => {
+        const calls = [];
+        const logs = [];
+        const plan = {
+            destinationMarkdownPath: path.join(os.tmpdir(), 'force-output.md'),
+            assets: [],
+        };
+
+        await executePublishPlan(plan, {
+            dryRun: false,
+            force: true,
+            logger: { log: (message) => logs.push(message) },
+            fileExists: async () => true,
+            mkdir: async () => calls.push('mkdir'),
+            writeFile: async () => calls.push('writeFile'),
+            uploadAssets: async () => calls.push('upload'),
+            readTransformedMarkdown: async () => 'markdown',
+        });
+
+        assert.deepEqual(calls, ['upload', 'mkdir', 'writeFile']);
+        assert.ok(logs.some((message) => message.includes('--force')));
+    });
+});
+
+describe('publish CLI end-to-end behavior', () => {
+    test('--version prints the package version without requiring env vars', async () => {
+        const { stdout } = await execFileAsync(process.execPath, ['scripts/publish-post.js', '--version'], {
+            cwd: repoRoot,
+        });
+
+        assert.match(stdout.trim(), /^\d+\.\d+\.\d+$/);
+    });
+
+    test('--help exits cleanly without requiring env vars', async () => {
+        const { stdout } = await execFileAsync(process.execPath, ['scripts/publish-post.js', '--help'], {
+            cwd: repoRoot,
+        });
+
+        assert.match(stdout, /--dry-run/);
+    });
+
+    test('unknown flags fail fast with a non-zero exit code', async () => {
+        await assert.rejects(
+            () => execFileAsync(process.execPath, ['scripts/publish-post.js', '--bogus'], { cwd: repoRoot }),
+            (error) => error.code === 1 && /未知参数/.test(error.stderr),
+        );
     });
 });
 

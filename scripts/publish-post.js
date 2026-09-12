@@ -1,5 +1,6 @@
 import { createReadStream } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline/promises';
@@ -12,6 +13,9 @@ import { getContentType } from './content-types.js';
 import { buildPublishPlan, deriveDateFromDirName, readTransformedMarkdown } from './post-utils.js';
 
 dotenv.config({ quiet: true });
+
+const require = createRequire(import.meta.url);
+const { version: publishCliVersion } = require('../package.json');
 
 const rootDir = path.resolve(import.meta.dirname, '..');
 const outputDir = path.join(rootDir, 'src', 'content', 'blog');
@@ -144,17 +148,36 @@ function printPlan(plan, logger = console) {
     }
 }
 
+async function defaultFileExists(filePath) {
+    try {
+        await access(filePath);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export async function executePublishPlan(plan, {
     dryRun = false,
+    force = false,
     logger = console,
     mkdir: makeDir = mkdir,
     writeFile: writeMarkdown = writeFile,
+    fileExists = defaultFileExists,
     uploadAssets: uploadPlanAssets = uploadAssets,
     readTransformedMarkdown: readMarkdown = readTransformedMarkdown,
 } = {}) {
     if (dryRun) {
         logger.log('Dry run only. No markdown will be written and no R2 assets will be uploaded.');
         return;
+    }
+
+    // Fail before uploading: overwriting an already-published post must be an explicit --force decision.
+    if (await fileExists(plan.destinationMarkdownPath)) {
+        if (!force) {
+            throw new Error(`目标文件已存在: ${plan.destinationMarkdownPath}（如需覆盖请加 --force）`);
+        }
+        logger.log(`--force 覆盖已存在文件: ${path.relative(rootDir, plan.destinationMarkdownPath)}`);
     }
 
     const transformedMarkdown = await readMarkdown(plan);
@@ -170,13 +193,15 @@ export async function executePublishPlan(plan, {
 
 export function parsePublishArgs(argv = process.argv.slice(2)) {
     const args = argv.map((arg) => arg.trim()).filter(Boolean);
-    const knownFlags = new Set(['--dry-run', '--help']);
+    const knownFlags = new Set(['--dry-run', '--force', '--version', '--help']);
     const help = args.includes('--help');
     const dryRun = args.includes('--dry-run');
+    const force = args.includes('--force');
+    const version = args.includes('--version');
     const unknownFlags = args.filter((arg) => arg.startsWith('-') && !knownFlags.has(arg));
     const dirName = args.find((arg) => !arg.startsWith('-')) || '';
 
-    return { dirName, dryRun, help, unknownFlags };
+    return { dirName, dryRun, force, version, help, unknownFlags };
 }
 
 function printPublishUsage(logger = console) {
@@ -185,6 +210,8 @@ function printPublishUsage(logger = console) {
         '',
         'Options:',
         '  --dry-run    预览发布计划，不写 markdown、不上传 R2',
+        '  --force      目标 markdown 已存在时允许覆盖',
+        '  --version    打印版本号',
         '  --help       显示本帮助',
         '',
         'Examples:',
@@ -285,15 +312,19 @@ export async function promptForFileSelection(markdownFiles, {
 }
 
 async function main() {
-    console.log('Obsidian Post Publisher');
-
-    const { dirName: directDirName, dryRun, help, unknownFlags } = parsePublishArgs();
+    const { dirName: directDirName, dryRun, force, version, help, unknownFlags } = parsePublishArgs();
     if (help) {
         printPublishUsage();
         return;
     }
+    if (version) {
+        console.log(publishCliVersion);
+        return;
+    }
+
+    console.log('Obsidian Post Publisher');
     if (unknownFlags.length > 0) {
-        console.warn(`忽略未知参数: ${unknownFlags.join(', ')}（支持的 flag: --dry-run、--help）`);
+        throw new Error(`未知参数: ${unknownFlags.join(', ')}（支持的 flag: --dry-run、--force、--version、--help）`);
     }
     validatePublishEnvs({ dryRun });
     const dirName = directDirName || await promptForDirName();
@@ -347,7 +378,7 @@ async function main() {
         await uploadAssets(orderedPlans[0]);
 
         for (const p of orderedPlans) {
-            await executePublishPlan(p, { dryRun: false, uploadAssets: async () => {} });
+            await executePublishPlan(p, { dryRun: false, force, uploadAssets: async () => {} });
         }
         console.log('Publish complete.');
         return;
@@ -368,7 +399,7 @@ async function main() {
         }
     }
 
-    await executePublishPlan(plan, { dryRun });
+    await executePublishPlan(plan, { dryRun, force });
     console.log(dryRun ? 'Dry run complete.' : 'Publish complete.');
 }
 
