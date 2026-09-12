@@ -35,5 +35,8 @@ jobs:
           test -f src/content/blog/20260411-ai-reliance.md
           test -f src/content/updates/fingerprint-app-update-log.json
 
+      - name: Run content check
+        run: npm run check
+
       - name: Build Astro site
         run: npm run build
