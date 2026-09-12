@@ -378,7 +378,7 @@ Phase 14 补上的写作 CLI 集中在 `scripts/`：`check-posts.js`（frontmatt
 ## CI
 
 - `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages
-- `astro-build-check.yml`：安装依赖、构建 Astro，验证首页品牌标记、`_headers` 安全头、社交元数据与 JSON-LD、OG 卡数量（≥14）、RSS 全文和 dist 无已删除测试文章路由
+- `astro-build-check.yml`：安装依赖、构建 Astro，验证首页品牌标记、`_headers` 安全头、社交元数据与 JSON-LD、OG 卡数量与有标题文章数精确匹配（文章数 + 默认卡，增删文章无需改断言）、RSS 全文和 dist 无已删除测试文章路由
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 - `metadata-editor-check.yml`：当元数据编辑 CLI、测试或依赖变更时，运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口
 - `cli-commands-check.yml`：当写作 CLI、发布脚本或其测试变更时，验证 check/stats/new-post/list-posts 与 publish 参数行为
