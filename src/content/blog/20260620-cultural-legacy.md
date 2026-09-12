@@ -5,6 +5,19 @@ excerpt: "无法再见，却被永恒标记。"
 category: "随笔"
 tags:
   - "思考，随笔，旅行，自我"
+imageDimensions:
+  - path: "cultural-legacy/sanxia-cities.jpg"
+    width: 3999
+    height: 2999
+  - path: "cultural-legacy/sanxia-quotes.jpg"
+    width: 3999
+    height: 2999
+  - path: "cultural-legacy/sanxia-streets.jpg"
+    width: 3000
+    height: 4000
+  - path: "cultural-legacy/wanzhou-satellite-image.png"
+    width: 2559
+    height: 1385
 ---
 
 我站在弯曲的长江岸边，和所有游客一样，排队进入那个据说建在江心四十米深处的水下博物馆。在此之前，我对它的印象不过是资讯简介里面的几行简略文字——石鱼，题刻，被三峡库区蓄水淹没——仅此而已。

@@ -9,6 +9,52 @@ tags:
   - "思考"
 featured: true
 status: "active"
+imageDimensions:
+  - path: "ai-reliance/202408-llm-ranking.png"
+    width: 1080
+    height: 1368
+  - path: "ai-reliance/202408-research-screenshot.png"
+    width: 2559
+    height: 1525
+  - path: "ai-reliance/2026-kangde-chinese.png"
+    width: 1323
+    height: 394
+  - path: "ai-reliance/doubao-image.jpeg"
+    width: 1280
+    height: 1911
+  - path: "ai-reliance/glm-contrast.jpg"
+    width: 2546
+    height: 2160
+  - path: "ai-reliance/GPT-image.png"
+    width: 1536
+    height: 1024
+  - path: "ai-reliance/juya.png"
+    width: 1080
+    height: 460
+  - path: "ai-reliance/lmstudio-qwen3-8b.png"
+    width: 1658
+    height: 1945
+  - path: "ai-reliance/nano-banana-2-image.png"
+    width: 1408
+    height: 768
+  - path: "ai-reliance/qwen-wan-2.7-pro-image.png"
+    width: 2368
+    height: 1760
+  - path: "ai-reliance/research-part.png"
+    width: 1747
+    height: 855
+  - path: "ai-reliance/research-word-cloud.png"
+    width: 600
+    height: 400
+  - path: "ai-reliance/zai-image-20240801.jpg"
+    width: 2415
+    height: 2160
+  - path: "ai-reliance/zai-image-20240802.jpg"
+    width: 2619
+    height: 2160
+  - path: "ai-reliance/zai-image-20260410.jpg"
+    width: 1280
+    height: 1801
 ---
 > 现在的我有一个习惯：  
 > 每天上午 9 点左右，我会打开 B 站，收看@橘鸦 Juya 的最新视频——AI 早报。  

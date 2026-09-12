@@ -6,6 +6,22 @@ category: "随笔"
 tags:
   - "AI辅助"
   - "自我"
+imageDimensions:
+  - path: "gaokao-chinese-essay/desert.png"
+    width: 1122
+    height: 1402
+  - path: "gaokao-chinese-essay/heart-fire.png"
+    width: 1122
+    height: 1402
+  - path: "gaokao-chinese-essay/outside-window.png"
+    width: 1122
+    height: 1402
+  - path: "gaokao-chinese-essay/starry-night.png"
+    width: 1122
+    height: 1402
+  - path: "gaokao-chinese-essay/train.png"
+    width: 1122
+    height: 1402
 ---
 
 > 阅读下面的材料，根据要求写作：  

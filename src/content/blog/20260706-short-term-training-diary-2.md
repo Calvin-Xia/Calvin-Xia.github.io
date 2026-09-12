@@ -6,6 +6,22 @@ category: "日志"
 tags:
   - "日志"
   - "随笔"
+imageDimensions:
+  - path: "short-term-training-diary/cloud-1.jpg"
+    width: 4096
+    height: 3510
+  - path: "short-term-training-diary/drone.jpg"
+    width: 4096
+    height: 3510
+  - path: "short-term-training-diary/golden-sun.jpg"
+    width: 3072
+    height: 4534
+  - path: "short-term-training-diary/reflection.jpg"
+    width: 4096
+    height: 3510
+  - path: "short-term-training-diary/sunset.jpg"
+    width: 4096
+    height: 3510
 ---
 
 ## 记在前面

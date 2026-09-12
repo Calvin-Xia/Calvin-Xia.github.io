@@ -6,6 +6,25 @@ category: "随笔"
 tags:
   - "劳动节"
   - "旅行"
+imageDimensions:
+  - path: "labors-day/climate.jpg"
+    width: 3072
+    height: 4534
+  - path: "labors-day/institution.jpg"
+    width: 4096
+    height: 3510
+  - path: "labors-day/railway.JPG"
+    width: 5333
+    height: 4000
+  - path: "labors-day/rain.JPG"
+    width: 3375
+    height: 6000
+  - path: "labors-day/sunset.JPG"
+    width: 6000
+    height: 3375
+  - path: "labors-day/yangloudong.JPG"
+    width: 3375
+    height: 6000
 ---
 
 > **Sie ist die erste Grundbedingung alles menschlichen Lebens, und zwar in einem solchem Grade, daß wir in gewissem Sinne sagen müssen: Sie hat den Menschen selbst geschaffen.**
