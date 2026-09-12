@@ -64,7 +64,11 @@
         "openSearch": "Open Search",
         "recentKicker": "Recent Updates",
         "recentTitle": "Latest Organized Content",
-        "viewMore": "View More"
+        "viewMore": "View More",
+        "trendingKicker": "Popular",
+        "trendingTitle": "Popular Articles",
+        "trendingAria": "Popular articles list",
+        "trendingViews": "{views} views"
     },
     "articles": {
         "pageTitle": "Articles - Calvin Xia",
@@ -322,7 +326,12 @@
         "bodyAria": "Article body",
         "share": "Share",
         "shareCopied": "Link copied",
-        "imageCopied": "Image copied"
+        "imageCopied": "Image copied",
+        "previous": "Previous",
+        "next": "Next",
+        "adjacentAria": "Article navigation",
+        "relatedTitle": "Related Articles",
+        "relatedAria": "Related articles"
     },
     "archive": {
         "pageTitle": "Article Archive - Calvin Xia",

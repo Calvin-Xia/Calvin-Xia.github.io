@@ -5,6 +5,7 @@ import ArticleToc from '../../components/ArticleToc.astro';
 import GiscusComments from '../../components/GiscusComments.astro';
 import LicenseBadge from '../../components/LicenseBadge.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { buildArticleNavigation, selectRelatedPosts, sortPostsByDateDesc } from '../../lib/article-navigation.js';
 import { isFreshDate } from '../../lib/content';
 import { t } from '../../lib/i18n.ts';
 import { buildBlogPostingJsonLd } from '../../lib/site-seo.js';
@@ -12,14 +13,23 @@ import { computeReadingStats } from '../../lib/word-count.js';
 
 export async function getStaticPaths() {
     const posts = await getCollection('blog', ({ data }) => data.status !== 'draft');
+    const sorted = sortPostsByDateDesc(posts);
 
     return posts.map((post) => ({
         params: { slug: post.id },
-        props: { post },
+        props: {
+            post,
+            navigation: buildArticleNavigation(sorted, post.id),
+            related: selectRelatedPosts(sorted, post.id, {
+                limit: 4,
+                category: post.data.category,
+                tags: post.data.tags,
+            }),
+        },
     }));
 }
 
-const { post } = Astro.props;
+const { post, navigation, related } = Astro.props;
 const { Content } = await render(post);
 const readingStats = computeReadingStats(post.body);
 const readTimeDisplay = post.data.readTime || readingStats.readTimeDisplay;
@@ -110,6 +120,54 @@ const blogPostingJsonLd = JSON.stringify(buildBlogPostingJsonLd({
             </section>
             <ArticleToc />
         </div>
+        <nav class="article-adjacent" aria-label={t('articleDetail.adjacentAria')}>
+            {navigation.older && (
+                <a
+                    class="adjacent-card"
+                    href={`/articles/${navigation.older.slug}/`}
+                    data-history="true"
+                    data-title={t('nav.articles')}
+                    data-i18n-data-title="nav.articles"
+                >
+                    <span class="adjacent-label" data-i18n="articleDetail.previous">{t('articleDetail.previous')}</span>
+                    <span class="adjacent-title">{navigation.older.title}</span>
+                </a>
+            )}
+            {navigation.newer && (
+                <a
+                    class="adjacent-card adjacent-card--next"
+                    href={`/articles/${navigation.newer.slug}/`}
+                    data-history="true"
+                    data-title={t('nav.articles')}
+                    data-i18n-data-title="nav.articles"
+                >
+                    <span class="adjacent-label" data-i18n="articleDetail.next">{t('articleDetail.next')}</span>
+                    <span class="adjacent-title">{navigation.newer.title}</span>
+                </a>
+            )}
+        </nav>
+
+        {related.length > 0 && (
+            <section class="article-related" aria-label={t('articleDetail.relatedAria')}>
+                <h2 class="section-heading" data-i18n="articleDetail.relatedTitle">{t('articleDetail.relatedTitle')}</h2>
+                <div class="related-grid">
+                    {related.map((item) => (
+                        <a
+                            class="related-card"
+                            href={`/articles/${item.slug}/`}
+                            data-history="true"
+                            data-title={t('nav.articles')}
+                            data-i18n-data-title="nav.articles"
+                        >
+                            <span class="blog-card-category">{item.category}</span>
+                            <h3 class="related-title">{item.title}</h3>
+                            <p class="related-excerpt">{item.excerpt}</p>
+                        </a>
+                    ))}
+                </div>
+            </section>
+        )}
+
         <script type="application/ld+json" set:html={blogPostingJsonLd} />
         <GiscusComments />
         <footer class="license-section">

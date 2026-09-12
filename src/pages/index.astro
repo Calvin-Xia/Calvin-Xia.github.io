@@ -102,10 +102,75 @@ const homepageUpdates = getHomepageUpdates([
         </div>
     </section>
 
+    <section id="trending-articles" class="section-stack home-trending" aria-label={t('home.trendingAria')} data-trending-section hidden>
+        <div class="home-section-head">
+            <div>
+                <p class="section-kicker" data-i18n="home.trendingKicker">{t('home.trendingKicker')}</p>
+                <h2 class="section-heading" data-i18n="home.trendingTitle">{t('home.trendingTitle')}</h2>
+            </div>
+        </div>
+        <ol class="trending-list" data-trending-list data-title-map={JSON.stringify(Object.fromEntries(blogEntries.map((entry) => [entry.id, entry.data.title])))}></ol>
+    </section>
+
     <p class="home-repo-link">
         <a href="https://github.com/Calvin-Xia/mr.xia.github.io" target="_blank" rel="noopener">GitHub Repository</a>
     </p>
 </BaseLayout>
+
+<script>
+    import { t } from '../lib/i18n.ts';
+
+    function initTrendingSection() {
+        const section = document.querySelector('[data-trending-section]');
+        const list = document.querySelector('[data-trending-list]');
+
+        if (!section || !list || list.dataset.trendingBound === 'true') {
+            return;
+        }
+        list.dataset.trendingBound = 'true';
+
+        window
+            .fetch('/api/trending?limit=5')
+            .then((response) => response.json())
+            .then((payload) => {
+                const titleMap = JSON.parse(list.dataset.titleMap || '{}');
+                const entries = (payload?.trending || []).filter((entry) => titleMap[entry.slug]);
+
+                if (!entries.length) {
+                    return;
+                }
+
+                for (const entry of entries) {
+                    const item = document.createElement('li');
+                    item.className = 'trending-item';
+
+                    const rank = document.createElement('span');
+                    rank.className = 'trending-rank';
+                    rank.setAttribute('aria-hidden', 'true');
+
+                    const link = document.createElement('a');
+                    link.className = 'trending-link';
+                    link.href = `/articles/${entry.slug}/`;
+                    link.textContent = titleMap[entry.slug];
+
+                    const views = document.createElement('span');
+                    views.className = 'trending-views';
+                    views.textContent = t('home.trendingViews', { views: entry.views });
+
+                    item.append(rank, link, views);
+                    list.append(item);
+                }
+
+                section.hidden = false;
+            })
+            .catch(() => {
+                section.hidden = true;
+            });
+    }
+
+    initTrendingSection();
+    document.addEventListener('astro:page-load', initTrendingSection);
+</script>
 
 <script>
     import { initButtonRipples, PageAnimations } from '../scripts/page-animations';

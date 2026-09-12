@@ -1,5 +1,6 @@
 import { checkHealth } from './lib/health-check.js';
 import { SecurityLogger } from './lib/security-logger.js';
+import { handleTrendingRequest } from './lib/umami-trending.js';
 import { handleViewCounterRequest } from './lib/umami-view-counter.js';
 
 interface Env {
@@ -139,6 +140,8 @@ export default {
 
         if (url.pathname === '/api/health') {
             response = await handleHealthRequest(request, env);
+        } else if (url.pathname === '/api/trending') {
+            response = await handleTrendingRequest(request, env);
         } else {
             response = await handleViewCounterRequest(request, env);
         }

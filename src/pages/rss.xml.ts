@@ -1,11 +1,23 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
-import { getCollection } from 'astro:content';
+import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+import { getCollection, render } from 'astro:content';
 import { buildRssItems, createRssChannelCustomData, isPublishedStatus } from '../lib/site-seo.js';
 
 export async function GET(context: APIContext) {
     const posts = await getCollection('blog', ({ data }) => isPublishedStatus(data.status));
-    const items = buildRssItems(posts);
+    const container = await AstroContainer.create();
+
+    const contentByLink = new Map<string, string>();
+    for (const post of posts) {
+        const { Content } = await render(post);
+        contentByLink.set(`/articles/${post.id}/`, await container.renderToString(Content));
+    }
+
+    const items = buildRssItems(posts).map((item) => ({
+        ...item,
+        content: contentByLink.get(item.link) || '',
+    }));
 
     return rss({
         title: 'Mr.Xia - 个人小站',

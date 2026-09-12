@@ -39,3 +39,4 @@ jobs:
           node -e "const fs = require('fs'); const article = fs.readFileSync('dist/articles/20260411-ai-reliance/index.html', 'utf8'); for (const needle of ['\"@type\":\"BlogPosting\"', 'article:published_time', 'og:image']) { if (!article.includes(needle)) { throw new Error('article page is missing ' + needle); } }"
           test -f dist/og/default.png
           node -e "const fs = require('fs'); const cards = fs.readdirSync('dist/og').filter((f) => f.endsWith('.png')); if (cards.length < 14) { throw new Error('expected at least 14 OG cards, found ' + cards.length); }"
+          node -e "const fs = require('fs'); const rss = fs.readFileSync('dist/rss.xml', 'utf8'); if (!rss.includes('content:encoded') || rss.length < 20000) { throw new Error('dist/rss.xml is missing full-text content:encoded entries'); }"
