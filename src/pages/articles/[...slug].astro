@@ -89,6 +89,16 @@ const blogPostingJsonLd = JSON.stringify(buildBlogPostingJsonLd({
                 <span class="view-count view-count--pending" data-view-counter data-slug={post.id} aria-live="polite" data-i18n="articleDetail.viewsLoading">
                     {t('articleDetail.viewsLoading')}
                 </span>
+                <button type="button" class="article-share-btn" id="article-share-btn" data-share-title={post.data.title} data-i18n-aria-label="articleDetail.share">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    <span data-i18n="articleDetail.share">{t('articleDetail.share')}</span>
+                </button>
             </div>
         </header>
 
@@ -106,4 +116,46 @@ const blogPostingJsonLd = JSON.stringify(buildBlogPostingJsonLd({
             <LicenseBadge />
         </footer>
     </article>
+    <script>
+        import { t } from '../../lib/i18n.ts';
+
+        function initArticleShareButton() {
+            const button = document.getElementById('article-share-btn');
+            if (!button || button.dataset.shareBound === 'true') {
+                return;
+            }
+            button.dataset.shareBound = 'true';
+
+            button.addEventListener('click', async () => {
+                const shareData = {
+                    title: button.dataset.shareTitle || document.title,
+                    url: window.location.href,
+                };
+
+                try {
+                    if (navigator.share) {
+                        await navigator.share(shareData);
+                        return;
+                    }
+
+                    await navigator.clipboard.writeText(shareData.url);
+                    const label = button.querySelector('span');
+                    if (label) {
+                        const original = label.textContent;
+                        label.textContent = t('articleDetail.shareCopied');
+                        window.setTimeout(() => {
+                            label.textContent = original;
+                        }, 2000);
+                    }
+                } catch (error) {
+                    if (error?.name !== 'AbortError') {
+                        console.error('Share failed:', error);
+                    }
+                }
+            });
+        }
+
+        initArticleShareButton();
+        document.addEventListener('astro:page-load', initArticleShareButton);
+    </script>
 </BaseLayout>

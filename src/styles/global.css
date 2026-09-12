@@ -2879,6 +2879,30 @@ html[data-anim-root] .shadowbox:not(.markdown-container):not(.fade-in-up) {
     margin: 0;
 }
 
+.article-share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.75rem;
+    font-size: 0.82rem;
+    font-family: inherit;
+    color: var(--text-secondary);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition:
+        color var(--duration-fast) var(--ease-standard),
+        border-color var(--duration-fast) var(--ease-standard),
+        background-color var(--duration-fast) var(--ease-standard);
+}
+
+.article-share-btn:hover {
+    color: var(--accent);
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+}
+
 @media (max-width: 480px) {
     .blog-card-thumb {
         width: 104px;

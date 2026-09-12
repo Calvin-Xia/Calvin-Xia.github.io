@@ -319,7 +319,9 @@
     },
     "articleDetail": {
         "viewsLoading": "Loading views",
-        "bodyAria": "Article body"
+        "bodyAria": "Article body",
+        "share": "Share",
+        "shareCopied": "Link copied"
     },
     "archive": {
         "pageTitle": "Article Archive - Calvin Xia",
