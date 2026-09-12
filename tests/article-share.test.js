@@ -3,14 +3,16 @@ import { readFile } from 'node:fs/promises';
 import { describe, test } from 'node:test';
 
 describe('article share button source contract', () => {
-    test('detail page wires navigator.share with clipboard fallback', async () => {
+    test('detail page wires image-first sharing with link and clipboard fallbacks', async () => {
         const page = await readFile('src/pages/articles/[...slug].astro', 'utf8');
 
         assert.match(page, /id="article-share-btn"/);
         assert.match(page, /<svg[^>]*aria-hidden="true"/, 'share icon must be an inline svg');
-        assert.match(page, /navigator\.share/);
+        assert.match(page, /data-share-image=\{`\/og\/\$\{post\.id\}\.png`\}/, 'share image must stay site-relative so the click-time fetch is same-origin');
+        assert.match(page, /navigator\.canShare\(\{ files: \[file\] \}\)/, 'must gate file sharing behind canShare');
+        assert.match(page, /new File\(\[blob\]/);
+        assert.match(page, /navigator\.share\(\{ title: shareTitle, url: shareUrl \}\)/, 'link share fallback');
         assert.match(page, /navigator\.clipboard\.writeText/);
-        assert.match(page, /data-share-title=\{post\.data\.title\}/);
         assert.match(page, /articleDetail\.shareCopied/);
     });
 

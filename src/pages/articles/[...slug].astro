@@ -89,7 +89,7 @@ const blogPostingJsonLd = JSON.stringify(buildBlogPostingJsonLd({
                 <span class="view-count view-count--pending" data-view-counter data-slug={post.id} aria-live="polite" data-i18n="articleDetail.viewsLoading">
                     {t('articleDetail.viewsLoading')}
                 </span>
-                <button type="button" class="article-share-btn" id="article-share-btn" data-share-title={post.data.title} data-i18n-aria-label="articleDetail.share">
+                <button type="button" class="article-share-btn" id="article-share-btn" data-share-title={post.data.title} data-share-image={`/og/${post.id}.png`} data-i18n-aria-label="articleDetail.share">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
@@ -127,18 +127,35 @@ const blogPostingJsonLd = JSON.stringify(buildBlogPostingJsonLd({
             button.dataset.shareBound = 'true';
 
             button.addEventListener('click', async () => {
-                const shareData = {
-                    title: button.dataset.shareTitle || document.title,
-                    url: window.location.href,
-                };
+                const shareTitle = button.dataset.shareTitle || document.title;
+                const shareUrl = window.location.href;
 
                 try {
+                    // Prefer sharing the OG card as an image file (richer share targets).
+                    if (button.dataset.shareImage && navigator.canShare) {
+                        try {
+                            const response = await fetch(new URL(button.dataset.shareImage, window.location.origin));
+                            const blob = await response.blob();
+                            const fileName = `${(button.dataset.shareImage.split('/').pop() || 'share').replace(/\.[a-z0-9]+$/i, '')}.png`;
+                            const file = new File([blob], fileName, { type: blob.type || 'image/png' });
+                            if (file.size > 0 && navigator.canShare({ files: [file] })) {
+                                await navigator.share({ files: [file], title: shareTitle, text: shareTitle });
+                                return;
+                            }
+                        } catch (error) {
+                            if (error?.name === 'AbortError') {
+                                return;
+                            }
+                            // Fall through to link sharing.
+                        }
+                    }
+
                     if (navigator.share) {
-                        await navigator.share(shareData);
+                        await navigator.share({ title: shareTitle, url: shareUrl });
                         return;
                     }
 
-                    await navigator.clipboard.writeText(shareData.url);
+                    await navigator.clipboard.writeText(shareUrl);
                     const label = button.querySelector('span');
                     if (label) {
                         const original = label.textContent;
