@@ -49,6 +49,19 @@ const works = defineCollection({
         externalUrl: z.string().url().optional(),
         status: z.string().optional(),
         featured: z.boolean().optional(),
+        order: z.number(),
+        i18nPrefix: z.string(),
+        displayTags: z.array(z.object({
+            key: z.string().optional(),
+            text: z.string().optional(),
+        })).optional(),
+        actions: z.array(z.object({
+            key: z.string().optional(),
+            text: z.string().optional(),
+            href: z.string(),
+            variant: z.enum(['primary', 'outline']).default('outline'),
+            external: z.boolean().default(false),
+        })),
     }),
 });
 

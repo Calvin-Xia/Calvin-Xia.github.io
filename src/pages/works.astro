@@ -1,7 +1,15 @@
 ---
+import { getCollection } from 'astro:content';
 import PageIntro from '../components/PageIntro.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { t } from '../lib/i18n.ts';
+
+const works = (await getCollection('works', ({ data }) => data.status !== 'draft'))
+    .sort((left, right) => left.data.order - right.data.order);
+
+function actionHref(action: { href: string; external: boolean }) {
+    return action.external ? action.href : action.href;
+}
 ---
 
 <BaseLayout title={t('works.pageTitle')} titleKey="works.pageTitle" description={t('works.description')} descriptionKey="works.description" currentPage="works">
@@ -14,149 +22,42 @@ import { t } from '../lib/i18n.ts';
     />
 
     <section class="section-stack project-list">
-        <div id="work-fingerprint-app" class="project-card">
-            <div class="project-card-layout">
-                <div class="project-card-copy">
-                    <p class="card-kicker" data-i18n="works.fingerprint.kicker">{t('works.fingerprint.kicker')}</p>
-                    <h3 data-i18n="works.fingerprint.title">{t('works.fingerprint.title')}</h3>
-                    <p data-i18n="works.fingerprint.description">{t('works.fingerprint.description')}</p>
-                    <p class="project-meta" data-i18n="works.fingerprint.meta">{t('works.fingerprint.meta')}</p>
+        {works.map((work) => {
+            const anchor = work.data.filePath.split('#')[1] || work.id;
+            const prefix = work.data.i18nPrefix;
+            return (
+                <div id={anchor} class="project-card">
+                    <div class="project-card-layout">
+                        <div class="project-card-copy">
+                            <p class="card-kicker" data-i18n={`${prefix}.kicker`}>{t(`${prefix}.kicker`)}</p>
+                            <h3 data-i18n={`${prefix}.title`}>{t(`${prefix}.title`)}</h3>
+                            <p data-i18n={`${prefix}.description`}>{t(`${prefix}.description`)}</p>
+                            <p class="project-meta" data-i18n={`${prefix}.meta`}>{t(`${prefix}.meta`)}</p>
+                        </div>
+                        <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
+                            <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
+                                {(work.data.displayTags || []).map((tag) => (
+                                    <span class="project-tag" data-i18n={tag.key}>{tag.key ? t(tag.key) : tag.text}</span>
+                                ))}
+                            </div>
+                            <div class="action-row project-card-actions">
+                                {work.data.actions.map((action) => (
+                                    <a
+                                        href={actionHref(action)}
+                                        target={action.external ? '_blank' : undefined}
+                                        rel={action.external ? 'noopener' : undefined}
+                                        class={`btn${action.variant === 'outline' ? ' btn-outline' : ''}`}
+                                        data-i18n={action.key}
+                                    >
+                                        {action.key ? t(action.key) : action.text}
+                                    </a>
+                                ))}
+                            </div>
+                        </aside>
+                    </div>
                 </div>
-                <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
-                    <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
-                        <span class="project-tag" data-i18n="works.fingerprint.tagApk">{t('works.fingerprint.tagApk')}</span>
-                        <span class="project-tag">FusionApp 2.0</span>
-                        <span class="project-tag" data-i18n="works.fingerprint.tagUpdates">{t('works.fingerprint.tagUpdates')}</span>
-                    </div>
-                    <div class="action-row project-card-actions">
-                        <a
-                            href="/storage/指纹验证-myapp.zhiwenyanzheng-2.0.0beta-48.apk"
-                            target="_blank"
-                            rel="noopener"
-                            class="btn"
-                            data-i18n="works.downloadApp"
-                        >
-                            {t('works.downloadApp')}
-                        </a>
-                        <a href="/updates/fingerprint-app-update-log/" class="btn btn-outline" data-i18n="works.viewUpdateLog">
-                            {t('works.viewUpdateLog')}
-                        </a>
-                    </div>
-                </aside>
-            </div>
-        </div>
-
-        <div id="work-favorites-collection" class="project-card">
-            <div class="project-card-layout">
-                <div class="project-card-copy">
-                    <p class="card-kicker" data-i18n="works.favorites.kicker">{t('works.favorites.kicker')}</p>
-                    <h3 data-i18n="works.favorites.title">{t('works.favorites.title')}</h3>
-                    <p data-i18n="works.favorites.description">{t('works.favorites.description')}</p>
-                    <p class="project-meta" data-i18n="works.favorites.meta">{t('works.favorites.meta')}</p>
-                </div>
-                <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
-                    <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
-                        <span class="project-tag" data-i18n="works.favorites.staticTag">{t('works.favorites.staticTag')}</span>
-                        <span class="project-tag" data-i18n="works.favorites.dynamicTag">{t('works.favorites.dynamicTag')}</span>
-                        <span class="project-tag">Next.js</span>
-                    </div>
-                    <div class="action-row project-card-actions">
-                        <a
-                            href="https://github.com/Calvin-Xia/listmyfavorites.github.io/"
-                            target="_blank"
-                            rel="noopener"
-                            class="btn"
-                            data-i18n="works.staticRepo"
-                        >
-                            {t('works.staticRepo')}
-                        </a>
-                        <a
-                            href="https://github.com/Calvin-Xia/VibeVault2/"
-                            target="_blank"
-                            rel="noopener"
-                            class="btn btn-outline"
-                            data-i18n="works.dynamicRepo"
-                        >
-                            {t('works.dynamicRepo')}
-                        </a>
-                    </div>
-                </aside>
-            </div>
-        </div>
-
-        <div id="work-class1-map" class="project-card">
-            <div class="project-card-layout">
-                <div class="project-card-copy">
-                    <p class="card-kicker" data-i18n="works.classMap.kicker">{t('works.classMap.kicker')}</p>
-                    <h3 data-i18n="works.classMap.title">{t('works.classMap.title')}</h3>
-                    <p data-i18n="works.classMap.description">{t('works.classMap.description')}</p>
-                    <p class="project-meta" data-i18n="works.classMap.meta">{t('works.classMap.meta')}</p>
-                </div>
-                <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
-                    <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
-                        <span class="project-tag" data-i18n="works.classMap.publicSite">{t('works.classMap.publicSite')}</span>
-                        <span class="project-tag" data-i18n="works.classMap.mapDisplay">{t('works.classMap.mapDisplay')}</span>
-                        <span class="project-tag" data-i18n="works.classMap.memorial">{t('works.classMap.memorial')}</span>
-                    </div>
-                    <div class="action-row project-card-actions">
-                        <a
-                            href="https://github.com/Calvin-Xia/class1forever.github.io/"
-                            target="_blank"
-                            rel="noopener"
-                            class="btn"
-                        >
-                            GitHub Repository
-                        </a>
-                        <a
-                            href="https://class1forever.pages.dev/"
-                            target="_blank"
-                            rel="noopener"
-                            class="btn btn-outline"
-                            data-i18n="works.visitAddress"
-                        >
-                            {t('works.visitAddress')}
-                        </a>
-                    </div>
-                </aside>
-            </div>
-        </div>
-
-        <div id="work-button-block-designer" class="project-card">
-            <div class="project-card-layout">
-                <div class="project-card-copy">
-                    <p class="card-kicker" data-i18n="works.buttonDesigner.kicker">{t('works.buttonDesigner.kicker')}</p>
-                    <h3 data-i18n="works.buttonDesigner.title">{t('works.buttonDesigner.title')}</h3>
-                    <p data-i18n="works.buttonDesigner.description">{t('works.buttonDesigner.description')}</p>
-                    <p class="project-meta" data-i18n="works.buttonDesigner.meta">{t('works.buttonDesigner.meta')}</p>
-                </div>
-                <aside class="project-card-side" aria-label={t('works.summaryActions')} data-i18n-aria-label="works.summaryActions">
-                    <div class="project-tag-list" aria-label={t('works.projectTags')} data-i18n-aria-label="works.projectTags">
-                        <span class="project-tag">Next.js</span>
-                        <span class="project-tag" data-i18n="works.buttonDesigner.designTool">{t('works.buttonDesigner.designTool')}</span>
-                        <span class="project-tag" data-i18n="works.buttonDesigner.online">{t('works.buttonDesigner.online')}</span>
-                    </div>
-                    <div class="action-row project-card-actions">
-                        <a
-                            href="https://github.com/Calvin-Xia/VibeUIgenerator/"
-                            target="_blank"
-                            rel="noopener"
-                            class="btn"
-                        >
-                            GitHub Repository
-                        </a>
-                        <a
-                            href="https://vibeui-generator.pages.dev/"
-                            target="_blank"
-                            rel="noopener"
-                            class="btn btn-outline"
-                            data-i18n="works.visitAddress"
-                        >
-                            {t('works.visitAddress')}
-                        </a>
-                    </div>
-                </aside>
-            </div>
-        </div>
+            );
+        })}
     </section>
 
     <section class="section-stack">
