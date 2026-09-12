@@ -1892,6 +1892,14 @@ select:disabled {
     color: transparent;
 }
 
+/* Lightbox triggers carry role="button" for keyboard a11y; the global
+   [role="button"] button-shell styles must not paint over photos. */
+.markdown-content img[role="button"] {
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+
 .markdown-content img.article-lightbox-trigger {
     cursor: zoom-in;
 }
