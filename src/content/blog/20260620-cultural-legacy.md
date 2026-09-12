@@ -18,6 +18,7 @@ imageDimensions:
   - path: "cultural-legacy/wanzhou-satellite-image.png"
     width: 2559
     height: 1385
+hero: "20260620-cultural-legacy.webp"
 ---
 
 我站在弯曲的长江岸边，和所有游客一样，排队进入那个据说建在江心四十米深处的水下博物馆。在此之前，我对它的印象不过是资讯简介里面的几行简略文字——石鱼，题刻，被三峡库区蓄水淹没——仅此而已。

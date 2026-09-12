@@ -22,6 +22,7 @@ imageDimensions:
   - path: "short-term-training-diary/water.jpg"
     width: 4096
     height: 3510
+hero: "20260706-short-term-training-diary-1.webp"
 ---
 
 ## 记在前面

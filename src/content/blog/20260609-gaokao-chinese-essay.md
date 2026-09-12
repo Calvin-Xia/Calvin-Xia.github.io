@@ -22,6 +22,7 @@ imageDimensions:
   - path: "gaokao-chinese-essay/train.png"
     width: 1122
     height: 1402
+hero: "20260609-gaokao-chinese-essay.webp"
 ---
 
 > 阅读下面的材料，根据要求写作：  

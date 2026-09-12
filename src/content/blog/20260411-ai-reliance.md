@@ -55,6 +55,7 @@ imageDimensions:
   - path: "ai-reliance/zai-image-20260410.jpg"
     width: 1280
     height: 1801
+hero: "20260411-ai-reliance.webp"
 ---
 > 现在的我有一个习惯：  
 > 每天上午 9 点左右，我会打开 B 站，收看@橘鸦 Juya 的最新视频——AI 早报。  

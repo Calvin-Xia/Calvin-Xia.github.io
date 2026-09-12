@@ -25,6 +25,7 @@ imageDimensions:
   - path: "labors-day/yangloudong.JPG"
     width: 3375
     height: 6000
+hero: "20260503-labors-day.webp"
 ---
 
 > **Sie ist die erste Grundbedingung alles menschlichen Lebens, und zwar in einem solchem Grade, daß wir in gewissem Sinne sagen müssen: Sie hat den Menschen selbst geschaffen.**
