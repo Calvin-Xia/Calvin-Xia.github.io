@@ -156,9 +156,9 @@
 
 **Font Stack:**
 
-```css
-@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+Fonts are self-hosted via `@fontsource/*` packages (weight CSS imports in `src/layouts/BaseLayout.astro`); CJK glyphs load on demand through unicode-range slices. Do not reintroduce a Google Fonts `@import`.
 
+```css
 :root {
     --font-serif: "Noto Serif SC", "Songti SC", STSong, serif;
     --font-sans: "Noto Sans SC", Inter, "PingFang SC", "Microsoft YaHei", sans-serif;

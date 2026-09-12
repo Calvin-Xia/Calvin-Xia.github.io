@@ -40,3 +40,4 @@ jobs:
           test -f dist/og/default.png
           node -e "const fs = require('fs'); const cards = fs.readdirSync('dist/og').filter((f) => f.endsWith('.png')); if (cards.length < 14) { throw new Error('expected at least 14 OG cards, found ' + cards.length); }"
           node -e "const fs = require('fs'); const rss = fs.readFileSync('dist/rss.xml', 'utf8'); if (!rss.includes('content:encoded') || rss.length < 20000) { throw new Error('dist/rss.xml is missing full-text content:encoded entries'); }"
+          node -e "const fs = require('fs'); if (fs.existsSync('dist/articles/00010101-test-assignment')) { throw new Error('dist must not contain the removed test article route'); }"

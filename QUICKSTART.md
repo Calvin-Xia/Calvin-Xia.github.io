@@ -1,6 +1,6 @@
 # 快速开始
 
-这份文档用于第一次接手仓库时快速跑起 Astro 站点。Phase 12 已完成，所有内容管理通过 Astro 内容集合和 npm 脚本进行，站点同时包含增强中文搜索、Worker 健康检查与安全监控、工具页 PWA、UI 国际化、文章体验增强和单篇文章元数据编辑 CLI。
+这份文档用于第一次接手仓库时快速跑起 Astro 站点。Phase 0-18 已完成，内容创作（博客、作品、工具、更新日志）全部通过 Astro 内容集合和 npm 脚本进行；写作 CLI 覆盖建稿、校验、统计与元数据编辑，发布链路自动探测图片尺寸并交互选头图；文章页有头图封面、上一篇/下一篇、相关文章与分享按钮，全站注入 og:/twitter:/canonical + JSON-LD 并在构建时生成逐篇 OG 分享卡；四族字体经 @fontsource 自托管，作品数据单一来源化为 `src/content/works/*.json`。
 
 ## 1. 安装与启动
 
@@ -39,6 +39,9 @@ npm run build
 npm test
 npm run test:coverage
 npm run lint
+npm run check
+npm run stats
+npm run list-posts
 npm run api
 npm run edit-metadata -- <markdown-file>
 npm run publish -- --dry-run <obsidian-post-dir>

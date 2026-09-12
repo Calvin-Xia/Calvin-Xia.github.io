@@ -1,6 +1,6 @@
 # 站点维护与界面更新说明
 
-这份文档描述 Astro 迁移完成后的站点维护方式。Phase 0-12 已完成，所有内容维护入口通过 Astro 内容集合、翻译 JSON 和 npm 脚本进行，旧 HTML/JSON/Python 管线已移除。Phase 5 补上了 RSS/sitemap/giscus 评论区，Phase 6 补上了字数字阅读时间、归档页和文章浏览量 Worker 代理，Phase 7 补上了 MiniSearch 懒加载搜索和 Worker 健康检查，Phase 7.5 补上了本地图标 WebP 降级和工具页 PWA，Phase 8 补上了 UI 国际化，Phase 9 补上安全监控与 CI 质量检查，Phase 10 补上移动端/可访问性/选择工具栏文章体验，Phase 11 补上中文搜索增强，Phase 12 补上单篇文章元数据编辑 CLI。
+这份文档描述 Astro 迁移完成后的站点维护方式。Phase 0-18 已完成，所有内容维护入口通过 Astro 内容集合、翻译 JSON和 npm 脚本进行，旧 HTML/JSON/Python 管线已移除。Phase 5 补上了 RSS/sitemap/giscus 评论区，Phase 6 补上了字数字阅读时间、归档页和文章浏览量 Worker 代理，Phase 7 补上了 MiniSearch 懒加载搜索和 Worker 健康检查，Phase 7.5 补上了本地图标 WebP 降级和工具页 PWA，Phase 8 补上了 UI 国际化，Phase 9 补上安全监控与 CI 质量检查，Phase 10 补上移动端/可访问性/选择工具栏文章体验，Phase 11 补上中文搜索增强，Phase 12 补上单篇文章元数据编辑 CLI，Phase 13 补上页面切换动画，Phase 14 补上写作 CLI 工具集（check/stats/new-post/list-posts），Phase 15 补上发布链路图片尺寸探测与头图功能，Phase 16 补上全站社交元数据与逐篇 OG 分享卡，Phase 17 补上上一篇/下一篇、相关文章、RSS 全文与热门文章 API，Phase 18 完成作品数据单一来源化、articles 页客户端脚本模块化、共享工具去重和 @fontsource 字体自托管。
 
 ## 当前内容结构
 
@@ -21,14 +21,17 @@ Astro 内容集合：
 辅助脚本：
 
 - `tools/api-server.js`：本地 `/new-post/` API
-- `scripts/publish-post.js`：Obsidian→R2 发布管线，标签留空时默认写入 `未分类`
+- `scripts/publish-post.js`：Obsidian→R2 发布管线，标签留空时默认写入 `未分类`，探测图片尺寸写入 `imageDimensions`，交互式选择头图，覆盖已有文章需 `--force`
 - `scripts/edit-metadata.js`：交互式编辑单篇 Markdown frontmatter，Zod 验证并原子写入
+- `scripts/check-posts.js`、`scripts/post-stats.js`、`scripts/new-post-cli.js`、`scripts/list-posts.js`：写作 CLI（校验/统计/离线建稿/概览）
+- `scripts/og-card.js` + `scripts/generate-og-images.mjs`：构建时用 satori + resvg 渲染逐篇 OG 分享卡到 `dist/og/`
 - `scripts/post-utils.js`、`scripts/markdown-utils.js`、`scripts/slug.js`、`scripts/content-types.js`：发布和文件操作工具
 
 Worker：
 
-- `src/worker.ts`：Cloudflare Worker 入口，服务端代理自部署 Umami 实现文章浏览量
+- `src/worker.ts`：Cloudflare Worker 入口，服务端代理自部署 Umami 实现文章浏览量与热门文章
 - `src/lib/umami-view-counter.js`：Umami 登录、token 缓存与浏览量查询核心逻辑
+- `src/lib/umami-trending.js`：`/api/trending` 近 30 天热门文章聚合（Cache API 缓存 600s，失败降级空数组）
 - `src/lib/health-check.js`：Worker `/api/health` 健康检查逻辑
 - `src/lib/security-logger.js`：API 调用频率、4xx/5xx 和高错误率告警记录
 - `wrangler.jsonc`：Wrangler 部署配置（Worker 入口、ASSETS binding）
@@ -38,10 +41,14 @@ Worker：
 
 - `word-count.js`：字数统计与阅读时间自动计算
 - `archive.js`：归档数据按年份分组
+- `content.ts`：内容集合到可搜索条目的转换与排序
+- `shared-content.js`：服务端与客户端共享的内容类型、日期与"新文章"判定逻辑
 - `search-index-builder.ts`：构建 MiniSearch 序列化索引并接入 `jieba-wasm` 中文分词
 - `search-client.ts`：客户端懒加载搜索索引，提供高亮、过滤、防抖和搜索历史
 - `article-enhancements/`：图片灯箱、标题锚点、目录、阅读进度、逐段渐显、选择工具栏
-- `site-seo.js`：共享 SEO helpers（RSS/sitemap/OG 等）
+- `site-seo.js`：共享 SEO helpers（RSS/sitemap/OG/canonical/JSON-LD）
+- `escape-regexp.js`、`cdn-hosts.js`：跨脚本共享的正则转义与 CDN 域名白名单单一来源
+- 文章列表页客户端模块在 `src/scripts/articles-index/`（payload/cards/filters/search），`src/pages/articles.astro` 只保留装配与事件绑定
 
 工具页 PWA：
 
@@ -53,9 +60,10 @@ Worker：
 
 - 首页 `/`
   - 从 Astro 内容集合静态生成最近更新。
+  - 人气卡展示 `/api/trending` 返回的近 30 天热门文章（Worker 聚合 Umami 数据构建时标题映射，接口失败时卡片隐藏）。
 - 文章页 `/articles/`
   - 默认展示 blog 集合文章。
-  - 每张卡片展示自动计算的字数（如 "约 3,500 字"）和阅读时间。
+  - 每张卡片展示自动计算的字数（如 "约 3,500 字"）和阅读时间；有头图的文章在卡片右侧展示缩略图。
   - 搜索索引由 `/search-index.json` 提供，客户端首次搜索时懒加载 MiniSearch 索引；中文分词由 `jieba-wasm` 增强。
   - 搜索范围由构建时 payload 的 `searchableTypes` 控制，目前包括 article、work、tool。
   - 搜索结果显示标题、日期、片段和关键词高亮；输入防抖执行，最近 10 条搜索历史保存在 localStorage。
@@ -63,16 +71,19 @@ Worker：
   - 上方有 "文章归档" 入口链接到 `/articles/archive/`。
 - 文章详情 `/articles/{slug}/`
   - 从 `src/content/blog/*.md` 静态生成。
+  - frontmatter `hero` 指定的头图在标题上方展示为封面。
   - meta 区域展示字数和阅读时间（frontmatter 手动 `readTime` 优先）。
+  - `<head>` 注入 og:/twitter:/canonical 与 BlogPosting JSON-LD；`og:image` 统一指向构建时生成的 `/og/{slug}.png` 品牌分享卡。
   - 图片 `alt` 会渲染为灰色说明文字。
   - 图片灯箱、标题锚点、目录、阅读进度、逐段渐显、选择工具栏和 TeX 公式渲染由 `src/lib/article-enhancements/` 运行时增强。
-  - 底部显示 giscus 评论区（基于 GitHub Discussions，懒加载）。
+  - 底部有上一篇/下一篇导航、相关文章 4 篇（构建时按同分类 > 标签重合 > 最新补位静态生成）和分享按钮（带图系统分享 → 复制 OG 卡图片 → 链接分享逐级降级）。
+  - 再往下是 giscus 评论区（基于 GitHub Discussions，懒加载）。
   - 文章卡片底部显示自部署 Umami 统计的浏览量（Worker 代理）。
   - `/articles/` ↔ `/articles/{slug}/` 使用 Astro `ClientRouter`/View Transitions 方向性动画，返回时恢复滚动位置和搜索状态。
 - 文章归档 `/articles/archive/`
   - 按年份分组展示所有非草稿文章时间线，入口在 `/articles/` 内部。
 - 作品页 `/works/`
-  - 使用 Astro 页面和内容集合入口。
+  - 数据驱动：卡片结构、排序（`order`）、按钮（`actions`）和外链都来自 `src/content/works/*.json`，文案经 `i18nPrefix` 引用 `works.*` 双语键。
   - 底部 "工具集" 入口卡片链接到 `/works/tools/`。
 - 工具页 `/works/tools/`
   - 作为作品体系的一部分展示计时器、随机选择器和 Markdown 工具。
@@ -80,7 +91,7 @@ Worker：
 - 更新日志 `/updates/{slug}/`
   - 从 `src/content/updates/*.json` 的结构化 `timeline` 渲染。
 - RSS Feed `/rss.xml`
-  - 构建时由 `@astrojs/rss` 自动生成，排除草稿文章。
+  - 构建时由 `@astrojs/rss` 自动生成，排除草稿文章；正文以 `content:encoded` 输出全文。
   - `BaseLayout` `<head>` 中包含 auto-discovery `<link>`。
 - Sitemap
   - 构建时由 `@astrojs/sitemap` 自动生成，排除 `/new-post/`、`/404` 等非内容页面。
@@ -328,7 +339,7 @@ UI 国际化使用自定义轻量实现，不引入路由级 `/en`：
 
 移动端 TOC 保持右侧 wiki 侧边栏姿态，灯箱支持 1x-4x 缩放、左右箭头、Escape、+/- 和焦点恢复。修改增强行为时，需同时运行 `npm test`（含 `phase-2-5-integration.test.js`、`phase-10-integration.test.js`）并在桌面/移动端验证。
 
-### 内容管理 CLI（Phase 12）
+### 内容管理 CLI（Phase 12 / Phase 14）
 
 `scripts/edit-metadata.js` 是单篇文章元数据编辑工具，测试在 `tests/edit-metadata.test.js`。维护要点：
 
@@ -337,11 +348,37 @@ UI 国际化使用自定义轻量实现，不引入路由级 `/en`：
 - 写入使用临时文件 + rename，失败时清理临时文件
 - `metadata-editor-check.yml` 会在相关文件变更时验证 CLI 测试和 help 入口
 
+Phase 14 补上的写作 CLI 集中在 `scripts/`：`check-posts.js`（frontmatter/日期/标签/链接/R2 资产校验）、`post-stats.js`（字数与阅读时长统计）、`new-post-cli.js`（离线交互建稿，校验函数与发布管线共享）、`list-posts.js`（全站概览）。`publish-post.js` 带覆盖保护（`--force`）、`--version` 和未知参数报错；`tools/api-server.js` 的 Bearer 比较使用 `crypto.timingSafeEqual`。行为测试在 `tests/check-posts.test.js`、`tests/post-stats.test.js`、`tests/new-post-cli.test.js`、`tests/list-posts.test.js`、`tests/api-server.test.js`，CI 门禁为 `cli-commands-check.yml`。
+
 发布流程标签默认值修复位于 `scripts/publish-post.js` 与 `scripts/post-utils.js`，对应测试在 `tests/publish-post.test.js` 和 `tests/post-utils.test.js`。
+
+### 头图与图片尺寸（Phase 15）
+
+- 发布时交互选择头图，sharp 降采样为长边 1600 的 webp 存入 `src/assets/hero/`；详情页封面用 astro:assets 处理，列表页缩略图 `getImage` 输出 480×270。
+- 发布与回填脚本探测图片宽高写入 frontmatter `imageDimensions`，`src/lib/rehype-image-dimensions.js` 在构建时注入 `width`/`height`（首图 eager）以消除 CLS。
+- 已知限制：纯 HTML 内嵌的 `<img>`（如 2025 年度总结）不走 rehype 注入；回填/下载 CDN 资产必须带 Referer `https://workers.calvin-xia.cn/`，否则 403。
+
+### SEO 与 OG 分享卡（Phase 16）
+
+- `src/lib/site-seo.js` 的 `buildSocialMeta` 为全站页面注入 og:/twitter:/canonical；首页 WebSite、文章页 BlogPosting JSON-LD。
+- `scripts/generate-og-images.mjs` 挂在 `npm run build` 链上，用 satori + resvg 渲染 1200×630 品牌卡（含 QR 码与头图缩略）到 `dist/og/`；中文字体取 @fontsource/noto-serif-sc 的 chinese-simplified 全量 .woff 单文件。resvg 不认 webp 数据 URI，缩略图必须先转 PNG 再嵌入。
+
+### 文章导航与热门文章（Phase 17）
+
+- 上一篇/下一篇与相关文章在构建时静态生成，无运行时开销；相关文章权重为同分类 > 标签重合 > 最新补位。
+- RSS 输出全文 `content:encoded`。
+- `/api/trending` 由 `src/lib/umami-trending.js` 聚合 Umami 近 30 天数据，Cache API 缓存 600 秒；首页人气卡消费该接口，失败时隐藏。
+
+### 字体自托管与共享模块（Phase 18）
+
+- 字体经 `@fontsource/noto-serif-sc`、`noto-sans-sc`、`inter`、`jetbrains-mono` 按权重在 `src/layouts/BaseLayout.astro` 引入，CJK 由 unicode-range 分片按需加载；`src/styles/global.css` 与 CSP 中不再有 Google Fonts 来源，不要重新引入。
+- `src/lib/escape-regexp.js`、`src/scripts/safe-init.js`、`src/lib/cdn-hosts.js` 是正则转义、模块初始化保护和 CDN 域名的唯一权威实现，新增脚本直接复用，不要再复制。
+- `src/pages/articles.astro` 的客户端逻辑在 `src/scripts/articles-index/`（payload/cards/filters/search），改动时保持"调用表达式留主 astro、实现进模块"的结构，相关源码契约测试会锁定。
 
 ## CI
 
 - `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages
-- `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出（首页品牌标记与 `_headers` 安全头）
+- `astro-build-check.yml`：安装依赖、构建 Astro，验证首页品牌标记、`_headers` 安全头、社交元数据与 JSON-LD、OG 卡数量（≥14）、RSS 全文和 dist 无已删除测试文章路由
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 - `metadata-editor-check.yml`：当元数据编辑 CLI、测试或依赖变更时，运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口
+- `cli-commands-check.yml`：当写作 CLI、发布脚本或其测试变更时，验证 check/stats/new-post/list-posts 与 publish 参数行为

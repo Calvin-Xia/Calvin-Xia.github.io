@@ -5,17 +5,18 @@ This repository is a static website fully migrated to Astro from root-level HTML
 - Astro config and source: `package.json`, `astro.config.mjs`, `tsconfig.json`, `src/`.
 - Astro content collections: `src/content.config.ts`, `src/content/blog/`, `src/content/works/`, `src/content/tools/`, `src/content/updates/`.
 - Astro styles: `src/styles/global.css`.
-- Astro client scripts: `src/scripts/` (article runtime, view counter, timer, random-selector, markdown-renderer, page-animations, CDN proxy, etc.).
-- Workers runtime: `src/worker.ts` and `src/lib/umami-view-counter.js` proxy article view counts through the self-hosted Umami API (`UMAMI_HOST`/`UMAMI_WEBSITE_ID` are public vars in `wrangler.jsonc`; `UMAMI_USERNAME`/`UMAMI_PASSWORD` are Worker secrets); the detailed `/api/health` response uses the `HEALTH_CHECK_TOKEN` Worker secret.
+- Astro client scripts: `src/scripts/` (article runtime, view counter, timer, random-selector, markdown-renderer, page-animations, CDN proxy, articles-index client modules, safe-init, etc.).
+- Workers runtime: `src/worker.ts` and `src/lib/umami-view-counter.js` proxy article view counts through the self-hosted Umami API (`UMAMI_HOST`/`UMAMI_WEBSITE_ID` are public vars in `wrangler.jsonc`; `UMAMI_USERNAME`/`UMAMI_PASSWORD` are Worker secrets); the detailed `/api/health` response uses the `HEALTH_CHECK_TOKEN` Worker secret. `src/lib/umami-trending.js` powers `/api/trending` (home popularity card).
 - Worker config: `wrangler.jsonc` (Worker entry, ASSETS binding), `.dev.vars.example` (local Worker secret template).
 - Astro static assets: `public/` mirrors deployable static assets such as `storage/`, `.well-known/`, `libs/mammoth/`, and old-URL redirect files.
 - Astro tool routes: `src/pages/works/tools.astro` (作品体系下的工具集), `src/pages/markdown-tool.astro` (Markdown 工具独立页), and `src/pages/articles/archive.astro` (文章归档).
-- RSS and SEO: `src/lib/site-seo.js` (shared SEO helpers), `src/pages/rss.xml.ts` (RSS 2.0 feed), `src/pages/robots.txt.ts`, `astro.config.mjs` (`@astrojs/sitemap` integration).
+- RSS and SEO: `src/lib/site-seo.js` (shared SEO helpers incl. `buildSocialMeta`), `src/pages/rss.xml.ts` (RSS 2.0 feed with full-text `content:encoded`), `src/pages/robots.txt.ts`, `astro.config.mjs` (`@astrojs/sitemap` integration); OG share cards generated at build time by `scripts/generate-og-images.mjs` + `scripts/og-card.js` into `dist/og/`.
 - Comments: `src/components/GiscusComments.astro` (giscus + GitHub Discussions).
 - Article content: `src/lib/word-count.js` (字数 & 阅读时间), `src/lib/archive.js` (归档分组), `src/lib/article-enhancements/` (图片灯箱、标题锚点、目录、阅读进度、逐段渐显).
-- Publishing and local authoring scripts: `scripts/publish-post.js`, `scripts/post-utils.js`, `tools/api-server.js`.
+- Publishing and local authoring scripts: `scripts/publish-post.js`, `scripts/post-utils.js`, `tools/api-server.js`; authoring CLI: `scripts/check-posts.js`, `scripts/post-stats.js`, `scripts/new-post-cli.js`, `scripts/list-posts.js`.
+- Fonts are self-hosted via `@fontsource/*` packages (imports in `src/layouts/BaseLayout.astro`); do not reintroduce Google Fonts `@import` or CSP origins.
 - Other assets: `storage/`, `.well-known/`.
-- CI/CD workflows: `.github/workflows/deploy.yml`, `astro-build-check.yml`, `phase-2-content-check.yml`, `metadata-editor-check.yml`.
+- CI/CD workflows: `.github/workflows/deploy.yml`, `astro-build-check.yml`, `phase-2-content-check.yml`, `metadata-editor-check.yml`, `cli-commands-check.yml`.
 
 When adding new files, keep them in the existing folder conventions and use relative links.
 
@@ -26,9 +27,14 @@ When adding new files, keep them in the existing folder conventions and use rela
 - `npm run preview`: Preview the Astro production build locally.
 - `npm test`: Run Node test suites for content migration, publishing, and local API behavior.
 - `npm run test:coverage`: Run the same tests with Node's experimental coverage report.
+- `npm run lint` / `npm run lint:fix`: Run ESLint checks or auto-fix.
+- `npm run check`: Validate frontmatter, dates, tags, links and R2 asset consistency for all posts.
+- `npm run stats`: Print word count and reading time for all posts.
+- `npm run new-post`: Create a draft post interactively offline (shared validation with the publish pipeline).
+- `npm run list-posts`: Overview of all blog posts.
 - `npm run api`: Start the local new-post API server on `127.0.0.1:4322`.
 - `npm run publish -- --dry-run <obsidian-post-dir>`: Preview an Obsidian→R2 publish plan without writing files or uploading.
-- `npm run publish <obsidian-post-dir>`: Publish an Obsidian post copy into Astro content and upload assets to R2.
+- `npm run publish <obsidian-post-dir>`: Publish an Obsidian post copy into Astro content and upload assets to R2; requires `--force` to overwrite an existing post, probes image dimensions into `imageDimensions`, and offers hero image selection (`--version` prints the tool version).
 - `npx wrangler secret put UMAMI_USERNAME` / `UMAMI_PASSWORD`: Configure the production Worker secrets for the self-hosted Umami API login used by article view counts.
 - `npx wrangler secret put HEALTH_CHECK_TOKEN`: Configure the production Worker secret for the detailed `/api/health` response.
 - `npx wrangler dev`: Start local Wrangler dev server to test the Worker API routes (uses `.dev.vars` for secrets).

@@ -1,6 +1,6 @@
 # Mr.Xia 个人网站
 
-这是一个基于 [Astro](https://astro.build) 的静态个人站点，已从根目录 HTML/CSS/vanilla JS 全面迁移完成。Phase 0-6 已完成：博客、作品、工具和更新日志由 Astro 内容集合驱动，所有页面已转为 Astro 组件，RSS feed、sitemap、giscus 评论区、文章字数/阅读时间、归档页和文章浏览量 Worker 代理均已完成。Phase 4 清理已执行，旧管线文件已移除。
+这是一个基于 [Astro](https://astro.build) 的静态个人站点，已从根目录 HTML/CSS/vanilla JS 全面迁移完成。内容创作（Phase 0-14）：博客、作品、工具和更新日志由 Astro 内容集合驱动，所有页面已转为 Astro 组件，RSS 全文 feed、sitemap、giscus 评论区、文章字数/阅读时间、归档页、中文搜索增强、UI 国际化、文章浏览量与热门文章 Worker 代理均已完成，写作 CLI 覆盖建稿/校验/统计/元数据编辑。站点体验（Phase 15-17）：发布链路自动探测图片尺寸并交互选头图，文章页有头图封面与卡片缩略图、上一篇/下一篇、相关文章和分享按钮，全站 og:/twitter:/canonical + JSON-LD，构建时用 satori 逐篇生成 OG 分享卡。清理收尾（Phase 18）：作品数据单一来源化（`src/content/works/*.json` + schema）、articles 页客户端脚本模块化、`escapeRegExp`/`safeInit`/CDN 白名单共享去重、四族字体经 @fontsource 自托管（CJK 按 unicode-range 分片按需加载）、PWA theme_color 对齐品牌色。
 
 ## 当前结构
 
@@ -83,6 +83,9 @@ npm test
 npm run test:coverage
 npm run lint
 npm run lint:fix
+npm run check
+npm run stats
+npm run list-posts
 npm run api
 npx wrangler secret put UMAMI_USERNAME
 npx wrangler secret put UMAMI_PASSWORD
@@ -93,9 +96,11 @@ npm run publish -- <obsidian-post-dir>
 
 - `npm run api` 启动本地 new-post API，默认监听 `127.0.0.1:4322`
 - `npm run lint` / `npm run lint:fix` 运行 ESLint 检查或自动修复
+- `npm run check` 校验全站文章 frontmatter、日期、标签、站内链接与 R2 资产一致性
+- `npm run stats` / `npm run list-posts` 输出全站文章字数、阅读时间与概览
 - `npx wrangler secret put UMAMI_USERNAME` / `UMAMI_PASSWORD` 注入自部署 Umami 的服务端账号（浏览量 API 登录用）；`HEALTH_CHECK_TOKEN` 用于 `/api/health` 详细响应
 - `npm run publish -- --dry-run <dir>` 只打印 Obsidian→R2 发布计划，不写文件、不上传
-- `npm run publish -- <dir>` 复制 Obsidian Markdown 到 `src/content/blog/`，上传 `file/` 资源到 R2，并替换副本中的资源 URL
+- `npm run publish -- <dir>` 复制 Obsidian Markdown 到 `src/content/blog/`，上传 `file/` 资源到 R2，并替换副本中的资源 URL；自动探测图片尺寸写入 `imageDimensions`，交互式选择头图（存入 `src/assets/hero/`），覆盖已有文章需要 `--force`
 - 文章阅读体验增强由 `src/scripts/article-runtime.js` 统一初始化，并在 Astro `ClientRouter` 页面切换后重新绑定
 
 ## 内容维护
@@ -151,7 +156,10 @@ npm run publish -- 20260429-my-new-post
 
 Phase 2.5 的文章页增强集中在 `src/lib/article-enhancements/`，入口是 `src/scripts/article-runtime.js`，目录容器是 `src/components/ArticleToc.astro`，样式在 `src/styles/global.css`。
 
-- 图片：正文图片会按 `alt` 生成灰色说明文字，点击后打开原生 `<dialog>` 灯箱，支持切换、1x–4x 缩放、滚轮、移动端双指缩放和多种关闭方式。
+- 图片：正文图片会按 `alt` 生成灰色说明文字，点击后打开原生 `<dialog>` 灯箱，支持切换、1x–4x 缩放、滚轮、移动端双指缩放和多种关闭方式；正文图片的宽高由 rehype 从 frontmatter `imageDimensions` 注入，首图 eager 加载。
+- 头图：发布时选择的头图存于 `src/assets/hero/`，详情页在标题上方展示封面，列表卡片右侧展示 480×270 缩略图；`src/assets/hero/*.webp` 属于源码资产。
+- 导航：详情页底部有上一篇/下一篇（日期序）和相关文章 4 篇（构建时按同分类 > 标签重合 > 最新补位生成），全部构建时静态产出。
+- 分享：详情页提供分享按钮，优先带图系统分享，失败降级为复制 OG 卡图片到剪贴板，再降级为链接分享。
 - 标题：`.markdown-content h2/h3/h4` 会生成稳定 id、去重 hash 和可访问 `#` 锚点；标题少于 3 个时目录隐藏。
 - 目录：桌面端显示右侧目录和阅读进度，移动端折叠到文章顶部；滚动时高亮当前章节，重复初始化通过 cleanup 防止事件堆叠。
 - 公式：文章 Markdown 支持 `$...$` 与 `$$...$$`，由 `remark-math` + `rehype-katex` 在构建时渲染，文章页引入 KaTeX CSS。
@@ -169,6 +177,8 @@ Astro 内容集合文件位于：
 - `src/content/works/*.json`
 - `src/content/tools/*.json`
 - `src/content/updates/*.json`
+
+works 卡片是数据驱动的：JSON 保存结构数据（`order` 排序、`i18nPrefix` 引用双语 i18n 键、`actions` 按钮数组、`externalUrl`/`displayTags`/`status`），文案一律走 `works.*` 双语键，改 JSON 即生效；schema 见 `src/content.config.ts`。
 
 更新后运行：
 
@@ -195,9 +205,10 @@ git diff --check
 当前 CI 包括：
 
 - `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages
-- `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出
+- `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出（含 OG 卡数量与无测试文章路由断言）
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 - `metadata-editor-check.yml`：元数据编辑 CLI、测试或依赖变更时运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口
+- `cli-commands-check.yml`：写作 CLI（check/stats/new-post/list-posts）与发布脚本变更时验证命令行为
 
 ## 相关说明文档
 
