@@ -28,9 +28,7 @@ const heroImages = import.meta.glob('../../assets/hero/*.webp', { eager: true, i
 const heroImage = post.data.hero ? heroImages[`../../assets/hero/${post.data.hero}`] : null;
 
 const canonical = new URL(`/articles/${post.id}/`, Astro.site).toString();
-const ogImagePath = heroImage
-    ? new URL(heroImage.src, Astro.site).toString()
-    : new URL(`/og/${post.id}.png`, Astro.site).toString();
+const ogImagePath = new URL(`/og/${post.id}.png`, Astro.site).toString();
 const blogPostingJsonLd = JSON.stringify(buildBlogPostingJsonLd({
     title: post.data.title,
     description: post.data.excerpt,

@@ -1,27 +1,48 @@
 // Post-build step: materialize OG share cards into dist/og/.
-// Posts with a hero image use the hero as og:image (wired in [...slug].astro);
-// every other post gets a rendered title card, plus one site-default card.
+// Every published post gets a branded card (hero posts embed their hero
+// thumbnail; the rest are typographic), plus one site-default card.
 // Usage: node scripts/generate-og-images.mjs [--out <dist-dir>]
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { listPostFiles, readPostFile } from './blog-posts.js';
+import matter from 'gray-matter';
+import { listPostFiles } from './blog-posts.js';
 import { renderDefaultCardPng, renderTitleCardPng } from './og-card.js';
+import { buildCanonicalUrl } from '../src/lib/site-seo.js';
 
 const rootDir = path.resolve(import.meta.dirname, '..');
 const defaultOutputDir = path.join(rootDir, 'dist', 'og');
+const heroDir = path.join(rootDir, 'src', 'assets', 'hero');
 
-export function selectPostsNeedingCards(posts) {
-    return posts
-        .filter((post) => !post.frontmatter.hero)
-        .map((post) => ({
-            id: post.fileName.replace(/\.md$/i, ''),
-            title: String(post.frontmatter.title || ''),
+export async function selectPostsForCards(posts, { siteUrl, heroDir: heroDirOverride } = {}) {
+    const effectiveHeroDir = heroDirOverride || heroDir;
+    const cards = [];
+    for (const post of posts) {
+        const id = post.fileName.replace(/\.md$/i, '');
+        const title = String(post.frontmatter.title || '').trim();
+        if (!title) {
+            continue;
+        }
+
+        const heroPath = path.join(effectiveHeroDir, `${id}.webp`);
+        let thumbBuffer = null;
+        try {
+            thumbBuffer = await readFile(heroPath);
+        } catch {
+            thumbBuffer = null;
+        }
+
+        cards.push({
+            id,
+            title,
             kicker: String(post.frontmatter.category || '文章'),
             date: String(post.frontmatter.date || ''),
-        }))
-        .filter((post) => post.title);
+            url: buildCanonicalUrl(`/articles/${id}/`, { siteUrl }),
+            thumbBuffer,
+        });
+    }
+    return cards;
 }
 
 function printUsage(logger = console) {
@@ -51,10 +72,11 @@ async function main() {
     const files = await listPostFiles(contentDir);
     const posts = [];
     for (const filePath of files) {
-        posts.push(await readPostFile(filePath));
+        const raw = await readFile(filePath, 'utf8');
+        posts.push({ fileName: path.basename(filePath), frontmatter: matter(raw).data || {} });
     }
 
-    const targets = selectPostsNeedingCards(posts);
+    const targets = await selectPostsForCards(posts);
     await mkdir(outputDir, { recursive: true });
 
     let failures = 0;
@@ -62,7 +84,7 @@ async function main() {
         try {
             const png = await renderTitleCardPng(target);
             await writeFile(path.join(outputDir, `${target.id}.png`), png);
-            console.log(`[og] ${target.id}.png (${Math.round(png.length / 1024)}KB)`);
+            console.log(`[og] ${target.id}.png (${Math.round(png.length / 1024)}KB${target.thumbBuffer ? ', 含头图' : ''})`);
         } catch (error) {
             failures += 1;
             console.error(`[og-fail] ${target.id}: ${error.message}`);
@@ -70,7 +92,7 @@ async function main() {
     }
 
     try {
-        const png = await renderDefaultCardPng();
+        const png = await renderDefaultCardPng({ url: buildCanonicalUrl('/') });
         await writeFile(path.join(outputDir, 'default.png'), png);
         console.log(`[og] default.png (${Math.round(png.length / 1024)}KB)`);
     } catch (error) {
@@ -78,7 +100,7 @@ async function main() {
         console.error(`[og-fail] default: ${error.message}`);
     }
 
-    console.log(`\nOG 卡生成完成：${targets.length + 1 - failures} 张（${targets.length} 篇标题卡 + 默认卡），${failures} 个失败。`);
+    console.log(`\nOG 卡生成完成：${targets.length + 1 - failures} 张（${targets.length} 篇文章卡 + 默认卡），${failures} 个失败。`);
     if (failures > 0) {
         process.exitCode = 1;
     }
