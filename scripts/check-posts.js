@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -62,6 +63,31 @@ export function validateFrontmatter(meta = {}) {
         }
     }
 
+    if (meta.hero !== undefined) {
+        if (typeof meta.hero !== 'string' || !meta.hero.trim()) {
+            issues.push({ level: 'error', message: 'hero 必须为非空字符串' });
+        } else if (!/\.(webp|png|jpe?g|avif|gif)$/i.test(meta.hero)) {
+            issues.push({ level: 'error', message: 'hero 应为图片文件名（webp/png/jpg/avif/gif）' });
+        }
+    }
+
+    if (meta.imageDimensions !== undefined) {
+        if (!Array.isArray(meta.imageDimensions)) {
+            issues.push({ level: 'error', message: 'imageDimensions 必须为数组' });
+        } else {
+            for (const item of meta.imageDimensions) {
+                if (
+                    !item
+                    || typeof item.path !== 'string' || !item.path.trim()
+                    || !Number.isFinite(item.width) || item.width <= 0
+                    || !Number.isFinite(item.height) || item.height <= 0
+                ) {
+                    issues.push({ level: 'error', message: `imageDimensions 条目无效: ${JSON.stringify(item)}` });
+                }
+            }
+        }
+    }
+
     return issues;
 }
 
@@ -98,11 +124,22 @@ export function collectInternalArticleSlugs(body) {
     return [...String(body || '').matchAll(INTERNAL_ARTICLE_LINK_PATTERN)].map((match) => match[1]);
 }
 
-export function analyzePost(post, { knownSlugs }) {
+export function analyzePost(post, { knownSlugs, heroDir = '' }) {
     const issues = [];
 
     for (const issue of validateFrontmatter(post.frontmatter)) {
         issues.push({ ...issue, file: post.filePath });
+    }
+
+    const hero = post.frontmatter.hero;
+    if (typeof hero === 'string' && hero.trim() && heroDir) {
+        if (!existsSync(path.join(heroDir, hero))) {
+            issues.push({
+                level: 'error',
+                message: `hero 文件不存在: ${hero}`,
+                file: post.filePath,
+            });
+        }
     }
 
     if (findUntransformedAssetLinks(post.body)) {
@@ -138,7 +175,11 @@ export function analyzePost(post, { knownSlugs }) {
     return issues;
 }
 
-export async function collectPostIssues(contentDir, { online = false, fetchImpl = fetch } = {}) {
+export async function collectPostIssues(contentDir, {
+    online = false,
+    fetchImpl = fetch,
+    heroDir = path.join(rootDir, 'src', 'assets', 'hero'),
+} = {}) {
     const files = await listPostFiles(contentDir);
     const issues = [];
 
@@ -151,7 +192,7 @@ export async function collectPostIssues(contentDir, { online = false, fetchImpl 
 
     for (const filePath of files) {
         const post = await readPostFile(filePath);
-        issues.push(...analyzePost(post, { knownSlugs }));
+        issues.push(...analyzePost(post, { knownSlugs, heroDir }));
         for (const url of collectHttpUrls(post.body)) {
             httpUrls.add(url);
         }

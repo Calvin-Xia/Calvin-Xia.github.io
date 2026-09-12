@@ -5,6 +5,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
+import rehypeImageDimensions from './src/lib/rehype-image-dimensions.js';
 import { remarkBlockquoteBreaks } from './src/lib/remark-blockquote-breaks.js';
 import { remarkMarkHighlight } from './src/lib/remark-mark-highlight.js';
 import { serializeSitemapItem, shouldIncludeSitemapPage } from './src/lib/site-seo.js';
@@ -59,7 +60,7 @@ export default defineConfig({
             defaultColor: false,
         },
         remarkPlugins: [remarkBlockquoteBreaks, remarkMarkHighlight, remarkMath],
-        rehypePlugins: [rehypeKatex],
+        rehypePlugins: [rehypeImageDimensions, rehypeKatex],
     },
     vite: {
         plugins: [resolveAstroPrerenderEntrypoint()],

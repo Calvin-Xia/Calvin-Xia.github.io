@@ -194,3 +194,46 @@ describe('check-posts directory scan', () => {
         assert.ok(report.issues.some((issue) => issue.level === 'warning' && issue.message.includes('unreachable.test')));
     });
 });
+
+describe('check-posts hero and imageDimensions validation', () => {
+    const baseMeta = { title: 'T', date: '2026-06-03', excerpt: 'e', category: 'c', tags: ['a'] };
+
+    test('accepts a well-formed hero and imageDimensions manifest', () => {
+        const issues = validateFrontmatter({
+            ...baseMeta,
+            hero: '20260603-t.webp',
+            imageDimensions: [{ path: 'p/a.jpg', width: 100, height: 50 }],
+        });
+
+        assert.deepEqual(issues, []);
+    });
+
+    test('flags invalid hero and manifest entries', () => {
+        const issues = validateFrontmatter({
+            ...baseMeta,
+            hero: 3,
+            imageDimensions: [{ path: '', width: -1, height: 0 }, 'broken'],
+        });
+        const messages = issues.filter((issue) => issue.level === 'error').map((issue) => issue.message);
+
+        assert.ok(messages.some((message) => message.includes('hero 必须为非空字符串')));
+        assert.equal(messages.filter((message) => message.includes('imageDimensions 条目无效')).length, 2);
+    });
+
+    test('flags a non-array imageDimensions field', () => {
+        const issues = validateFrontmatter({ ...baseMeta, imageDimensions: 'nope' });
+
+        assert.ok(issues.some((issue) => issue.level === 'error' && issue.message.includes('imageDimensions 必须为数组')));
+    });
+
+    test('reports missing hero files when a hero directory is provided', () => {
+        const issues = analyzePost({
+            filePath: 'C:/tmp/20260603-a.md',
+            fileName: '20260603-a.md',
+            frontmatter: { ...baseMeta, hero: 'missing.webp' },
+            body: '',
+        }, { knownSlugs: new Set(['20260603-a']), heroDir: os.tmpdir() });
+
+        assert.ok(issues.some((issue) => issue.level === 'error' && issue.message.includes('hero 文件不存在: missing.webp')));
+    });
+});

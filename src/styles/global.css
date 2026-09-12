@@ -2844,3 +2844,16 @@ html[data-anim-root] .shadowbox:not(.markdown-container):not(.fade-in-up) {
         background: rgba(var(--surface-rgb), 0.78) !important;
     }
 }
+
+.article-cover {
+    margin: 0;
+}
+
+.article-cover img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-muted);
+    box-shadow: var(--shadow-subtle);
+}

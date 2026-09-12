@@ -32,6 +32,12 @@ const blog = defineCollection({
         author: z.string().optional(),
         readTime: z.string().optional(),
         status: z.string().optional(),
+        hero: z.string().optional(),
+        imageDimensions: z.array(z.object({
+            path: z.string(),
+            width: z.number(),
+            height: z.number(),
+        })).optional(),
     }),
 });
 

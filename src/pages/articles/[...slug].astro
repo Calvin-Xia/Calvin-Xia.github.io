@@ -22,6 +22,9 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 const readingStats = computeReadingStats(post.body);
 const readTimeDisplay = post.data.readTime || readingStats.readTimeDisplay;
+
+const heroImages = import.meta.glob('../../assets/hero/*.webp', { eager: true, import: 'default' });
+const heroImage = post.data.hero ? heroImages[`../../assets/hero/${post.data.hero}`] : null;
 ---
 
 <BaseLayout title={`${post.data.title} - Calvin Xia`} description={post.data.excerpt} currentPage="articles">
@@ -56,6 +59,20 @@ const readTimeDisplay = post.data.readTime || readingStats.readTimeDisplay;
                 </span>
             </div>
         </header>
+
+        {heroImage && (
+            <figure class="article-cover">
+                <img
+                    src={heroImage.src}
+                    width={heroImage.width}
+                    height={heroImage.height}
+                    alt={post.data.title}
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                />
+            </figure>
+        )}
 
         <div class="article-reading-layout">
             <section class="markdown-container" aria-label={t('articleDetail.bodyAria')} data-i18n-aria-label="articleDetail.bodyAria">
