@@ -25,13 +25,28 @@ function setButtonDisabled(button, disabled) {
     button.setAttribute('aria-disabled', String(disabled));
 }
 
-function createButton(documentRef, className, label, text) {
+// Linear stroke icons (2px round caps) — same family as the article share
+// button, replacing the old plain-text glyph buttons.
+const LIGHTBOX_ICONS = {
+    previous: '<path d="m15 18-6-6 6-6"/>',
+    next: '<path d="m9 18 6-6-6-6"/>',
+    zoomOut: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/>',
+    zoomIn: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/>',
+    reset: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+    close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+};
+
+function createButton(documentRef, className, label, iconKey) {
     const button = documentRef.createElement('button');
     button.type = 'button';
     button.classList.add('article-lightbox__button', className);
     button.setAttribute('aria-label', label);
     button.setAttribute('title', label);
-    button.textContent = text;
+    button.innerHTML = [
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">',
+        LIGHTBOX_ICONS[iconKey] || '',
+        '</svg>',
+    ].join('');
     return button;
 }
 
@@ -301,12 +316,12 @@ export function createLightboxController({ documentRef = document } = {}) {
         const figure = documentRef.createElement('figure');
         const image = documentRef.createElement('img');
         const caption = documentRef.createElement('figcaption');
-        const previousButton = createButton(documentRef, 'article-lightbox__button--previous', t('articleEnhancements.lightboxPrevious'), '<');
-        const nextButton = createButton(documentRef, 'article-lightbox__button--next', t('articleEnhancements.lightboxNext'), '>');
-        const zoomOutButton = createButton(documentRef, 'article-lightbox__button--zoom-out', t('articleEnhancements.lightboxZoomOut'), '-');
-        const resetButton = createButton(documentRef, 'article-lightbox__button--reset', t('articleEnhancements.lightboxReset'), '1x');
-        const zoomInButton = createButton(documentRef, 'article-lightbox__button--zoom-in', t('articleEnhancements.lightboxZoomIn'), '+');
-        const closeButton = createButton(documentRef, 'article-lightbox__button--close', t('articleEnhancements.lightboxClose'), 'x');
+        const previousButton = createButton(documentRef, 'article-lightbox__button--previous', t('articleEnhancements.lightboxPrevious'), 'previous');
+        const nextButton = createButton(documentRef, 'article-lightbox__button--next', t('articleEnhancements.lightboxNext'), 'next');
+        const zoomOutButton = createButton(documentRef, 'article-lightbox__button--zoom-out', t('articleEnhancements.lightboxZoomOut'), 'zoomOut');
+        const resetButton = createButton(documentRef, 'article-lightbox__button--reset', t('articleEnhancements.lightboxReset'), 'reset');
+        const zoomInButton = createButton(documentRef, 'article-lightbox__button--zoom-in', t('articleEnhancements.lightboxZoomIn'), 'zoomIn');
+        const closeButton = createButton(documentRef, 'article-lightbox__button--close', t('articleEnhancements.lightboxClose'), 'close');
 
         dialog.classList.add('article-lightbox');
         dialog.setAttribute('role', 'dialog');

@@ -1887,6 +1887,9 @@ select:disabled {
 .markdown-content img {
     height: auto;
     border-radius: var(--radius-md);
+    /* Broken images (e.g. CDN hot-link 403 during local preview) render their
+       alt text as a big boxed block — keep that state visually quiet. */
+    color: transparent;
 }
 
 .markdown-content img.article-lightbox-trigger {
@@ -2086,7 +2089,8 @@ select:disabled {
 }
 
 .article-lightbox::backdrop {
-    background: rgba(0, 0, 0, 0.72);
+    background: rgba(8, 12, 11, 0.62);
+    backdrop-filter: blur(10px);
 }
 
 .article-lightbox[open] {
@@ -2108,9 +2112,10 @@ select:disabled {
     justify-content: center;
     gap: 0.45rem;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     padding: 0.45rem;
-    background: rgba(var(--surface-rgb), 0.92);
+    background: rgba(var(--surface-rgb), 0.78);
+    backdrop-filter: blur(16px) saturate(1.15);
     box-shadow: var(--shadow-raised);
 }
 
@@ -2121,11 +2126,10 @@ select:disabled {
     background: var(--surface);
     color: var(--text);
     border-color: var(--border);
-}
-
-.article-lightbox__button--reset {
-    width: auto;
-    padding-inline: 0.75rem;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .article-lightbox__figure {
@@ -2848,9 +2852,7 @@ html[data-anim-root] .shadowbox:not(.markdown-container):not(.fade-in-up) {
 .article-cover {
     margin: 0 auto;
     max-width: var(--article-text-width);
-}
-
-.article-cover img {
+}.article-cover img {
     display: block;
     width: 100%;
     height: auto;
@@ -2901,6 +2903,145 @@ html[data-anim-root] .shadowbox:not(.markdown-container):not(.fade-in-up) {
     color: var(--accent);
     border-color: var(--border-strong);
     background: var(--surface-hover);
+}
+
+.article-adjacent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem;
+    margin-top: 2.2rem;
+}
+
+.article-adjacent:has(.adjacent-card:only-child) {
+    grid-template-columns: 1fr;
+}
+
+.adjacent-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.adjacent-card:hover {
+    border-color: var(--border-strong);
+}
+
+.adjacent-card--next {
+    text-align: right;
+    align-items: flex-end;
+}
+
+.adjacent-label {
+    font-size: 0.78rem;
+    color: var(--accent);
+    letter-spacing: 0.18em;
+}
+
+.adjacent-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.article-related {
+    margin-top: 2.6rem;
+}
+
+.article-related .section-heading {
+    margin-bottom: 1.1rem;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.9rem;
+}
+
+.related-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 1rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.related-card:hover {
+    border-color: var(--border-strong);
+}
+
+.related-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.related-excerpt {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.trending-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+    counter-reset: trending;
+}
+
+.trending-item {
+    counter-increment: trending;
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.trending-rank {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 1.4rem;
+}
+
+.trending-rank::before {
+    content: counter(trending);
+}
+
+.trending-link {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.trending-link:hover {
+    color: var(--accent);
+}
+
+.trending-views {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    white-space: nowrap;
 }
 
 @media (max-width: 480px) {
