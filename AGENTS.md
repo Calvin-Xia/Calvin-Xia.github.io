@@ -38,6 +38,7 @@ When adding new files, keep them in the existing folder conventions and use rela
 - `npx wrangler secret put UMAMI_USERNAME` / `UMAMI_PASSWORD`: Configure the production Worker secrets for the self-hosted Umami API login used by article view counts.
 - `npx wrangler secret put HEALTH_CHECK_TOKEN`: Configure the production Worker secret for the detailed `/api/health` response.
 - `npx wrangler dev`: Start local Wrangler dev server to test the Worker API routes (uses `.dev.vars` for secrets).
+- `npx wrangler deploy`: Build and deploy the production site `calvin-xia.cn` (Cloudflare Workers + ASSETS from `dist/`; run `npm run build` first). The GitHub Pages deployment from `deploy.yml` is an automatic mirror.
 
 ## Coding Style & Naming Conventions
 - Languages: Astro components, TypeScript modules, CSS3, vanilla JavaScript (ES6+).

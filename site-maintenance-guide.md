@@ -375,6 +375,12 @@ Phase 14 补上的写作 CLI 集中在 `scripts/`：`check-posts.js`（frontmatt
 - `src/lib/escape-regexp.js`、`src/scripts/safe-init.js`、`src/lib/cdn-hosts.js` 是正则转义、模块初始化保护和 CDN 域名的唯一权威实现，新增脚本直接复用，不要再复制。
 - `src/pages/articles.astro` 的客户端逻辑在 `src/scripts/articles-index/`（payload/cards/filters/search），改动时保持"调用表达式留主 astro、实现进模块"的结构，相关源码契约测试会锁定。
 
+## 部署
+
+- 生产站点 `https://calvin-xia.cn` 由 Cloudflare Workers 提供：`wrangler.jsonc` 的 `mr-xia-site`，ASSETS 指向 `./dist`，`/api/*` 先走 Worker，自定义域在 Cloudflare 控制台绑定。部署 = 先 `npm run build`，再 `npx wrangler deploy`。
+- GitHub Pages 镜像由 `deploy.yml` 在 push main 时自动构建发布（`https://calvin-xia.github.io`），与生产站相互独立。
+- `public/_headers` 的 CSP：`script-src` 放行 `https://static.cloudflareinsights.com`（Cloudflare Web Analytics beacon 脚本），`connect-src` 放行 `https://cloudflareinsights.com`（beacon 上报）；调整白名单时同步更新 `tests/phase-5-seo-comments.test.js` 的断言。
+
 ## CI
 
 - `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages

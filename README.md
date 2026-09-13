@@ -90,6 +90,7 @@ npm run api
 npx wrangler secret put UMAMI_USERNAME
 npx wrangler secret put UMAMI_PASSWORD
 npx wrangler secret put HEALTH_CHECK_TOKEN
+npx wrangler deploy
 npm run publish -- --dry-run <obsidian-post-dir>
 npm run publish -- <obsidian-post-dir>
 ```
@@ -99,6 +100,7 @@ npm run publish -- <obsidian-post-dir>
 - `npm run check` 校验全站文章 frontmatter、日期、标签、站内链接与 R2 资产一致性
 - `npm run stats` / `npm run list-posts` 输出全站文章字数、阅读时间与概览
 - `npx wrangler secret put UMAMI_USERNAME` / `UMAMI_PASSWORD` 注入自部署 Umami 的服务端账号（浏览量 API 登录用）；`HEALTH_CHECK_TOKEN` 用于 `/api/health` 详细响应
+- `npx wrangler deploy` 先构建后把 `dist/` 以 Worker + ASSETS 部署到生产 `calvin-xia.cn`；`deploy.yml` 部署的 GitHub Pages 是 push main 时的自动镜像
 - `npm run publish -- --dry-run <dir>` 只打印 Obsidian→R2 发布计划，不写文件、不上传
 - `npm run publish -- <dir>` 复制 Obsidian Markdown 到 `src/content/blog/`，上传 `file/` 资源到 R2，并替换副本中的资源 URL；自动探测图片尺寸写入 `imageDimensions`，交互式选择头图（存入 `src/assets/hero/`），覆盖已有文章需要 `--force`
 - 文章阅读体验增强由 `src/scripts/article-runtime.js` 统一初始化，并在 Astro `ClientRouter` 页面切换后重新绑定
@@ -204,7 +206,7 @@ git diff --check
 
 当前 CI 包括：
 
-- `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages
+- `deploy.yml`：push main 时自动构建 Astro 并通过 GitHub Actions 部署到 GitHub Pages（镜像；生产站 `calvin-xia.cn` 由 `npx wrangler deploy` 手动部署）
 - `astro-build-check.yml`：安装依赖、构建 Astro、验证关键静态输出（含 OG 卡数量与无测试文章路由断言）
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 - `metadata-editor-check.yml`：元数据编辑 CLI、测试或依赖变更时运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口
