@@ -1031,15 +1031,15 @@ select:disabled {
 }
 
 .project-list {
-    gap: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: rgba(var(--surface-rgb), 0.74);
-    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
 }
 
 .project-card {
-    border-bottom: 1px solid var(--border-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: rgba(var(--surface-rgb), 0.74);
     padding: clamp(1rem, 3vw, 1.4rem);
     transition:
         border-color var(--duration-fast) var(--ease-standard),
@@ -1048,15 +1048,23 @@ select:disabled {
         transform var(--duration-fast) var(--ease-standard);
 }
 
-.project-card:last-child {
-    border-bottom: 0;
-}
-
 .project-card-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem);
     gap: 1.25rem;
     align-items: start;
+}
+
+/* Half-width grid cards stack internally; the full-width tools card keeps its side-by-side layout. */
+.project-list .project-card-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 901px) {
+    .project-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 .project-card-copy,
