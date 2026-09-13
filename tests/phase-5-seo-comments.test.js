@@ -278,6 +278,9 @@ describe('Phase 5 SEO and comments', () => {
 
         assert.match(scriptSrc, /https:\/\/umami\.calvin-xia\.cn/);
         assert.match(scriptSrc, /https:\/\/giscus\.app/);
+        // Cloudflare Web Analytics beacon loads from static.cloudflareinsights.com and reports to cloudflareinsights.com.
+        assert.match(scriptSrc, /https:\/\/static\.cloudflareinsights\.com/);
+        assert.match(connectSrc, /https:\/\/cloudflareinsights\.com/);
         assert.match(styleSrc, /https:\/\/giscus\.app/);
         assert.match(connectSrc, /https:\/\/umami\.calvin-xia\.cn/);
         assert.match(connectSrc, /https:\/\/giscus\.app/);
