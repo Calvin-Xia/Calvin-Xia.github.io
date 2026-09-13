@@ -5,7 +5,7 @@
     "filePath": "/works/#work-class1-map",
     "tags": ["公开站点", "地图展示", "纪念项目"],
     "category": "数字地图",
-    "externalUrl": "https://class1forever.pages.dev/",
+    "externalUrl": "https://map.calvin-xia.cn/",
     "status": "active",
     "order": 4,
     "i18nPrefix": "works.classMap",
@@ -16,6 +16,6 @@
     ],
     "actions": [
         { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/class1forever.github.io/", "variant": "primary", "external": true },
-        { "key": "works.visitAddress", "href": "https://class1forever.pages.dev/", "variant": "outline", "external": true }
+        { "key": "works.visitAddress", "href": "https://map.calvin-xia.cn/", "variant": "outline", "external": true }
     ]
 }

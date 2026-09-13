@@ -5,7 +5,7 @@
     "filePath": "/works/#work-message-board",
     "tags": ["Cloudflare", "全栈", "D1"],
     "category": "Web 应用",
-    "externalUrl": "https://web-message.pages.dev/",
+    "externalUrl": "https://issue.calvin-xia.cn/",
     "status": "active",
     "order": 5,
     "i18nPrefix": "works.messageBoard",
@@ -15,7 +15,7 @@
         { "key": "works.messageBoard.tagPromo" }
     ],
     "actions": [
-        { "key": "works.visitAddress", "href": "https://web-message.pages.dev/", "variant": "primary", "external": true },
+        { "key": "works.visitAddress", "href": "https://issue.calvin-xia.cn/", "variant": "primary", "external": true },
         { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/web_message/", "variant": "outline", "external": true },
         { "key": "works.promoRepo", "href": "https://github.com/Calvin-Xia/university-psychology-assignment/", "variant": "outline", "external": true }
     ]

@@ -5,7 +5,7 @@
     "filePath": "/works/#work-bridge-map",
     "tags": ["地图", "数字叙事", "团队实践"],
     "category": "数字地图",
-    "externalUrl": "https://wuhan-bridge-map.calvin-xia.workers.dev/",
+    "externalUrl": "https://bridge.calvin-xia.cn/",
     "status": "active",
     "order": 2,
     "i18nPrefix": "works.bridgeMap",
@@ -16,6 +16,6 @@
     ],
     "actions": [
         { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/Wuhan-Bridge-Map/", "variant": "primary", "external": true },
-        { "key": "works.visitAddress", "href": "https://wuhan-bridge-map.calvin-xia.workers.dev/", "variant": "outline", "external": true }
+        { "key": "works.visitAddress", "href": "https://bridge.calvin-xia.cn/", "variant": "outline", "external": true }
     ]
 }

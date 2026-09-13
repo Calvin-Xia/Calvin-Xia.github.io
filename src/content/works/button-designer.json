@@ -5,7 +5,7 @@
     "filePath": "/works/#work-button-block-designer",
     "tags": ["Next.js", "设计工具", "在线体验"],
     "category": "设计工具",
-    "externalUrl": "https://vibeui-generator.pages.dev/",
+    "externalUrl": "https://ui.calvin-xia.cn/",
     "status": "active",
     "order": 14,
     "i18nPrefix": "works.buttonDesigner",
@@ -16,6 +16,6 @@
     ],
     "actions": [
         { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/VibeUIgenerator/", "variant": "primary", "external": true },
-        { "key": "works.visitAddress", "href": "https://vibeui-generator.pages.dev/", "variant": "outline", "external": true }
+        { "key": "works.visitAddress", "href": "https://ui.calvin-xia.cn/", "variant": "outline", "external": true }
     ]
 }
