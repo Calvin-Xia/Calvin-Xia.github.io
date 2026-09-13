@@ -7,7 +7,7 @@
     "category": "设计工具",
     "externalUrl": "https://vibeui-generator.pages.dev/",
     "status": "active",
-    "order": 4,
+    "order": 14,
     "i18nPrefix": "works.buttonDesigner",
     "displayTags": [
         { "text": "Next.js" },

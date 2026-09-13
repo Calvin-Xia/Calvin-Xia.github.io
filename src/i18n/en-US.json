@@ -120,13 +120,70 @@
         "openTools": "Open Tools",
         "staticRepo": "Static Site GitHub Repository",
         "dynamicRepo": "Dynamic Site GitHub Repository",
-        "fingerprint": {
-            "kicker": "Android App",
-            "title": "Fingerprint Verification App",
-            "description": "A lightweight fingerprint verification framework app built with FusionApp 2.0, focused on simple verification flows and ongoing releases.",
-            "meta": "Use cases: local installation, version records, historical feature tracking",
-            "tagApk": "Android APK",
-            "tagUpdates": "Ongoing updates"
+        "downloadRelease": "Download Installer",
+        "promoRepo": "Promo Video Repo",
+        "personalSite": {
+            "kicker": "Site & Blog",
+            "title": "Personal Site calvin-xia.cn",
+            "description": "This very site: an Astro static site with a Cloudflare Worker API powering the blog, works, tools, and update logs.",
+            "meta": "Focus: blog & works archive, bilingual UI, Umami view stats, OG share cards",
+            "tagContent": "Blog & works",
+            "tagWorker": "Workers API"
+        },
+        "bridgeMap": {
+            "kicker": "Digital Map",
+            "title": "Bridges of Wuhan Interactive Map",
+            "description": "An interactive map for the 'Bridges of Wuhan' research project, weaving bridge-by-bridge questions, interviews, and survey charts into one browsable map.",
+            "meta": "Stack: Astro + AMap JS API + ECharts, deployed on Cloudflare Workers",
+            "tagAmap": "AMap API"
+        },
+        "waterline": {
+            "kicker": "Research",
+            "title": "Wuhan Waterline Extraction Workflow",
+            "description": "A reproducible Sentinel-2 L2A workflow for water and shoreline extraction, covering quality auditing, multi-temporal change analysis, and reference-based evaluation.",
+            "meta": "Focus: reproducible methods, dual-reviewer audit protocol, multi-temporal experiments in central Wuhan",
+            "tagSentinel": "Sentinel-2 remote sensing",
+            "tagReproducible": "Reproducible"
+        },
+        "classMap": {
+            "kicker": "Digital Map",
+            "title": "Class 1 Whereabouts Map",
+            "description": "A visual map showing the graduation destinations of Class 1, Grade 2022, balancing memory and accessibility.",
+            "meta": "Focus: graduation destinations, online access, public maintenance",
+            "publicSite": "Public site",
+            "mapDisplay": "Map display",
+            "memorial": "Memorial project"
+        },
+        "messageBoard": {
+            "kicker": "Web App",
+            "title": "Campus Feedback Board",
+            "description": "An online feedback board on Cloudflare Pages Functions + D1 + KV with an ops console; its promo video is built programmatically with Remotion.",
+            "meta": "Stack: full-stack dynamic app, live in production; companion Remotion promo-video repo",
+            "tagD1": "D1 + KV",
+            "tagPromo": "With promo video"
+        },
+        "skills": {
+            "kicker": "AI & Agents",
+            "title": "AI Agent Skill Set",
+            "description": "Three reusable AI agent skills - course review material, architecture analysis, and PRD generation - with scripts, templates, tests, and CI.",
+            "meta": "Focus: SKILL.md conventions, quality self-scores, reusable templates",
+            "tagAgent": "Agent skills",
+            "tagCi": "Tests & CI"
+        },
+        "agentDemo": {
+            "kicker": "AI & Agents",
+            "title": "Remote-Sensing Agent Experiment",
+            "description": "An agent-loop experiment for multi-temporal remote sensing; the first minimal runnable chain is done and serves as a research starting point.",
+            "meta": "Focus: tool-calling loop, scripted policy, experimental project",
+            "tagExperiment": "Experiment"
+        },
+        "courseGrabber": {
+            "kicker": "Productivity",
+            "title": "Course Grabber · Tampermonkey",
+            "description": "A fork of an open-source course-grabbing script with my own iteration: a Tampermonkey port, reworked console UI, and multiple fixes up to v2.5.1.",
+            "meta": "Focus: tested across provinces, scheduled enrollment, my own iteration on the fork",
+            "tagTampermonkey": "Tampermonkey",
+            "tagFork": "Fork + iteration"
         },
         "favorites": {
             "kicker": "Bookmarks",
@@ -136,14 +193,36 @@
             "staticTag": "Static version",
             "dynamicTag": "Dynamic version"
         },
-        "classMap": {
-            "kicker": "Class Map",
-            "title": "Class 1 Whereabouts Map",
-            "description": "A visual map showing the graduation destinations of Class 1, Grade 2022, balancing memory and accessibility.",
-            "meta": "Focus: graduation destinations, online access, public maintenance",
-            "publicSite": "Public site",
-            "mapDisplay": "Map display",
-            "memorial": "Memorial project"
+        "pixelPicker": {
+            "kicker": "Research",
+            "title": "Remote-Sensing Pixel Picker",
+            "description": "An interactive pixel-picking script for Landsat 8 imagery, used to hand-label water and vegetation samples.",
+            "meta": "Use cases: sample labeling, water/vegetation identification",
+            "tagLandsat": "Landsat 8",
+            "tagInteractive": "Interactive picking"
+        },
+        "hackathonAgent": {
+            "kicker": "AI & Agents",
+            "title": "Knowledge Integration Agent",
+            "description": "A ZJU hackathon team project (experimental): multi-textbook parsing, knowledge graph construction, and cross-textbook RAG Q&A.",
+            "meta": "Focus: three-day sprint, complete docs & tests, experimental agent pipeline",
+            "tagKg": "KG + RAG",
+            "tagHackathon": "Hackathon team project"
+        },
+        "assignmentDemo": {
+            "kicker": "Desktop Tool",
+            "title": "Group Assignment Kanban",
+            "description": "An Electron desktop kanban with drag-and-drop tasks, file uploads, and cross-window sync for group assignments.",
+            "meta": "Stack: Electron + React + SQLite/Drizzle, packaged for Windows",
+            "tagDesktop": "Desktop app"
+        },
+        "jsonEditor": {
+            "kicker": "Desktop Tool",
+            "title": "Visual JSON/JSON5 Editor",
+            "description": "A Windows desktop JSON/JSON5 editor with lossless round-trip editing and comment preservation; the v1.0.0 installer is released.",
+            "meta": "Stack: Electron + React + Zustand; installer & portable builds on Releases",
+            "tagRoundTrip": "Lossless round-trip",
+            "tagRelease": "v1.0.0 installer"
         },
         "buttonDesigner": {
             "kicker": "Design Tool",
@@ -152,6 +231,14 @@
             "meta": "Best for: rapid prototypes, button style exploration, component visual tests",
             "designTool": "Design tool",
             "online": "Online demo"
+        },
+        "fingerprint": {
+            "kicker": "Android App",
+            "title": "Fingerprint Verification App",
+            "description": "A lightweight fingerprint verification framework app built with FusionApp 2.0, focused on simple verification flows and ongoing releases.",
+            "meta": "Use cases: local installation, version records, historical feature tracking",
+            "tagApk": "Android APK",
+            "tagUpdates": "Ongoing updates"
         },
         "toolsCard": {
             "kicker": "Tools",

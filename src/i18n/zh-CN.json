@@ -120,13 +120,70 @@
         "openTools": "打开工具集",
         "staticRepo": "静态网页 GitHub Repository",
         "dynamicRepo": "动态网页 GitHub Repository",
-        "fingerprint": {
-            "kicker": "Android 应用",
-            "title": "指纹验证应用",
-            "description": "使用 FusionApp 2.0 编写的指纹验证框架式应用，聚焦轻量验证流程与持续版本迭代。",
-            "meta": "适用场景：本地安装体验、版本更新记录、历史功能追踪",
-            "tagApk": "Android APK",
-            "tagUpdates": "持续更新"
+        "downloadRelease": "下载安装包",
+        "promoRepo": "宣传短片仓库",
+        "personalSite": {
+            "kicker": "网站与博客",
+            "title": "个人主站 calvin-xia.cn",
+            "description": "本站自身：Astro 静态站配合 Cloudflare Worker API，承载博客、作品、工具与更新日志。",
+            "meta": "内容重点：博客与作品集、双语切换、Umami 浏览统计、OG 分享卡",
+            "tagContent": "博客与作品集",
+            "tagWorker": "Workers API"
+        },
+        "bridgeMap": {
+            "kicker": "数字地图",
+            "title": "桥见江城 · 武汉桥梁数字地图",
+            "description": "团队调研实践「桥见江城」的交互数字地图，将一桥一问、访谈观察与问卷图表汇于一张可浏览的地图。",
+            "meta": "技术形态：Astro + 高德 JS API + ECharts，Workers 部署在线可访问",
+            "tagAmap": "高德地图 API"
+        },
+        "waterline": {
+            "kicker": "科研项目",
+            "title": "武汉水体岸线提取工作流",
+            "description": "基于 Sentinel-2 L2A 的水体与岸线提取可复现科研工作流，覆盖质量审计、多时相对比与参考评估。",
+            "meta": "内容重点：可复现方法、双判读者评审协议、中央武汉多时相实验",
+            "tagSentinel": "Sentinel-2 遥感",
+            "tagReproducible": "可复现工作流"
+        },
+        "classMap": {
+            "kicker": "数字地图",
+            "title": "金鹰一班蹭饭地图",
+            "description": "以可视化地图的方式动态展示高 2022 级 1 班毕业去向，兼顾纪念性与可访问性。",
+            "meta": "内容重点：毕业去向展示、在线访问、公开维护",
+            "publicSite": "公开站点",
+            "mapDisplay": "地图展示",
+            "memorial": "纪念项目"
+        },
+        "messageBoard": {
+            "kicker": "Web 应用",
+            "title": "校园问题反馈留言板",
+            "description": "Cloudflare Pages Functions + D1 + KV 的在线留言板，含后台处理台，宣传短片由 Remotion 程序化制作。",
+            "meta": "技术形态：全栈动态应用已上线，配套 Remotion 宣传短片仓库",
+            "tagD1": "D1 + KV",
+            "tagPromo": "附宣传短片"
+        },
+        "skills": {
+            "kicker": "AI 与智能体",
+            "title": "AI Agent 技能集",
+            "description": "三个可复用的 AI agent 技能：课程复习材料、架构分析与 PRD 生成，配套脚本、模板、测试与 CI。",
+            "meta": "内容重点：SKILL.md 规范、质量自评、可复用模板",
+            "tagAgent": "Agent 技能",
+            "tagCi": "测试与 CI"
+        },
+        "agentDemo": {
+            "kicker": "AI 与智能体",
+            "title": "遥感智能体实验链路",
+            "description": "面向多时相遥感的 agent 循环实验仓，已完成第一条可运行的最小链路，作为后续研究起点。",
+            "meta": "内容重点：工具调用循环、脚本化策略、实验性项目",
+            "tagExperiment": "实验项目"
+        },
+        "courseGrabber": {
+            "kicker": "效率工具",
+            "title": "教务抢课脚本 · 油猴版",
+            "description": "fork 开源抢课脚本后的二次开发：油猴化改造、控制台重做与多项修复，迭代至 v2.5.1。",
+            "meta": "内容重点：多省市高校实测、定时开抢、fork 后自有迭代",
+            "tagTampermonkey": "油猴脚本",
+            "tagFork": "Fork 二次开发"
         },
         "favorites": {
             "kicker": "收藏与导航",
@@ -136,14 +193,36 @@
             "staticTag": "静态版",
             "dynamicTag": "动态版"
         },
-        "classMap": {
-            "kicker": "班级地图",
-            "title": "金鹰一班蹭饭地图",
-            "description": "以可视化地图的方式动态展示高 2022 级 1 班毕业去向，兼顾纪念性与可访问性。",
-            "meta": "内容重点：毕业去向展示、在线访问、公开维护",
-            "publicSite": "公开站点",
-            "mapDisplay": "地图展示",
-            "memorial": "纪念项目"
+        "pixelPicker": {
+            "kicker": "科研项目",
+            "title": "遥感影像像素拾取工具",
+            "description": "Landsat 8 影像的交互式像素拾取脚本，用于水体与植被样本的人工标注。",
+            "meta": "适用场景：样本标注、水体/植被判别辅助",
+            "tagLandsat": "Landsat 8",
+            "tagInteractive": "交互拾取"
+        },
+        "hackathonAgent": {
+            "kicker": "AI 与智能体",
+            "title": "学科知识整合智能体",
+            "description": "浙大黑客松团队实验项目：多教材解析、知识图谱构建与跨教材 RAG 问答。",
+            "meta": "内容重点：三天冲刺、完整文档与测试、实验性智能体链路",
+            "tagKg": "知识图谱 + RAG",
+            "tagHackathon": "黑客松团队项目"
+        },
+        "assignmentDemo": {
+            "kicker": "桌面工具",
+            "title": "小组作业协作看板",
+            "description": "Electron 桌面看板：拖拽任务、文件上传与跨窗口同步，面向小组作业协作场景。",
+            "meta": "技术形态：Electron + React + SQLite/Drizzle，支持 Windows 打包",
+            "tagDesktop": "桌面应用"
+        },
+        "jsonEditor": {
+            "kicker": "桌面工具",
+            "title": "JSON/JSON5 可视化编辑器",
+            "description": "Windows 桌面 JSON/JSON5 编辑器，支持无损往返编辑并保留注释，已发布 v1.0.0 安装包。",
+            "meta": "技术形态：Electron + React + Zustand，Release 提供安装包与便携版",
+            "tagRoundTrip": "无损往返编辑",
+            "tagRelease": "v1.0.0 安装包"
         },
         "buttonDesigner": {
             "kicker": "设计工具",
@@ -152,6 +231,14 @@
             "meta": "适合场景：快速原型、按钮样式探索、组件视觉试验",
             "designTool": "设计工具",
             "online": "在线体验"
+        },
+        "fingerprint": {
+            "kicker": "Android 应用",
+            "title": "指纹验证应用",
+            "description": "使用 FusionApp 2.0 编写的指纹验证框架式应用，聚焦轻量验证流程与持续版本迭代。",
+            "meta": "适用场景：本地安装体验、版本更新记录、历史功能追踪",
+            "tagApk": "Android APK",
+            "tagUpdates": "持续更新"
         },
         "toolsCard": {
             "kicker": "工具集",

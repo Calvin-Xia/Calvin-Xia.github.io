@@ -4,10 +4,10 @@
     "date": "2025-12-24",
     "filePath": "/works/#work-class1-map",
     "tags": ["公开站点", "地图展示", "纪念项目"],
-    "category": "班级地图",
+    "category": "数字地图",
     "externalUrl": "https://class1forever.pages.dev/",
     "status": "active",
-    "order": 3,
+    "order": 4,
     "i18nPrefix": "works.classMap",
     "displayTags": [
         { "key": "works.classMap.publicSite" },

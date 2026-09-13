@@ -1,0 +1,19 @@
+{
+    "title": "武汉水体岸线提取工作流",
+    "excerpt": "基于 Sentinel-2 L2A 的水体与岸线提取可复现科研工作流，覆盖质量审计、多时相对比与参考评估。",
+    "date": "2026-08-19",
+    "filePath": "/works/#work-waterline",
+    "tags": ["遥感", "科研", "可复现"],
+    "category": "科研项目",
+    "status": "active",
+    "order": 3,
+    "i18nPrefix": "works.waterline",
+    "displayTags": [
+        { "text": "Python" },
+        { "key": "works.waterline.tagSentinel" },
+        { "key": "works.waterline.tagReproducible" }
+    ],
+    "actions": [
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/Wuhan-Waterline/", "variant": "primary", "external": true }
+    ]
+}

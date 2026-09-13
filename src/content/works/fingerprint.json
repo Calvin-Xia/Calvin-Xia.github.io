@@ -7,7 +7,7 @@
     "category": "Android 应用",
     "featured": true,
     "status": "active",
-    "order": 1,
+    "order": 15,
     "i18nPrefix": "works.fingerprint",
     "displayTags": [
         { "key": "works.fingerprint.tagApk" },

@@ -6,7 +6,7 @@
     "tags": ["静态版", "动态版", "Next.js"],
     "category": "收藏与导航",
     "status": "active",
-    "order": 2,
+    "order": 9,
     "i18nPrefix": "works.favorites",
     "displayTags": [
         { "key": "works.favorites.staticTag" },

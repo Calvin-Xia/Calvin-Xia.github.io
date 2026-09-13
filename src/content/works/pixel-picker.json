@@ -1,0 +1,19 @@
+{
+    "title": "遥感影像像素拾取工具",
+    "excerpt": "Landsat 8 影像的交互式像素拾取脚本，用于水体与植被样本的人工标注。",
+    "date": "2026-05-11",
+    "filePath": "/works/#work-pixel-picker",
+    "tags": ["遥感", "Python", "标注"],
+    "category": "科研项目",
+    "status": "active",
+    "order": 10,
+    "i18nPrefix": "works.pixelPicker",
+    "displayTags": [
+        { "text": "Python" },
+        { "key": "works.pixelPicker.tagLandsat" },
+        { "key": "works.pixelPicker.tagInteractive" }
+    ],
+    "actions": [
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/pixel-picker/", "variant": "primary", "external": true }
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "title": "桥见江城 · 武汉桥梁数字地图",
+    "excerpt": "团队调研实践「桥见江城」的交互数字地图，一桥一问、访谈观察与问卷图表汇于一张可浏览的地图。",
+    "date": "2026-08-26",
+    "filePath": "/works/#work-bridge-map",
+    "tags": ["地图", "数字叙事", "团队实践"],
+    "category": "数字地图",
+    "externalUrl": "https://wuhan-bridge-map.calvin-xia.workers.dev/",
+    "status": "active",
+    "order": 2,
+    "i18nPrefix": "works.bridgeMap",
+    "displayTags": [
+        { "text": "Astro" },
+        { "key": "works.bridgeMap.tagAmap" },
+        { "text": "ECharts" }
+    ],
+    "actions": [
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/Wuhan-Bridge-Map/", "variant": "primary", "external": true },
+        { "key": "works.visitAddress", "href": "https://wuhan-bridge-map.calvin-xia.workers.dev/", "variant": "outline", "external": true }
+    ]
+}

@@ -1,0 +1,19 @@
+{
+    "title": "教务抢课脚本 · 油猴版",
+    "excerpt": "fork 开源抢课脚本后的二次开发：油猴化改造、控制台重做与多项修复，迭代至 v2.5.1。",
+    "date": "2026-09-10",
+    "filePath": "/works/#work-course-grabber",
+    "tags": ["油猴", "抢课", "Fork"],
+    "category": "效率工具",
+    "status": "active",
+    "order": 8,
+    "i18nPrefix": "works.courseGrabber",
+    "displayTags": [
+        { "text": "JavaScript" },
+        { "key": "works.courseGrabber.tagTampermonkey" },
+        { "key": "works.courseGrabber.tagFork" }
+    ],
+    "actions": [
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/Auto_courseGrabber/", "variant": "primary", "external": true }
+    ]
+}

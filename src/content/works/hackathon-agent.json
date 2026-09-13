@@ -1,0 +1,19 @@
+{
+    "title": "学科知识整合智能体",
+    "excerpt": "浙大黑客松团队实验项目：多教材解析、知识图谱构建与跨教材 RAG 问答。",
+    "date": "2026-05-12",
+    "filePath": "/works/#work-hackathon-agent",
+    "tags": ["黑客松", "知识图谱", "RAG"],
+    "category": "AI 与智能体",
+    "status": "active",
+    "order": 11,
+    "i18nPrefix": "works.hackathonAgent",
+    "displayTags": [
+        { "text": "Python" },
+        { "key": "works.hackathonAgent.tagKg" },
+        { "key": "works.hackathonAgent.tagHackathon" }
+    ],
+    "actions": [
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/zju-hackerson-agent-design/", "variant": "primary", "external": true }
+    ]
+}

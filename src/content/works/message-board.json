@@ -1,0 +1,22 @@
+{
+    "title": "校园问题反馈留言板",
+    "excerpt": "Cloudflare Pages Functions + D1 + KV 的在线留言板，含后台处理台，宣传短片由 Remotion 程序化制作。",
+    "date": "2026-06-19",
+    "filePath": "/works/#work-message-board",
+    "tags": ["Cloudflare", "全栈", "D1"],
+    "category": "Web 应用",
+    "externalUrl": "https://web-message.pages.dev/",
+    "status": "active",
+    "order": 5,
+    "i18nPrefix": "works.messageBoard",
+    "displayTags": [
+        { "text": "Cloudflare Pages" },
+        { "key": "works.messageBoard.tagD1" },
+        { "key": "works.messageBoard.tagPromo" }
+    ],
+    "actions": [
+        { "key": "works.visitAddress", "href": "https://web-message.pages.dev/", "variant": "primary", "external": true },
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/web_message/", "variant": "outline", "external": true },
+        { "key": "works.promoRepo", "href": "https://github.com/Calvin-Xia/university-psychology-assignment/", "variant": "outline", "external": true }
+    ]
+}

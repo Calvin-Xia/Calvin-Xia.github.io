@@ -1,0 +1,19 @@
+{
+    "title": "小组作业协作看板",
+    "excerpt": "Electron 桌面看板：拖拽任务、文件上传与跨窗口同步，面向小组作业协作场景。",
+    "date": "2026-05-12",
+    "filePath": "/works/#work-assignment-demo",
+    "tags": ["Electron", "看板", "桌面应用"],
+    "category": "桌面工具",
+    "status": "active",
+    "order": 12,
+    "i18nPrefix": "works.assignmentDemo",
+    "displayTags": [
+        { "text": "Electron" },
+        { "text": "React" },
+        { "key": "works.assignmentDemo.tagDesktop" }
+    ],
+    "actions": [
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/Assignment-Demo/", "variant": "primary", "external": true }
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "title": "个人主站 calvin-xia.cn",
+    "excerpt": "本站自身：Astro 静态站 + Cloudflare Worker API，承载博客、作品、工具与更新日志。",
+    "date": "2026-09-12",
+    "filePath": "/works/#work-personal-site",
+    "tags": ["Astro", "博客", "Workers"],
+    "category": "网站与博客",
+    "externalUrl": "https://calvin-xia.cn/",
+    "status": "active",
+    "order": 1,
+    "i18nPrefix": "works.personalSite",
+    "displayTags": [
+        { "text": "Astro" },
+        { "key": "works.personalSite.tagContent" },
+        { "key": "works.personalSite.tagWorker" }
+    ],
+    "actions": [
+        { "key": "works.visitAddress", "href": "https://calvin-xia.cn/", "variant": "primary", "external": true },
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/Calvin-Xia.github.io/", "variant": "outline", "external": true }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "title": "遥感智能体实验链路",
+    "excerpt": "面向多时相遥感的 agent 循环实验仓，已完成第一条可运行的最小链路，作为后续研究起点。",
+    "date": "2026-08-30",
+    "filePath": "/works/#work-agent-demo",
+    "tags": ["AI Agent", "遥感", "实验"],
+    "category": "AI 与智能体",
+    "status": "active",
+    "order": 7,
+    "i18nPrefix": "works.agentDemo",
+    "displayTags": [
+        { "text": "Python" },
+        { "key": "works.agentDemo.tagExperiment" }
+    ],
+    "actions": [
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/agent-demo/", "variant": "primary", "external": true }
+    ]
+}

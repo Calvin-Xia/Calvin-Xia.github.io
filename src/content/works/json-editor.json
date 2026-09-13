@@ -1,0 +1,20 @@
+{
+    "title": "JSON/JSON5 可视化编辑器",
+    "excerpt": "Windows 桌面 JSON/JSON5 编辑器，支持无损往返编辑并保留注释，已发布 v1.0.0 安装包。",
+    "date": "2026-08-25",
+    "filePath": "/works/#work-json-editor",
+    "tags": ["JSON", "桌面应用", "Electron"],
+    "category": "桌面工具",
+    "status": "active",
+    "order": 13,
+    "i18nPrefix": "works.jsonEditor",
+    "displayTags": [
+        { "text": "Electron" },
+        { "key": "works.jsonEditor.tagRoundTrip" },
+        { "key": "works.jsonEditor.tagRelease" }
+    ],
+    "actions": [
+        { "key": "works.downloadRelease", "href": "https://github.com/Calvin-Xia/json-editor/releases", "variant": "primary", "external": true },
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/json-editor/", "variant": "outline", "external": true }
+    ]
+}

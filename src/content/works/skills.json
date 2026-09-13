@@ -1,0 +1,19 @@
+{
+    "title": "AI Agent 技能集",
+    "excerpt": "三个可复用的 AI agent 技能：课程复习材料、架构分析与 PRD 生成，配套脚本、模板、测试与 CI。",
+    "date": "2026-05-15",
+    "filePath": "/works/#work-skills",
+    "tags": ["AI Agent", "技能", "CI"],
+    "category": "AI 与智能体",
+    "status": "active",
+    "order": 6,
+    "i18nPrefix": "works.skills",
+    "displayTags": [
+        { "text": "Python" },
+        { "key": "works.skills.tagAgent" },
+        { "key": "works.skills.tagCi" }
+    ],
+    "actions": [
+        { "text": "GitHub Repository", "href": "https://github.com/Calvin-Xia/skills/", "variant": "primary", "external": true }
+    ]
+}
