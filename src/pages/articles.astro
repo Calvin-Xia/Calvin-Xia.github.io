@@ -25,14 +25,17 @@ const searchableTypes = ['article', 'work', 'tool'];
 const heroImages = import.meta.glob('../assets/hero/*.webp', { eager: true, import: 'default' });
 const heroThumbs = {};
 for (const [key, image] of Object.entries(heroImages)) {
-    const slug = key.split('/').pop().replace(/\.webp$/, '');
+    const fileName = key.split('/').pop();
     const { src } = await getImage({ src: image, width: 480, height: 270, fit: 'cover', format: 'webp' });
-    heroThumbs[slug] = src;
+    heroThumbs[fileName] = src;
 }
 
+// Keyed by the hero filename the post declares in frontmatter, not by the article
+// slug. The two only coincide by convention, so deriving one from the other silently
+// orphans the thumbnail as soon as an article is renamed.
 function heroThumbFor(item) {
-    const slug = String(item.filePath || '').replace(/^\/articles\//, '').replace(/\/$/, '');
-    return heroThumbs[slug] || null;
+    const heroFile = String(item.hero || '').trim();
+    return heroFile ? heroThumbs[heroFile] || null : null;
 }
 
 const articlesWithThumbs = articles.map((item) => ({ ...item, thumb: heroThumbFor(item) }));

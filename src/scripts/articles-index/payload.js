@@ -7,9 +7,15 @@ export function parseContentSearchPayload() {
     return JSON.parse(payloadElement?.textContent || EMPTY_PAYLOAD);
 }
 
+// `heroThumbs` is keyed by hero filename (what frontmatter declares), not by article
+// slug, so a renamed article keeps its thumbnail as long as it declares the hero.
 export function heroThumbFor(item, heroThumbs = {}) {
-    const slug = String(item.filePath || '').replace(/^\/articles\//, '').replace(/\/$/, '');
-    return item.thumb || heroThumbs[slug] || null;
+    if (item.thumb) {
+        return item.thumb;
+    }
+
+    const heroFile = String(item.hero || '').trim();
+    return heroFile ? heroThumbs[heroFile] || null : null;
 }
 
 export function contentTypeLabel(type, contentTypeKeys = {}) {

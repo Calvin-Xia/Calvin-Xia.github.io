@@ -20,6 +20,9 @@ export interface ContentItem {
     tags: string[];
     category: string;
     featured: boolean;
+    // Declared hero image filename. Consumers must key off this rather than assuming
+    // the hero file is named after the article slug — renamed slugs break that.
+    hero?: string;
     externalUrl?: string;
     status?: string;
     readingStats?: ReadingStats & {
@@ -53,6 +56,10 @@ export function blogEntryToItem(entry: CollectionEntry<'blog'>): ContentItem {
 
     if (entry.data.status) {
         item.status = entry.data.status;
+    }
+
+    if (entry.data.hero) {
+        item.hero = entry.data.hero;
     }
 
     return item;
