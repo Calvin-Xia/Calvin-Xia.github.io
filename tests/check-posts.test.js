@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, test } from 'node:test';
 import {
     analyzePost,
@@ -13,6 +14,7 @@ import {
     validateFrontmatter,
 } from '../scripts/check-posts.js';
 
+const blogDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'content', 'blog');
 const tempDirs = [];
 
 afterEach(async () => {
@@ -235,5 +237,27 @@ describe('check-posts hero and imageDimensions validation', () => {
         }, { knownSlugs: new Set(['20260603-a']), heroDir: os.tmpdir() });
 
         assert.ok(issues.some((issue) => issue.level === 'error' && issue.message.includes('hero 文件不存在: missing.webp')));
+    });
+
+    test('rejects a non-ASCII filename because it would percent-encode the article URL', () => {
+        const issues = analyzePost({
+            filePath: 'C:/tmp/20260315-两小时，环线，慢行.md',
+            fileName: '20260315-两小时，环线，慢行.md',
+            frontmatter: { ...baseMeta },
+            body: '',
+        }, { knownSlugs: new Set(['20260315-两小时，环线，慢行']) });
+
+        const slugIssues = issues.filter((issue) => issue.message.includes('非 ASCII'));
+        assert.equal(slugIssues.length, 1);
+        assert.equal(slugIssues[0].level, 'error');
+    });
+
+    test('every shipped blog filename is ASCII', async () => {
+        const files = (await readdir(blogDir)).filter((name) => name.endsWith('.md'));
+
+        assert.ok(files.length > 0);
+        for (const fileName of files) {
+            assert.match(fileName, /^[A-Za-z0-9._-]+$/, `${fileName} 含非 ASCII 字符`);
+        }
     });
 });

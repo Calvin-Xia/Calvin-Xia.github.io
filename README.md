@@ -86,6 +86,7 @@ npm run lint:fix
 npm run check
 npm run stats
 npm run list-posts
+npm run redirects
 npm run api
 npx wrangler secret put UMAMI_USERNAME
 npx wrangler secret put UMAMI_PASSWORD
@@ -97,8 +98,9 @@ npm run publish -- <obsidian-post-dir>
 
 - `npm run api` 启动本地 new-post API，默认监听 `127.0.0.1:4322`
 - `npm run lint` / `npm run lint:fix` 运行 ESLint 检查或自动修复
-- `npm run check` 校验全站文章 frontmatter、日期、标签、站内链接与 R2 资产一致性
+- `npm run check` 校验全站文章 frontmatter、日期、标签、slug 文件名（必须为 ASCII）、站内链接与 R2 资产一致性
 - `npm run stats` / `npm run list-posts` 输出全站文章字数、阅读时间与概览
+- `npm run redirects` 单独生成 17 个 legacy 跳转页到 `dist/`（`npm run build` 会自动跑；`npm run dev` 不生成）
 - `npx wrangler secret put UMAMI_USERNAME` / `UMAMI_PASSWORD` 注入自部署 Umami 的服务端账号（浏览量 API 登录用）；`HEALTH_CHECK_TOKEN` 用于 `/api/health` 详细响应
 - `npx wrangler deploy` 先构建后把 `dist/` 以 Worker + ASSETS 部署到生产 `calvin-xia.cn`；`deploy.yml` 部署的 GitHub Pages 是 push main 时的自动镜像
 - `npm run publish -- --dry-run <dir>` 只打印 Obsidian→R2 发布计划，不写文件、不上传
@@ -153,6 +155,12 @@ npm run publish -- 20260429-my-new-post
 `/new-post/` 表单只负责把正文写成 `src/content/blog/*.md`，不会上传本地图片，也不会转换 `./file/...` 路径；带本地附件的文章优先走 `npm run publish`。
 
 临时本地写作也可以同时运行 `npm run api` 和 `npm run dev`，打开 `/new-post/` 后用 `NEW_POST_SECRET` 提交表单，生成 `src/content/blog/*.md`。
+
+### 文章 slug 与旧链接
+
+文章文件名即文章 URL，因此必须是纯 ASCII 的英文语义名：`<YYYYMMDD>-<english-slug>`，例如 `20260411-ai-reliance`、`20260315-two-hour-loop-ride`。中文文件名会让 URL 出现百分号转义，`npm run check` 会以 error 拦截。
+
+重命名或删除已发布文章时，必须同步在 `scripts/legacy-redirects.js` 补上旧 URL 的跳转项，两种历史形态都要覆盖：`/blog/<旧名>.html` 与 `/articles/<旧名>/`。否则旧书签、RSS 条目和已分享出去的链接会 404。跳转页统一由 `npm run build` 生成到 `dist/`，`public/` 下不要再手写跳转 HTML。
 
 ### 文章阅读体验维护
 
@@ -211,6 +219,7 @@ git diff --check
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 - `metadata-editor-check.yml`：元数据编辑 CLI、测试或依赖变更时运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口
 - `cli-commands-check.yml`：写作 CLI（check/stats/new-post/list-posts）与发布脚本变更时验证命令行为
+- `legacy-redirects-check.yml`：跳转映射表或页面路由变更时运行跳转测试、生成跳转页到临时目录并断言数量与内容，同时确认 `public/` 下没有手写跳转 HTML
 
 ## 相关说明文档
 

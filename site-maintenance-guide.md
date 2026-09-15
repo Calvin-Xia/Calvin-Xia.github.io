@@ -25,6 +25,7 @@ Astro 内容集合：
 - `scripts/edit-metadata.js`：交互式编辑单篇 Markdown frontmatter，Zod 验证并原子写入
 - `scripts/check-posts.js`、`scripts/post-stats.js`、`scripts/new-post-cli.js`、`scripts/list-posts.js`：写作 CLI（校验/统计/离线建稿/概览）
 - `scripts/og-card.js` + `scripts/generate-og-images.mjs`：构建时用 satori + resvg 渲染逐篇 OG 分享卡到 `dist/og/`
+- `scripts/legacy-redirects.js` + `scripts/generate-redirects.mjs`：legacy URL 映射表与主题化跳转页模板，构建时生成到 `dist/`（`public/` 下不再手写跳转 HTML）
 - `scripts/post-utils.js`、`scripts/markdown-utils.js`、`scripts/slug.js`、`scripts/content-types.js`：发布和文件操作工具
 
 Worker：
@@ -388,3 +389,4 @@ Phase 14 补上的写作 CLI 集中在 `scripts/`：`check-posts.js`（frontmatt
 - `phase-2-content-check.yml`：运行 `npm test`、`npm run test:coverage`、内容结构检查和 Astro build
 - `metadata-editor-check.yml`：当元数据编辑 CLI、测试或依赖变更时，运行 `tests/edit-metadata.test.js` 并验证 CLI help 入口
 - `cli-commands-check.yml`：当写作 CLI、发布脚本或其测试变更时，验证 check/stats/new-post/list-posts 与 publish 参数行为
+- `legacy-redirects-check.yml`：当跳转映射表、生成脚本、文章内容或页面路由变更时，运行跳转测试、生成跳转页到临时目录并断言数量，再由生成脚本自身读回磁盘校验 meta refresh/canonical/JS 跳转/无 JS 兜底四项信号，最后确认 `public/` 下没有手写跳转 HTML

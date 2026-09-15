@@ -9,8 +9,9 @@
     },
     "scripts": {
         "dev": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro dev",
-        "build": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro build && node scripts/generate-og-images.mjs",
+        "build": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro build && node scripts/generate-og-images.mjs && node scripts/generate-redirects.mjs",
         "og": "node scripts/generate-og-images.mjs",
+        "redirects": "node scripts/generate-redirects.mjs",
         "preview": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro preview",
         "astro": "cross-env ASTRO_TELEMETRY_DISABLED=1 astro",
         "api": "node tools/api-server.js",

@@ -96,23 +96,27 @@ describe('og card selection', () => {
         const frontmatter = (title) => `---\ntitle: "${title}"\ndate: "2026-06-03"\nexcerpt: "e"\ncategory: "随笔"\ntags:\n  - "t"\n---\n\n正文\n`;
         await writeFile(path.join(dir, '20260603-with-hero.md'), frontmatter('有头图'), 'utf8');
         await writeFile(path.join(dir, '20260604-no-hero.md'), frontmatter('无头图'), 'utf8');
+        await writeFile(path.join(dir, '20260606-declared-missing.md'), frontmatter('声明了但文件缺失'), 'utf8');
         await writeFile(path.join(dir, '20260605-untitled.md'), '---\ntitle: ""\ndate: "2026-06-05"\n---\n\n正文\n', 'utf8');
         await writeFile(path.join(heroDir, '20260603-with-hero.webp'), Buffer.from('fake-webp'), 'utf8');
 
         const cards = await selectPostsForCards(
             [
-                { fileName: '20260603-with-hero.md', frontmatter: { title: '有头图', date: '2026-06-03', category: '随笔' } },
+                { fileName: '20260603-with-hero.md', frontmatter: { title: '有头图', date: '2026-06-03', category: '随笔', hero: '20260603-with-hero.webp' } },
                 { fileName: '20260604-no-hero.md', frontmatter: { title: '无头图', date: '2026-06-04', category: '随笔' } },
+                { fileName: '20260606-declared-missing.md', frontmatter: { title: '声明了但文件缺失', date: '2026-06-06', category: '随笔', hero: 'does-not-exist.webp' } },
                 { fileName: '20260605-untitled.md', frontmatter: { title: '', date: '2026-06-05' } },
             ],
             { siteUrl: 'https://calvin-xia.cn', heroDir },
         );
 
-        assert.equal(cards.length, 2);
+        assert.equal(cards.length, 3);
         const withHero = cards.find((card) => card.id === '20260603-with-hero');
         const noHero = cards.find((card) => card.id === '20260604-no-hero');
+        const declaredMissing = cards.find((card) => card.id === '20260606-declared-missing');
         assert.ok(Buffer.isBuffer(withHero.thumbBuffer));
         assert.equal(noHero.thumbBuffer, null);
+        assert.equal(declaredMissing.thumbBuffer, null);
         assert.equal(withHero.url, 'https://calvin-xia.cn/articles/20260603-with-hero/');
         assert.equal(withHero.kicker, '随笔');
     });

@@ -25,12 +25,14 @@ export async function selectPostsForCards(posts, { siteUrl, heroDir: heroDirOver
             continue;
         }
 
-        const heroPath = path.join(effectiveHeroDir, `${id}.webp`);
+        const heroFile = String(post.frontmatter.hero || '').trim();
         let thumbBuffer = null;
-        try {
-            thumbBuffer = await readFile(heroPath);
-        } catch {
-            thumbBuffer = null;
+        if (heroFile) {
+            try {
+                thumbBuffer = await readFile(path.join(effectiveHeroDir, heroFile));
+            } catch {
+                thumbBuffer = null;
+            }
         }
 
         cards.push({

@@ -8,7 +8,7 @@ This repository is a static website fully migrated to Astro from root-level HTML
 - Astro client scripts: `src/scripts/` (article runtime, view counter, timer, random-selector, markdown-renderer, page-animations, CDN proxy, articles-index client modules, safe-init, etc.).
 - Workers runtime: `src/worker.ts` and `src/lib/umami-view-counter.js` proxy article view counts through the self-hosted Umami API (`UMAMI_HOST`/`UMAMI_WEBSITE_ID` are public vars in `wrangler.jsonc`; `UMAMI_USERNAME`/`UMAMI_PASSWORD` are Worker secrets); the detailed `/api/health` response uses the `HEALTH_CHECK_TOKEN` Worker secret. `src/lib/umami-trending.js` powers `/api/trending` (home popularity card).
 - Worker config: `wrangler.jsonc` (Worker entry, ASSETS binding), `.dev.vars.example` (local Worker secret template).
-- Astro static assets: `public/` mirrors deployable static assets such as `storage/`, `.well-known/`, `libs/mammoth/`, and old-URL redirect files.
+- Astro static assets: `public/` mirrors deployable static assets such as `storage/`, `.well-known/`, `libs/mammoth/`. Legacy redirect pages are **not** hand-written here; they are generated into `dist/` at build time from `scripts/legacy-redirects.js` (map + themed template) by `scripts/generate-redirects.mjs`. Never add a redirect HTML file under `public/`.
 - Astro tool routes: `src/pages/works/tools.astro` (作品体系下的工具集), `src/pages/markdown-tool.astro` (Markdown 工具独立页), and `src/pages/articles/archive.astro` (文章归档).
 - RSS and SEO: `src/lib/site-seo.js` (shared SEO helpers incl. `buildSocialMeta`), `src/pages/rss.xml.ts` (RSS 2.0 feed with full-text `content:encoded`), `src/pages/robots.txt.ts`, `astro.config.mjs` (`@astrojs/sitemap` integration); OG share cards generated at build time by `scripts/generate-og-images.mjs` + `scripts/og-card.js` into `dist/og/`.
 - Comments: `src/components/GiscusComments.astro` (giscus + GitHub Discussions).
@@ -16,19 +16,20 @@ This repository is a static website fully migrated to Astro from root-level HTML
 - Publishing and local authoring scripts: `scripts/publish-post.js`, `scripts/post-utils.js`, `tools/api-server.js`; authoring CLI: `scripts/check-posts.js`, `scripts/post-stats.js`, `scripts/new-post-cli.js`, `scripts/list-posts.js`.
 - Fonts are self-hosted via `@fontsource/*` packages (imports in `src/layouts/BaseLayout.astro`); do not reintroduce Google Fonts `@import` or CSP origins.
 - Other assets: `storage/`, `.well-known/`.
-- CI/CD workflows: `.github/workflows/deploy.yml`, `astro-build-check.yml`, `phase-2-content-check.yml`, `metadata-editor-check.yml`, `cli-commands-check.yml`.
+- CI/CD workflows: `.github/workflows/deploy.yml`, `astro-build-check.yml`, `phase-2-content-check.yml`, `metadata-editor-check.yml`, `cli-commands-check.yml`, `legacy-redirects-check.yml`.
 
 When adding new files, keep them in the existing folder conventions and use relative links.
 
 ## Build, Test, and Development Commands
 - `npm install`: Install Astro and npm-managed libraries.
 - `npm run dev`: Start the Astro development server, usually at `http://localhost:4321`.
-- `npm run build`: Build the Astro static output into `dist/`.
+- `npm run build`: Build the Astro static output into `dist/`, then generate OG share cards and legacy redirect pages.
 - `npm run preview`: Preview the Astro production build locally.
+- `npm run redirects`: Regenerate the legacy redirect pages on their own (they are otherwise only produced by `npm run build`; `npm run dev` does not generate them).
 - `npm test`: Run Node test suites for content migration, publishing, and local API behavior.
 - `npm run test:coverage`: Run the same tests with Node's experimental coverage report.
 - `npm run lint` / `npm run lint:fix`: Run ESLint checks or auto-fix.
-- `npm run check`: Validate frontmatter, dates, tags, links and R2 asset consistency for all posts.
+- `npm run check`: Validate frontmatter, dates, tags, slug filenames, links and R2 asset consistency for all posts.
 - `npm run stats`: Print word count and reading time for all posts.
 - `npm run new-post`: Create a draft post interactively offline (shared validation with the publish pipeline).
 - `npm run list-posts`: Overview of all blog posts.
@@ -47,6 +48,25 @@ When adding new files, keep them in the existing folder conventions and use rela
 - Reuse CSS variables in `:root` before introducing one-off colors/spacings.
 - Keep JS organized by feature modules in `src/scripts/`.
 
+## Blog Taxonomy
+`src/content/blog/*.md` frontmatter carries two independent dimensions. Keep them strictly separated:
+- `category` — 栏目。每篇恰好一个，只能取 `随笔` / `总结` / `日志`。驱动文章列表的第一个筛选组与卡片角标。
+- `tags` — 主题。跨栏目，每篇 1-4 个，只能取以下封闭白名单：`武汉大学`、`高考`、`旅行`、`铁路`、`人工智能`、`故乡`、`测绘`、`自我`、`劳动`、`语言文化`。
+
+Rules:
+- 白名单是封闭词表：新增词必须是一次显式决定，并同步更新本节列表；不要为单篇文章临时造词。
+- `tags` 不得出现与该篇 `category` 相同的值（历史问题：`学业总结`、`生活总结`、`随笔`、`日志` 曾同时作为 category 和 tag 存在）。
+- 每个 tag 必须写成独立的数组项。禁止用逗号把多个词塞进一个字符串（历史 bug：`- "思考，随笔，旅行，自我"`）。
+- 覆盖度参考：`自我` 覆盖面最广（13 篇中 10 篇），`故乡`、`劳动` 目前各只落在 1 篇。它们是已知的偏冷项，写新文章时优先复用，而不是另造新词。
+- 本约定目前仅由文档约束，没有自动校验，改动 frontmatter 时请自检。
+
+## Blog Slugs
+文章文件名决定 URL（`generateId: fileStem`），因此必须满足两条硬性要求：
+- **只允许 ASCII**：文件名必须匹配 `^[A-Za-z0-9._-]+$`。中文文件名会让 URL 出现百分号转义。`npm run check` 会以 error 拦截。
+- **英文语义名**：`<YYYYMMDD>-<english-semantic-slug>`，例如 `20260411-ai-reliance`、`20260706-short-term-training-diary-1`、`20260315-two-hour-loop-ride`。不要用拼音首字母——发布管线里的 `slugifyTitle()` 会产出 `fxxj-pjcz` 这类不可读结果，手写文件名时请覆盖它。
+
+改名或删除已发布文章时，必须在 `scripts/legacy-redirects.js` 里补上旧 URL 的跳转项（同时覆盖 `/blog/<旧名>.html` 与 `/articles/<旧名>/` 两种历史形态），否则旧书签、RSS 条目和分享链接会 404。跳转页由 `npm run build` 生成，本地可用 `npm run redirects` 单独产出。
+
 ## Testing Guidelines
 Before submitting changes:
 - Run `npm test` for code, content, publishing, or local API changes.
@@ -55,7 +75,7 @@ Before submitting changes:
 - Check layout and behavior on desktop and mobile widths.
 - Validate navigation and interactive components (for example timer/tool interactions).
 - Confirm browser console has no new errors.
-- For Astro blog updates, ensure `src/content/blog/*.md` frontmatter is valid.
+- For Astro blog updates, ensure `src/content/blog/*.md` frontmatter is valid and that `category`/`tags` follow the Blog Taxonomy section above.
 
 ## CI/CD Requirements
 When implementing or modifying file operation features (such as content pipelines, build scripts, data generators, or any logic that reads/writes project files), a corresponding CI/CD configuration and workflow must be provided alongside the implementation. These CI/CD components should:

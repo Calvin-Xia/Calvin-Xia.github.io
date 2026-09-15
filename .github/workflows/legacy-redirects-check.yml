@@ -1,0 +1,68 @@
+name: Legacy Redirects Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/legacy-redirects.js
+      - scripts/generate-redirects.mjs
+      - tests/legacy-redirects.test.js
+      - src/content/blog/**
+      - src/pages/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/legacy-redirects-check.yml
+  pull_request:
+    paths:
+      - scripts/legacy-redirects.js
+      - scripts/generate-redirects.mjs
+      - tests/legacy-redirects.test.js
+      - src/content/blog/**
+      - src/pages/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/legacy-redirects-check.yml
+
+jobs:
+  validate-legacy-redirects:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run legacy redirect tests
+        run: node --test tests/legacy-redirects.test.js
+
+      # The generator validates the map, writes every page, then reads each file back
+      # and asserts it redirects, canonicalizes and keeps a no-JS fallback. A broken
+      # template fails here rather than shipping pages that silently do nothing.
+      - name: Generate redirect pages into a temp dir
+        run: node scripts/generate-redirects.mjs --out .redirect-check
+
+      - name: Assert one page per mapped entry
+        run: |
+          expected=$(node --input-type=module -e "import('./scripts/legacy-redirects.js').then(m => console.log(m.legacyRedirects.length))")
+          actual=$(find .redirect-check -name '*.html' | wc -l)
+          echo "映射条目: $expected，生成文件: $actual"
+          test "$expected" -gt 0
+          test "$actual" -eq "$expected"
+
+      - name: Assert no redirect HTML is hand-written under public/
+        run: |
+          if [ -n "$(find public -name '*.html' -print -quit)" ]; then
+            echo "public/ 下不应再手写跳转页；跳转页统一由 scripts/generate-redirects.mjs 生成:"
+            find public -name '*.html'
+            exit 1
+          fi
+          echo "public/ 下无手写跳转页"

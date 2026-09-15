@@ -9,6 +9,9 @@ const defaultContentDir = path.join(rootDir, 'src', 'content', 'blog');
 
 export const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const LOADER_NAME_PATTERN = /^\d/;
+// The filename stem becomes the article URL, so non-ASCII characters show up as
+// percent-encoded garbage in every link, RSS entry and share card.
+const ASCII_FILENAME_PATTERN = /^[A-Za-z0-9._-]+$/;
 const MARKDOWN_LINK_PATTERN = /!?\[[^\]]*]\(([^)\s]+)\)/g;
 const HTML_IMG_SRC_PATTERN = /<img\b[^>]*\bsrc=["']([^"']+)["']/gi;
 const INTERNAL_ARTICLE_LINK_PATTERN = /\[[^\]]*]\(\/articles\/([^)\s#?/]+)\/?[)#]/g;
@@ -168,6 +171,14 @@ export function analyzePost(post, { knownSlugs, heroDir = '' }) {
         issues.push({
             level: 'warning',
             message: '文件名不以数字开头，content loader 的 [0-9]*.md 模式不会收录该文件',
+            file: post.filePath,
+        });
+    }
+
+    if (!ASCII_FILENAME_PATTERN.test(post.fileName)) {
+        issues.push({
+            level: 'error',
+            message: '文件名含非 ASCII 字符，会让文章 URL 出现百分号转义；请改用英文语义 slug（见 AGENTS.md 的 Blog Taxonomy）',
             file: post.filePath,
         });
     }

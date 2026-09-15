@@ -31,6 +31,9 @@ prd-*/
 dist/
 node_modules/
 
+# 跳转页校验产物（scripts/generate-redirects.mjs --out）
+.redirect-check/
+
 # Local secrets
 .env*
 !.env.example

@@ -12,7 +12,7 @@
 **Interaction Tier**: L2 轻量流畅  
 **Dependencies**: CSS + vanilla JavaScript + IntersectionObserver。不要引入 GSAP、ScrollTrigger、Lenis、Three.js 或全局 custom cursor。  
 **Brand Name**: 全站统一使用 `Calvin Xia`。Header logo 回首页；主导航只放 `文章 / 作品 / 关于`；工具继续归入作品体系。  
-**Scope**: 本规范覆盖首页、文章列表、文章正文、作品页、工具页、关于页、更新日志、`/new-post` 本地页、评论、灯箱、基础表单与导航。它不修改 Worker、RSS、SEO、content schema、发布流程或 legacy 跳转策略。
+**Scope**: 本规范覆盖首页、文章列表、文章正文、作品页、工具页、关于页、更新日志、跳转页（legacy redirect）、`/new-post` 本地页、评论、灯箱、基础表单与导航。它不修改 Worker、RSS、SEO、content schema 或发布流程。
 
 ## 2. Color Palette & Roles
 
@@ -622,6 +622,7 @@ select:disabled {
 - 作品页是轻量项目档案。不要主推单个作品，不需要截图、封面、时间线、状态字段或复杂过滤。
 - 工具页是作品体系的一部分。Timer、Random Selector、Markdown Tool 并列；Markdown 工具可以更像编辑器，但不共享文章正文样式。
 - `/new-post` 是开发环境隐藏辅助页，只做视觉统一和可用性，不增加草稿保存、secret 保存、slug 预览或发布说明。
+- 跳转页是旧链接的兜底页。结构只有品牌头（logo 回首页）加居中提示：kicker、`页面已迁移` 与英文副行、新地址、手动前往按钮；不做主导航、不做 footer。0 秒自动跳转，所以这页只在无 JS、跳转被拦截或爬虫抓取时才会被看到——保持轻量，不要为它复刻整站外壳。明暗双主题都要校准。
 
 ## 6. Depth & Elevation
 
