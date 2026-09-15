@@ -2,11 +2,10 @@
 title: "两小时，环线，慢行"
 date: "2026-03-15"
 excerpt: "这是我第一次乘坐不带前缀的慢绿皮火车。"
-category: "生活总结"
+category: "随笔"
 tags:
-  - "生活总结"
-  - "火车运转"
   - "旅行"
+  - "铁路"
 featured: true
 author: "Mr.Xia"
 readTime: "7分钟"

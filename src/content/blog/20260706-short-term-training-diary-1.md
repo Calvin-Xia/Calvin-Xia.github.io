@@ -4,8 +4,8 @@ date: "2026-07-14"
 excerpt: "从一开始我便期待这次外出实践。"
 category: "日志"
 tags:
-  - "日志"
-  - "随笔"
+  - "测绘"
+  - "自我"
 imageDimensions:
   - path: "short-term-training-diary/departure.jpg"
     width: 3072

@@ -2,11 +2,11 @@
 title: "From Nervousness to Growth: A Reflection on Our Presentation"
 date: "2026-03-28"
 excerpt: "At first, it seemed almost impossible for me to complete this 15-minute presentation with my partner, Zhu."
-category: "学业总结"
+category: "总结"
 tags:
-  - "学业总结"
-  - "英语"
+  - "武汉大学"
   - "自我"
+  - "语言文化"
 featured: true
 status: "active"
 ---

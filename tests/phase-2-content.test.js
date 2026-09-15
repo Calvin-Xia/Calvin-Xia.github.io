@@ -72,7 +72,7 @@ describe('Phase 2 content collections', () => {
 
     test('2025 summary images point to the assets CDN root', async () => {
         const markdown = readFileSync(
-            projectPath('src', 'content', 'blog', '20251231-2025年度总结.md'),
+            projectPath('src', 'content', 'blog', '20251231-year-in-review.md'),
             'utf8',
         );
 

@@ -4,7 +4,8 @@ date: "2026-07-04"
 excerpt: "不要问我从哪里来，我的故乡在远方。我的远方，在前方"
 category: "随笔"
 tags:
-  - "AI辅助"
+  - "高考"
+  - "人工智能"
   - "自我"
 imageDimensions:
   - path: "gaokao-chinese-essay/desert.png"

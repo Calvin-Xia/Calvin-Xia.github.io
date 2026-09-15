@@ -2,11 +2,11 @@
 title: "返校宣讲回顾"
 date: "2026-03-12"
 excerpt: "Momentous but Momentary——何谓生涯规划？"
-category: "学业总结"
+category: "总结"
 tags:
-  - "学业总结"
   - "武汉大学"
-  - "宣讲"
+  - "高考"
+  - "自我"
 featured: true
 author: "Mr.Xia"
 readTime: "7分钟"

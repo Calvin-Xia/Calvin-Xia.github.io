@@ -2,11 +2,10 @@
 title: "我与大语言模型的初次邂逅"
 date: "2026-04-11"
 excerpt: "去找寻人类智能中那些无法被人工智能取代的部分，让大语言模型成为辅助工具，更重要的是，保持思考，笔耕不辍。"
-category: "生活总结"
+category: "随笔"
 tags:
-  - "生活总结"
   - "人工智能"
-  - "思考"
+  - "自我"
 featured: true
 status: "active"
 imageDimensions:

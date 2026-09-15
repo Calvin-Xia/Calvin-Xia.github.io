@@ -4,7 +4,9 @@ date: "2026-07-01"
 excerpt: "无法再见，却被永恒标记。"
 category: "随笔"
 tags:
-  - "思考，随笔，旅行，自我"
+  - "故乡"
+  - "旅行"
+  - "自我"
 imageDimensions:
   - path: "cultural-legacy/sanxia-cities.jpg"
     width: 3999

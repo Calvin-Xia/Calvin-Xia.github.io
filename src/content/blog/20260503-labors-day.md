@@ -4,8 +4,10 @@ date: "2026-05-03"
 excerpt: "劳动在日复一日地 维系 着人本身。维系着那些列车不会脱轨、那些乡镇不会孤悬、那些孩子会继续唱歌、那些塔吊下的夕阳还会照常落下。"
 category: "随笔"
 tags:
-  - "劳动节"
   - "旅行"
+  - "铁路"
+  - "劳动"
+  - "自我"
 imageDimensions:
   - path: "labors-day/climate.jpg"
     width: 3072
