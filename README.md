@@ -32,6 +32,8 @@ mr.xia.github.io/
 
 ## 本地开发
 
+博客正文表格由 `src/lib/rehype-scrollable-tables.js` 包装为可横向滚动的区域，手机端单元格保留最小阅读宽度。`mermaid` 围栏代码块由 `src/scripts/article-mermaid.js` 按需加载本站打包的 Mermaid 渲染，支持主题切换和 Astro 页面导航；宽图可横向滚动，源码可展开查看，加载或语法错误时保留源码。禁用 JavaScript 时仍显示原始代码块。
+
 ```bash
 npm install
 npm run dev

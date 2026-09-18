@@ -26,6 +26,9 @@ jobs:
       - name: Build Astro site
         run: npm run build
 
+      - name: Verify Markdown table and Mermaid output
+        run: node --test tests/scrollable-tables.test.js
+
       - name: Verify static output
         run: |
           test -f dist/index.html

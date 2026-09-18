@@ -5,6 +5,7 @@ This repository is a static website fully migrated to Astro from root-level HTML
 - Astro config and source: `package.json`, `astro.config.mjs`, `tsconfig.json`, `src/`.
 - Astro content collections: `src/content.config.ts`, `src/content/blog/`, `src/content/works/`, `src/content/tools/`, `src/content/updates/`.
 - Astro styles: `src/styles/global.css`.
+- Blog table scroll containers: `src/lib/rehype-scrollable-tables.js`; Mermaid fences: `src/scripts/article-mermaid.js` (self-hosted lazy import, theme-aware, source fallback).
 - Astro client scripts: `src/scripts/` (article runtime, view counter, timer, random-selector, markdown-renderer, page-animations, CDN proxy, articles-index client modules, safe-init, etc.).
 - Workers runtime: `src/worker.ts` and `src/lib/umami-view-counter.js` proxy article view counts through the self-hosted Umami API (`UMAMI_HOST`/`UMAMI_WEBSITE_ID` are public vars in `wrangler.jsonc`; `UMAMI_USERNAME`/`UMAMI_PASSWORD` are Worker secrets); the detailed `/api/health` response uses the `HEALTH_CHECK_TOKEN` Worker secret. `src/lib/umami-trending.js` powers `/api/trending` (home popularity card).
 - Worker config: `wrangler.jsonc` (Worker entry, ASSETS binding), `.dev.vars.example` (local Worker secret template).
