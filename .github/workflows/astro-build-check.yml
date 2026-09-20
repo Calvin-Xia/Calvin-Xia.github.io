@@ -29,6 +29,9 @@ jobs:
       - name: Verify Markdown table and Mermaid output
         run: node --test tests/scrollable-tables.test.js
 
+      - name: Verify giscus comments markup
+        run: node --test tests/giscus-comments.test.js
+
       - name: Verify static output
         run: |
           test -f dist/index.html

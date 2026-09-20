@@ -12,7 +12,9 @@ This repository is a static website fully migrated to Astro from root-level HTML
 - Astro static assets: `public/` mirrors deployable static assets such as `storage/`, `.well-known/`, `libs/mammoth/`. Legacy redirect pages are **not** hand-written here; they are generated into `dist/` at build time from `scripts/legacy-redirects.js` (map + themed template) by `scripts/generate-redirects.mjs`. Never add a redirect HTML file under `public/`.
 - Astro tool routes: `src/pages/works/tools.astro` (作品体系下的工具集), `src/pages/markdown-tool.astro` (Markdown 工具独立页), and `src/pages/articles/archive.astro` (文章归档).
 - RSS and SEO: `src/lib/site-seo.js` (shared SEO helpers incl. `buildSocialMeta`), `src/pages/rss.xml.ts` (RSS 2.0 feed with full-text `content:encoded`), `src/pages/robots.txt.ts`, `astro.config.mjs` (`@astrojs/sitemap` integration); OG share cards generated at build time by `scripts/generate-og-images.mjs` + `scripts/og-card.js` into `dist/og/`.
-- Comments: `src/components/GiscusComments.astro` (giscus + GitHub Discussions).
+- Comments: `src/components/GiscusComments.astro` (giscus + GitHub Discussions). 该组件只出现在文章详情页，有两条必须保留的约束：
+    - giscus 加载器脚本带 `data-astro-rerun`。Astro ClientRouter 会记录并跳过已执行过的脚本，而 giscus 的 `client.js` 每次执行只扫描一次 `.giscus`；去掉该属性后，站内客户端跳转到第二篇文章会留下一个空容器，评论区要硬刷新才恢复。`tests/giscus-comments.test.js` 以构建产物断言拦截该回退（在 `astro-build-check.yml` 里构建之后运行）。
+    - 不要给评论区加 `transition:persist`。giscus 的 iframe `src` 把当前路径烘焙进了 discussion 键值，保留旧容器会让新文章显示上一篇的评论。
 - Article content: `src/lib/word-count.js` (字数 & 阅读时间), `src/lib/archive.js` (归档分组), `src/lib/article-enhancements/` (图片灯箱、标题锚点、目录、阅读进度、逐段渐显).
 - Publishing and local authoring scripts: `scripts/publish-post.js`, `scripts/post-utils.js`, `tools/api-server.js`; authoring CLI: `scripts/check-posts.js`, `scripts/post-stats.js`, `scripts/new-post-cli.js`, `scripts/list-posts.js`.
 - Fonts are self-hosted via `@fontsource/*` packages (imports in `src/layouts/BaseLayout.astro`); do not reintroduce Google Fonts `@import` or CSP origins.

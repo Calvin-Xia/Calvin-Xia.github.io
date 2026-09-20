@@ -436,6 +436,7 @@
         "main": "Skip to main content"
     },
     "comments": {
+        "loading": "Loading comments…",
         "noscript": "Enable JavaScript to load comments."
     },
     "license": {

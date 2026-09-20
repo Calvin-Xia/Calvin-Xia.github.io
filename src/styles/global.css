@@ -2124,7 +2124,11 @@ select:disabled {
 }
 
 .giscus-comments {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     width: min(100%, var(--article-text-width));
+    min-height: 18rem;
     margin-block-start: 2rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -2136,6 +2140,20 @@ select:disabled {
 .giscus-comments .giscus iframe,
 .giscus-comments iframe {
     width: 100%;
+}
+
+/* The placeholder is opt-in from script so that a JavaScript-disabled page shows only the
+   noscript fallback. It doubles as the visible signal when giscus.app is blocked or unreachable:
+   giscus paints its iframe at opacity: 0 until its own load event, which never arrives there. */
+.giscus-placeholder {
+    display: none;
+    margin: 0;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.giscus-comments.is-loading:not(.is-ready) .giscus-placeholder {
+    display: block;
 }
 
 .giscus-fallback {

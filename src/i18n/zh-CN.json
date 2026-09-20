@@ -436,6 +436,7 @@
         "main": "跳到主要内容"
     },
     "comments": {
+        "loading": "评论加载中…",
         "noscript": "请启用 JavaScript 以加载评论功能。"
     },
     "license": {

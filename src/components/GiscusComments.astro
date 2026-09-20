@@ -3,11 +3,17 @@ import { t } from '../lib/i18n.ts';
 ---
 
 <div class="giscus-comments">
+    {/* i18n source contract: 评论加载中… */}
+    <p class="giscus-placeholder" data-i18n="comments.loading">{t('comments.loading')}</p>
     <div class="giscus"></div>
 </div>
 
-<script 
+<!-- data-astro-rerun: Astro's router executes this loader only once per session. Without the
+     attribute every client-side navigation into another article swaps in an empty .giscus mount
+     that giscus never revisits, leaving the comments blank until a full reload. -->
+<script
         is:inline
+        data-astro-rerun
         src="https://giscus.app/client.js"
         data-repo="Calvin-Xia/Calvin-Xia.github.io"
         data-repo-id="R_kgDOQimLyw"
@@ -31,24 +37,8 @@ import { t } from '../lib/i18n.ts';
             return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
         }
 
-        function ensureGiscusFrameReadyListener(iframe) {
-            if (iframe.dataset.giscusReadyListener === 'true') {
-                return;
-            }
-
-            iframe.dataset.giscusReadyListener = 'true';
-            iframe.addEventListener(
-                'load',
-                () => {
-                    iframe.dataset.giscusReady = 'true';
-                    updateGiscusTheme();
-                },
-                { once: true },
-            );
-        }
-
-        function updateGiscusTheme() {
-            const iframe = document.querySelector('iframe.giscus-frame');
+        function updateGiscusTheme(iframe) {
+            iframe = iframe || document.querySelector('iframe.giscus-frame');
             if (!iframe || !iframe.contentWindow) {
                 return;
             }
@@ -61,8 +51,6 @@ import { t } from '../lib/i18n.ts';
             } catch {
                 return;
             }
-
-            ensureGiscusFrameReadyListener(iframe);
 
             if (iframe.classList.contains('giscus-frame--loading') && iframe.dataset.giscusReady !== 'true') {
                 return;
@@ -80,18 +68,74 @@ import { t } from '../lib/i18n.ts';
             );
         }
 
-        window.addEventListener('calvin-theme-change', updateGiscusTheme);
-        document.addEventListener('astro:page-load', updateGiscusTheme);
-
-        let syncAttempts = 0;
-        const maxSyncAttempts = 12;
-        const syncTimer = setInterval(() => {
-            updateGiscusTheme();
-            syncAttempts++;
-            if (document.querySelector('iframe.giscus-frame') || syncAttempts >= maxSyncAttempts) {
-                clearInterval(syncTimer);
+        function revealComments(iframe) {
+            const container = iframe.closest('.giscus-comments');
+            if (container) {
+                container.classList.remove('is-loading');
+                container.classList.add('is-ready');
             }
-        }, 500);
+        }
+
+        function bindGiscusFrame(iframe) {
+            if (iframe.dataset.giscusReadyListener === 'true') {
+                return;
+            }
+
+            iframe.dataset.giscusReadyListener = 'true';
+
+            const onFrameReady = () => {
+                iframe.dataset.giscusReady = 'true';
+                revealComments(iframe);
+                updateGiscusTheme(iframe);
+            };
+
+            if (iframe.classList.contains('giscus-frame--loading')) {
+                iframe.addEventListener('load', onFrameReady, { once: true });
+            } else {
+                onFrameReady();
+            }
+        }
+
+        function collectGiscusFrames(node) {
+            if (!(node instanceof Element)) {
+                return;
+            }
+
+            if (node.classList.contains('giscus-frame')) {
+                bindGiscusFrame(node);
+                return;
+            }
+
+            node.querySelectorAll('iframe.giscus-frame').forEach(bindGiscusFrame);
+        }
+
+        function scanForGiscusFrames() {
+            document.querySelectorAll('iframe.giscus-frame').forEach(bindGiscusFrame);
+        }
+
+        // giscus resolves '.giscus' once per script execution and never observes the DOM again, so
+        // watch for frames instead of racing them with a fixed retry budget.
+        const observer = new MutationObserver((records) => {
+            records.forEach((record) => {
+                record.addedNodes.forEach(collectGiscusFrames);
+            });
+        });
+
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+
+        document.querySelectorAll('.giscus-comments:not(.is-ready)').forEach((container) => {
+            container.classList.add('is-loading');
+        });
+
+        scanForGiscusFrames();
+        window.addEventListener('calvin-theme-change', () => updateGiscusTheme());
+        document.addEventListener('astro:page-load', () => {
+            document.querySelectorAll('.giscus-comments:not(.is-ready)').forEach((container) => {
+                container.classList.add('is-loading');
+            });
+            scanForGiscusFrames();
+            updateGiscusTheme();
+        });
     })();
 </script>
 
