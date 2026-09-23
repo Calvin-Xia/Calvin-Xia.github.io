@@ -1,9 +1,13 @@
 // Worker-side trending articles: proxy the self-hosted Umami metrics API and
 // cache the aggregated top-article list at the edge. Degrades to an empty
 // list on any failure so the homepage card can hide itself.
-import { getUmamiConfig, requestUmamiToken } from './umami-view-counter.js';
+import { getUmamiConfig, requestUmamiToken, UPSTREAM_FETCH_TIMEOUT_MS } from './umami-view-counter.js';
 
 export const TRENDING_CACHE_CONTROL = 'public, max-age=600';
+// Empty results (no data yet, or an upstream failure) are still cached, but
+// only for a short window so a degradation does not hammer Umami on every
+// homepage visit while still recovering quickly.
+export const TRENDING_EMPTY_CACHE_CONTROL = 'public, max-age=60';
 const ARTICLE_PATH_PATTERN = /^\/articles\/(\d{8}[^/]*)\/?$/;
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 20;
@@ -36,6 +40,7 @@ export async function fetchTrendingArticles(env = {}, {
         const token = await requestUmamiToken(env, { forceRefresh: attempt > 0, fetchImpl });
         const response = await fetchImpl(metricsUrl, {
             headers: { Authorization: `Bearer ${token}` },
+            signal: AbortSignal.timeout(UPSTREAM_FETCH_TIMEOUT_MS),
         });
 
         if ((response.status === 401 || response.status === 403) && attempt === 0) {
@@ -69,6 +74,17 @@ export async function fetchTrendingArticles(env = {}, {
     throw new Error('umami trending unauthorized after token refresh');
 }
 
+function buildTrendingResponse(trending) {
+    return Response.json({ trending }, {
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': trending.length > 0
+                ? TRENDING_CACHE_CONTROL
+                : TRENDING_EMPTY_CACHE_CONTROL,
+        },
+    });
+}
+
 export async function handleTrendingRequest(request, env = {}, {
     fetchImpl = globalThis.fetch,
     cachesImpl = globalThis.caches,
@@ -86,25 +102,25 @@ export async function handleTrendingRequest(request, env = {}, {
         }
 
         const trending = await fetchTrendingArticles(env, { limit, fetchImpl });
-        const response = Response.json({ trending }, {
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Cache-Control': TRENDING_CACHE_CONTROL,
-            },
-        });
+        const response = buildTrendingResponse(trending);
 
-        if (cachesImpl?.default && trending.length > 0) {
+        if (cachesImpl?.default) {
             await cachesImpl.default.put(cacheKey, response.clone());
         }
 
         return response;
     } catch (error) {
         console.warn('Unable to load trending articles:', error);
-        return Response.json({ trending: [] }, {
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Cache-Control': 'no-store',
-            },
-        });
+        const response = buildTrendingResponse([]);
+
+        if (cachesImpl?.default) {
+            try {
+                await cachesImpl.default.put(cacheKey, response.clone());
+            } catch (cacheError) {
+                console.warn('Unable to cache trending degradation:', cacheError);
+            }
+        }
+
+        return response;
     }
 }

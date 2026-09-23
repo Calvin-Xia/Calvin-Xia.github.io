@@ -1,5 +1,7 @@
 # 最终决策总览(2026-09-12)
 
+> **历史快照（2026-09-12）**：那一轮的产物，现状见 docs/grilling/2026-09-23-project-audit/00-project-map.md。
+
 > 由 grilling 流程产出:3 轮 20 问全部回答完毕,用户于 Q19 确认共识。
 > 配套文档:[00-project-map.md](00-project-map.md)(事实基础) · [01-design-tree.md](01-design-tree.md)(决策树+默认项 D1-D12) · [02-rounds.md](02-rounds.md)(答复原文) · [04-phases-p14-p18.md](04-phases-p14-p18.md)(分阶段实施规划)。
 

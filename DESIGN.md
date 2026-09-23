@@ -2,6 +2,24 @@
 
 > Calvin Xia 是一个中性、直接、轻装饰的中文个人主页：阅读安静，入口清楚，工具可用，视觉不抢内容。
 
+## 实现状态（2026-09-23）
+
+本节由 2026-09-23 项目审计（批次①-a）按「目标型文档逐条标注实现状态」的既定规则补入；正文数值保留为设计意图，不因实现差异改写。
+
+| 项 | 本规范（目标态） | 实现 | 状态 |
+|---|---|---|---|
+| 响应式断点 | `DESIGN.md:919-926`：1024 / 700 / 420 | `src/styles/global.css` 900(`:2624`) / 767(`:2654`) / 768(`:2798`) / 480(`:2879`)；`src/components/MarkdownToolWidget.astro:285,305` 另用 980 / 640 | **未实现**（实现按内容宽度收敛，未按文档档位；且 767 与 768 两档重叠，见审计 `04-risks.md` 待裁决 C4） |
+| Header 移动端高度 | `DESIGN.md:952`：`min-height: 56px`（≤700） | `src/styles/global.css:2666`：`min-height: 96px`（≤767，两行网格） | **未实现** |
+| Page H1 | `DESIGN.md:172`：`clamp(2.25rem, 5vw, 4rem)` | `src/styles/global.css:243` `h1 { 3.75rem }`；`:499` `.page-title { clamp(3rem, 6vw, 4.35rem) }` | **未实现**（固定值 + 另一套 clamp） |
+| Hero H1 | `DESIGN.md:171`：`clamp(3.25rem, 8vw, 6.25rem)` | `src/styles/global.css:505`：`5.25rem` 固定值 | **未实现** |
+| Section H2 | `DESIGN.md:173`：`clamp(1.75rem, 3vw, 2.75rem)` | `src/styles/global.css:247` `h2 { 2.15rem }`；`:531` `.section-heading { 2rem }` | **未实现** |
+| 类名契约 | `DESIGN.md:289,589,595,601` 定义 `.tool-panel`/`.layout-grid`/`.auto-grid`/`.article-layout`，`:934-1015` 的 media query 示例用这五个类名 | `.article-layout`、`.layout-grid` 在 `src/**` 内**零出现**（连 CSS 都没写）；`.auto-grid`(`global.css:2413`)、`.tool-panel`(`:694`)、`.btn-row`(`:543`、`:2890`) 只有样式规则，无任何标记或脚本引用 | **未实现** |
+| 组件 CSS 不硬编码 hex | `DESIGN.md:149`：颜色必须走 CSS 变量，**除 token 定义本身外**不在组件 CSS 硬编码 hex | `src/scripts/markdown-renderer.ts:868-872` 的 5 处 hex 位于导出用的**独立 HTML 文档**的 `:root` 里，形式上是 token 定义（落在 `:149` 的例外条款内）；真正的问题是它自带一份**与站点平行的 token 副本**（值靠人工对齐，调色板变更不会同步） | **部分未实现**（不是「违规硬编码」，而是 token 值重复维护；且导出文档本就无法引用站点 CSS 变量） |
+| 主题 boot | `DESIGN.md:672-686`：固定浅色默认，不读系统主题 | `src/layouts/BaseLayout.astro:92-100` 与之完全一致 | **已实现** |
+| 色彩 token 表 | `DESIGN.md:17-153` | `src/styles/global.css:1-150` 值逐项一致 | **已实现** |
+
+正文数值保留为设计意图；实现差异以本节与 `docs/grilling/2026-09-23-project-audit/05-doc-drift.md` 为准。
+
 ## 1. Visual Theme & Atmosphere
 
 **Style**: Minimal Chinese Editorial / 极简克制 × 中文优雅  

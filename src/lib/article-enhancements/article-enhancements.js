@@ -1,4 +1,5 @@
 import { enhanceArticleImageCaptions } from '../article-image-captions.js';
+import { resolveArticleContent } from './article-scope.js';
 import { buildHeadingIndex } from './heading-index.js';
 import { initImageLightbox } from './image-lightbox.js';
 import { initReadingProgress } from './reading-progress.js';
@@ -17,8 +18,9 @@ function resolveDocument(root) {
 
 export function initArticleEnhancements(root = document) {
     const documentRef = resolveDocument(root);
-    const searchRoot = root?.querySelector ? root : documentRef;
-    const markdownContent = searchRoot.querySelector?.('.markdown-content');
+    // 作用域收紧到文章正文容器：工具页/发帖预览复用 `.markdown-content` 类名，
+    // 不能用它当判据（见 article-scope.js）。找不到容器就整体跳过。
+    const markdownContent = resolveArticleContent(root);
     const tocRoot = documentRef.querySelector?.('[data-article-toc]');
 
     enhancementCleanups.get(documentRef)?.();

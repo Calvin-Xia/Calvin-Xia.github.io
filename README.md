@@ -21,8 +21,8 @@ mr.xia.github.io/
 ├── scripts/                      # 发布、slug、Markdown、Content-Type 工具
 ├── tools/api-server.js           # 本地 new-post API
 ├── tests/                        # Node test suites
-├── public/                       # Astro 静态资源 + 旧 URL 重定向
-├── .github/workflows/            # CI：构建验证 + 自动部署到 GitHub Pages
+├── public/                       # Astro 静态资源（storage/、.well-known/、libs/）；旧 URL 跳转页由 npm run build 生成到 dist/，不要放在这里
+├── .github/workflows/            # CI：6 个 workflow（构建产物断言、内容全量测试、写作 CLI、元数据编辑、legacy 跳转、GitHub Pages 镜像部署）
 ├── .env.example                  # 本地配置模板，不含真实凭证
 ├── wrangler.jsonc                # Cloudflare Wrangler 配置（Worker 入口、ASSETS binding）
 ├── .dev.vars.example             # Wrangler 本地 Worker secret 模板，不含真实凭证
@@ -88,7 +88,10 @@ npm run lint:fix
 npm run check
 npm run stats
 npm run list-posts
+npm run new-post
+npm run edit-metadata -- <markdown-file>
 npm run redirects
+npm run og
 npm run api
 npx wrangler secret put UMAMI_USERNAME
 npx wrangler secret put UMAMI_PASSWORD
@@ -100,11 +103,14 @@ npm run publish -- <obsidian-post-dir>
 
 - `npm run api` 启动本地 new-post API，默认监听 `127.0.0.1:4322`
 - `npm run lint` / `npm run lint:fix` 运行 ESLint 检查或自动修复
-- `npm run check` 校验全站文章 frontmatter、日期、标签、slug 文件名（必须为 ASCII）、站内链接与 R2 资产一致性
+- `npm run check` 校验全站文章 frontmatter 类型与日期真实性、`src/assets/hero/` 本地文件存在性、正文残留 `file/` 链接、无效 http 链接、`/articles/x/` 内部链接存在性、文件名 ASCII 与 tags 白名单（白名单以 AGENTS.md 的 Blog Taxonomy 为准）；不校验 R2 资产
 - `npm run stats` / `npm run list-posts` 输出全站文章字数、阅读时间与概览
+- `npm run new-post` 离线交互式建稿（与发布管线共享校验，重名拒绝写入；文件名 slug 取标题拼音首字母，需要语义 slug 时请手动重命名并补 legacy 跳转）
+- `npm run edit-metadata -- <markdown-file>` 编辑已有文章 frontmatter（Zod 校验 + 临时文件原子替换；`--skip-validation` 跳过 schema 校验）
 - `npm run redirects` 单独生成 17 个 legacy 跳转页到 `dist/`（`npm run build` 会自动跑；`npm run dev` 不生成）
+- `npm run og` 只重新生成 OG 分享卡到 `dist/og/`，不跑完整构建
 - `npx wrangler secret put UMAMI_USERNAME` / `UMAMI_PASSWORD` 注入自部署 Umami 的服务端账号（浏览量 API 登录用）；`HEALTH_CHECK_TOKEN` 用于 `/api/health` 详细响应
-- `npx wrangler deploy` 先构建后把 `dist/` 以 Worker + ASSETS 部署到生产 `calvin-xia.cn`；`deploy.yml` 部署的 GitHub Pages 是 push main 时的自动镜像
+- `npx wrangler deploy` 把 `dist/` 以 Worker + ASSETS 部署到生产 `calvin-xia.cn`；它不会自动构建，必须先跑 `npm run build`。`deploy.yml` 部署的 GitHub Pages 是 push main 时的自动镜像
 - `npm run publish -- --dry-run <dir>` 只打印 Obsidian→R2 发布计划，不写文件、不上传
 - `npm run publish -- <dir>` 复制 Obsidian Markdown 到 `src/content/blog/`，上传 `file/` 资源到 R2，并替换副本中的资源 URL；自动探测图片尺寸写入 `imageDimensions`，交互式选择头图（存入 `src/assets/hero/`），覆盖已有文章需要 `--force`
 - 文章阅读体验增强由 `src/scripts/article-runtime.js` 统一初始化，并在 Astro `ClientRouter` 页面切换后重新绑定

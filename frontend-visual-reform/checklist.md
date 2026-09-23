@@ -1,5 +1,7 @@
 # 前端视觉重构检查清单
 
+> 历史快照（2026-05-22）：以下通过数与页面数为当时口径（`npm test` 151/151、`npm run build` 19 pages），不是当前数字。
+
 > Sync 2026-05-22: 源码重构与自动验证已同步到本清单。追补主题切换图标、标题换行、Markdown `==...==` 高亮、Astro/Shiki 代码块 light/dark 可读性与 Giscus 消息目标校验后，`npm test` 151/151 通过，`npm run build` 成功生成 19 pages。完整多视口、键盘路径和 legacy preview 项仍保持未完成。
 
 ## 阶段 0 - 基线审计与范围固化

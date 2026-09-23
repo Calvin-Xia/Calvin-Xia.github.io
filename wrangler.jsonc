@@ -13,6 +13,9 @@
         "UMAMI_HOST": "https://umami.calvin-xia.cn",
         "UMAMI_WEBSITE_ID": "48c8309d-6ae9-4050-ac2c-cc5b127950a8"
     },
+    "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+    },
     "observability": {
         "enabled": true,
         "head_sampling_rate": 1,

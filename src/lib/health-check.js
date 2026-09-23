@@ -1,7 +1,8 @@
 import { getUmamiConfig, requestUmamiToken } from './umami-view-counter.js';
 
-export async function checkHealth(env = {}, version = '0.0.1') {
+export async function checkHealth(env = {}) {
     const timestamp = new Date().toISOString();
+    const version = env.CF_VERSION_METADATA?.id ?? 'dev';
     const umami = getUmamiConfig(env);
 
     if (!umami.configured) {

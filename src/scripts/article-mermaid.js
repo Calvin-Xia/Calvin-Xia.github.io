@@ -1,3 +1,5 @@
+import { resolveArticleContent } from '../lib/article-enhancements/article-scope.js';
+
 const diagrams = new WeakMap();
 let renderQueue = Promise.resolve();
 let nextId = 0;
@@ -31,9 +33,18 @@ function prepareDiagram(pre) {
 }
 
 export function renderArticleMermaid(root = document) {
-    const theme = root.ownerDocument?.documentElement.dataset.theme
-        || root.documentElement?.dataset.theme || 'light';
-    const blocks = root.querySelectorAll('.markdown-content pre[data-language="mermaid"], .markdown-content pre:has(code.language-mermaid)');
+    // 只在文章正文容器内渲染：工具页的预览区也有 Mermaid 代码块，但不该被这里改写。
+    const contentRoot = resolveArticleContent(root);
+
+    if (!contentRoot) {
+        return renderQueue;
+    }
+
+    const theme = root.ownerDocument?.documentElement?.dataset?.theme
+        || root.documentElement?.dataset?.theme
+        || contentRoot.ownerDocument?.documentElement?.dataset?.theme
+        || 'light';
+    const blocks = contentRoot.querySelectorAll('pre[data-language="mermaid"], pre:has(code.language-mermaid)');
     for (const pre of blocks) {
         const state = diagrams.get(pre) || prepareDiagram(pre);
         if (state.theme === theme) continue;

@@ -47,6 +47,8 @@
 | Phase 7.5 | 已完成 | `OptimizedIcon` 提供 WebP/PNG 降级；工具页 PWA manifest 和 Service Worker 限定 `/works/tools/` |
 | Phase 8 | 已完成 | 自定义 JSON i18n、Header 无刷新语言切换、`calvin-xia-lang` 持久化；内容集合和备案保持中文 |
 
+> Phase 9–18 见 `README.md` 与 `site-maintenance-guide.md`；本表只覆盖 0–8。
+
 ### 目标目录结构（迁移后）
 
 ```

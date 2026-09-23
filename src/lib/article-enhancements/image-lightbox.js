@@ -303,6 +303,14 @@ export function createLightboxController({ documentRef = document } = {}) {
     }
 
     function ensureDialog() {
+        // ClientRouter 站内导航会整体替换 document.body，而共享控制器（sharedControllers）
+        // 以持久的 document 为键，于是上一页创建的 dialog 会变成脱离节点。继续复用它会让
+        // showModal() 打在脱离节点上：不报错、也没有弹层，表现为「站内导航后再打开的文章页，
+        // 点图片没反应」。这里检测到失效就丢掉缓存，走下面的重建（并重新挂到当前 body）。
+        if (state.dialog && state.dialog.isConnected === false) {
+            state.dialog = null;
+        }
+
         if (state.dialog) {
             return state.dialog;
         }

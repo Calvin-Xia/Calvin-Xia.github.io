@@ -1,16 +1,27 @@
 export const VIEW_COUNTER_CACHE_CONTROL = 'public, max-age=300';
+export const VIEW_COUNTER_ERROR_CACHE_CONTROL = 'no-store';
+
+// Outbound Umami calls must not hang forever when the upstream accepts the
+// connection but never answers: every call site uses this timeout so the
+// existing error-based degradation still fires and the platform timeout is
+// never reached.
+export const UPSTREAM_FETCH_TIMEOUT_MS = 8000;
 
 let cachedToken = null;
 
-function jsonResponse(data, init = {}) {
+function jsonResponse(data, { cacheControl = VIEW_COUNTER_ERROR_CACHE_CONTROL, ...init } = {}) {
     const headers = new Headers(init.headers || {});
     headers.set('Content-Type', 'application/json; charset=utf-8');
-    headers.set('Cache-Control', VIEW_COUNTER_CACHE_CONTROL);
+    headers.set('Cache-Control', cacheControl);
 
     return Response.json(data, {
         ...init,
         headers,
     });
+}
+
+function upstreamSignal() {
+    return AbortSignal.timeout(UPSTREAM_FETCH_TIMEOUT_MS);
 }
 
 function decodeSlug(value) {
@@ -76,6 +87,7 @@ export async function requestUmamiToken(env = {}, { forceRefresh = false, fetchI
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: config.username, password: config.password }),
+        signal: upstreamSignal(),
     });
 
     if (!response.ok) {
@@ -107,6 +119,7 @@ export async function fetchArticleViews(env = {}, slug, fetchImpl = globalThis.f
         const token = await requestUmamiToken(env, { forceRefresh: attempt > 0, fetchImpl });
         const response = await fetchImpl(metricsUrl, {
             headers: { Authorization: `Bearer ${token}` },
+            signal: upstreamSignal(),
         });
 
         if ((response.status === 401 || response.status === 403) && attempt === 0) {
@@ -138,16 +151,25 @@ export async function handleViewCounterRequest(request, env = {}) {
     }
 
     if (!isValidArticleSlug(rawSlug)) {
-        return jsonResponse({ error: 'invalid slug' }, { status: 400 });
+        return jsonResponse({ error: 'invalid slug' }, {
+            status: 400,
+            cacheControl: VIEW_COUNTER_ERROR_CACHE_CONTROL,
+        });
     }
 
     const slug = decodeSlug(rawSlug);
 
     try {
         const views = await fetchArticleViews(env, slug);
-        return jsonResponse({ slug, views });
+        // A null result is a degradation (Umami not configured), not data:
+        // only a real number may be cached for 5 minutes.
+        const cacheControl = views === null
+            ? VIEW_COUNTER_ERROR_CACHE_CONTROL
+            : VIEW_COUNTER_CACHE_CONTROL;
+
+        return jsonResponse({ slug, views }, { cacheControl });
     } catch (error) {
         console.warn('Unable to load article views:', error);
-        return jsonResponse({ slug, views: null });
+        return jsonResponse({ slug, views: null }, { cacheControl: VIEW_COUNTER_ERROR_CACHE_CONTROL });
     }
 }

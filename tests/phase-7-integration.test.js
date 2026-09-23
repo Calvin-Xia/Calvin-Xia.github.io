@@ -37,17 +37,13 @@ describe('Phase 7 integration', () => {
         assert.ok(elapsed < 200, `expected search under 200ms, got ${elapsed}ms`);
     });
 
-    test('health check degrades gracefully when Analytics Engine is not available', async () => {
-        const mockAnalytics = {
-            query: async () => ({ rows: [] }),
-        };
-
+    test('health check degrades gracefully when the analytics backend is not configured', async () => {
         const result = await checkHealth({
-            analyticsEngine: mockAnalytics,
-            version: '1.0.0',
+            CF_VERSION_METADATA: { id: 'test-version' },
         });
 
         assert.equal(result.status, 'degraded');
+        assert.equal(result.version, 'test-version');
         assert.equal(result.dependencies.analytics.status, 'not_configured');
     });
 });
