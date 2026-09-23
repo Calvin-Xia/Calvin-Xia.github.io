@@ -128,3 +128,20 @@
 | 已关闭（上级 agent 直接补齐） | P3-26（回滚链路） |
 | C 类（需偏好裁决） | C1 ← P2-11；C2 ← P2-20；C3 ← `05-doc-drift.md` 的 `DESIGN.md` 数值口径（标注已完成，口径未定）；C4 ← P2-17；C5 ← P2-18（除 `WORKER_VERSION` 外的死字段/死 CSS） |
 | **未定**（不在已批准的 10 项内，需再裁决或加批） | P1-7、P2-12、P2-13、P2-16、P3-21～P3-35（除已关闭的 P3-26）、§4 的覆盖空洞（除 lint 一行） |
+
+---
+
+## 6. 批次② 落地记录（2026-09-23）
+
+六项已批准条目全部落地，逐项实测与原规划的差异如下：
+
+| 编号 | 落地情况 | 与规划的差异 / 需要知道的取舍 |
+|---|---|---|
+| 2-1 | 四处出站调用统一 `AbortSignal.timeout(8000)`（常量 `UPSTREAM_FETCH_TIMEOUT_MS`） | `health-check.js` 本身不发请求，它复用 `requestUmamiToken`，所以超时在 `umami-view-counter.js` 内部生效 —— 无需在 health 侧重复加 signal |
+| 2-2 | `jsonResponse()` 的默认缓存头改为 `no-store`，只有拿到真实数字的成功态显式传 `max-age=300` | 默认值反转让“忘记传参”的失败面变安全；调用点已逐一显式传值 |
+| 2-3 | 空结果与故障降级都写入边缘缓存，TTL 60s；成功态仍 600s | **取舍（已被上级 agent 接受并在此备案）**：故障响应发给浏览器的头由 `no-store` 变为 `public, max-age=60`。若要让浏览器侧仍 `no-store`，需要把「边缘缓存副本」与「返回给客户端的响应」拆成两个对象；当前选择是用最多 60s 的陈旧空结果换取「故障期不再每次首页访问都打上游（含登录重试）」。首页热门卡默认 `hidden`，因此用户可见影响是“恢复后最多 60s 内卡片仍不出现”。 |
+| 2-4 | `npm run lint` 加在 `phase-2-content-check.yml` 的 `npm test` 之前 | 未加 `--max-warnings 0`（现有 warning 不属本批），触发条件不变 |
+| 2-5 | `wrangler.jsonc` 增 `version_metadata.binding = CF_VERSION_METADATA`；`worker.ts` 的 `Env` 删 `WORKER_VERSION`、health 版本取 `env.CF_VERSION_METADATA?.id ?? 'dev'`；`checkHealth(env)` 不再接第二参数 | 顺带清掉 `tests/phase-7-integration.test.js` 里遗留的死参数（`{ analyticsEngine, version: '1.0.0' }` → `CF_VERSION_METADATA`），该文件原不在批次② 清单内但属于同一逻辑变更 |
+| 2-6 | 根 `storage/` 的 3 个跟踪文件已 `git rm`，`public/storage/` 5 个文件未动 | 删除前复跑引用面：页面用的是 `/storage/*` URL（由 `public/storage/` 应答），无任何代码读取根目录路径 |
+
+验证口径：`npm test` 433/433（改动前 414，+19 断言）、`npm run lint` 0 error、`npm run check` 0 错误、`npm run build` 成功。`wrangler.jsonc` 的合法性由 `npx wrangler deploy --dry-run` 实际验证（无需登录/联网），输出确认已识别 `CF_VERSION_METADATA — Worker Version Metadata`。
