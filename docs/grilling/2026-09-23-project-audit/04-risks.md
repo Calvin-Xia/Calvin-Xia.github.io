@@ -31,7 +31,7 @@
 
 | # | 风险 | 标度 | 复跑证据 / 出处 | 归属 |
 |---|---|---|---|---|
-| P2-11 | **镜像站 canonical 自指**：`deploy.yml` 用 `vars.BASE_URL` 兜底 `https://calvin-xia.github.io` 当 `site` → 若仓库变量未设，GH Pages 的 canonical/og:url/sitemap 指向自己，与主域形成两份互指副本 | `[报告]`；`[复核]` 兜底值 | `[复核]` `.github/workflows/deploy.yml:37-38` = `BASE_URL: ${{ vars.BASE_URL \|\| 'https://calvin-xia.github.io' }}`；`astro.config.mjs:17-25,40` | **C 类（C1）** |
+| P2-11 | **镜像站 canonical 自指**：`deploy.yml` 用 `vars.BASE_URL` 兜底 `https://calvin-xia.github.io` 当 `site` → 若仓库变量未设，GH Pages 的 canonical/og:url/sitemap 指向自己，与主域形成两份互指副本 | `[报告]`；`[复核]` 兜底值 | `[复核]` `.github/workflows/deploy.yml:37-38` = `BASE_URL: ${{ vars.BASE_URL \|\| 'https://calvin-xia.github.io' }}`；`astro.config.mjs:17-25,40` | **已实测排除（2026-09-23）**：镜像内容页的 canonical/og:url 实测指向 `https://calvin-xia.cn/...`，不自指；只有 legacy 跳转页的 canonical 走 `BASE_URL`（极低影响，不修）。见 §10 |
 | P2-12 | **Umami 数据被镜像污染**：查询只按 `url` 路径不过滤 hostname，而镜像页同样上报同一 website（website-id 硬编码）→ 主站阅读量/趋势被镜像流量混入 | `[报告]` | `src/lib/umami-view-counter.js:103-104`、`src/lib/umami-trending.js:32-34`、`src/layouts/BaseLayout.astro:82`；`reports/lane-3-runtime.md` §10-P2-5 | **未定**（量化方式见 [`03-decisions.md`](03-decisions.md) F5） |
 | P2-13 | **改名文章的历史浏览量丢失**：4 篇中文 slug 改名后计数器只查新路径，旧路径累计值从展示与趋势榜消失 | `[报告]`；`[复核]` 映射表 17 条含 4 条改名 | `[复核]` `scripts/legacy-redirects.js` 的 4 条 `/articles/<中文>/` → 新 slug；`src/lib/umami-view-counter.js:41-46`；`reports/lane-3-runtime.md` §10-P2-6 | **未定** |
 | P2-14 | **CI 缺 lint / 类型检查**：`npm run lint`、`astro check`、`tsc --noEmit` 全都不在 CI 里；且 4 条 check 只 `push: [main]`，非 main 分支 push 零门禁；`src/worker.ts` 无专属 workflow | `[核实]` | `[复核]` `grep -rn "npm run lint\|astro check\|tsc --noEmit" .github/workflows/` → **0 命中**；`reports/lane-4-toolchain.md` §10 | **批次② 2-4**（已批准）：`npm run lint` 加进 `phase-2-content-check.yml`；`astro check`/`tsc`/非 main 门禁/worker 专属 workflow **未定** |
@@ -226,5 +226,45 @@ PR #15 上 `chatgpt-codex-connector[bot]` 提了 1 条 P2 inline 意见，指向
 | 真实浏览器（同一脚本、修复前后各跑一次） | `afterSecondClick`：修复前 `inDom/connected/open = 0/0/0`（点图片无反应）→ 修复后 `1/1/1` ✅；`afterFirstClick` 两边都是 `1/1/1`；导航离开后 dialog 随 body 一起消失（预期） |
 
 说明：现修法会在每次 `open()` 时读一次 `isConnected`（几乎零成本），代价可忽略；备选的「按当前 body 作为共享键」需要改 `sharedControllers` 的语义与相关测试，收益不明显。
+
+---
+
+## 10. 上线与生产验证（2026-09-23）
+
+合并（`317dc4d`，merge commit）→ GitHub Pages 部署 → 镜像实测 → `ff-only` 收 main → 生产 `npm run build` + `npx wrangler deploy`（version `c9554cf7-287d-4f87-8ad3-2afc9eab9829`）。
+
+### GitHub Pages 镜像（`https://calvin-xia.github.io/`）
+
+- 静态层：首页/文章/关于/工具/样式页/RSS/sitemap/OG 均 200；sitemap **22** 条 URL；6 条 legacy 跳转页均 200 且 meta refresh + canonical 指向本域；未知路径 404。
+- 浏览器：首页入场动画 5/5 + 时钟、站内导航二次进首页仍 5/5、文章页增强（锚点 4 / 图注 13 / 目录 / 进度条）、灯箱首点与站内绕一圈后重点都是 `1/1/1`、工具页预览 `0` 锚点 `0` 图注、390px 宽无横向溢出。
+- 控制台只有 2 条预期噪音：`/api/trending` 与 `/api/views/<slug>` 的 404（镜像无 Worker，脚本优雅降级、不抛异常）。
+
+### 生产 `calvin-xia.cn`
+
+| 检查 | 结果 |
+|---|---|
+| `/api/health`（无 token） | `{"status":"healthy",...}`，不泄露 version ✓（`worker.ts:85-90` 的刻恷设计） |
+| `/api/health`（带 token） | `version = c9554cf7-…` —— **与 `wrangler deploy` 刚打印的版本 id 一字不差**，批次② 2-5（`version_metadata`）在生产真生效（此前恒为写死的 `0.0.1`）；`dependencies.analytics.status = healthy` |
+| `/api/health`（错 token） | 401 ✓ |
+| `/api/trending?limit=3` | 200 + 真实数据（52/33/17 阅读），`Cache-Control: public, max-age=600` ✓ 成功态用长 TTL |
+| `/api/views/20260411-ai-reliance` | 200 `views: 3`，`max-age=300` ✓；文章页计数显示「3 次阅读」 |
+| `/api/views/%2e%2e%2fetc`（非法） | **400 + `no-store`** ✓ 批次② 2-2 生效 |
+| `/api/views/BAD_SLUG` | 200 `views:0` + `max-age=300` —— **不是 bug**：`isValidArticleSlug` 只拦空/`..`/斜线（`umami-view-counter.js:35-41`），大写与下划线合法；上游无此页面故为 0 |
+| 首页 | 入场动画 5/5 + 时钟 + 热门卡真实数据 |
+| 站内导航两次 | `pageLoads` 0→1→2、回首页 `fade-in-up` 5/5 —— 3-1 在生产生效 |
+| 文章页 | 锚点 4 / 图注 13 / 目录 / 进度条 |
+| 灯箱（站内绕一圈后重点） | `dialogs 1, open 1` —— dc1f1f7 在生产生效 |
+| 泄漏修复 | 离开文章页后滚动对脱离正文的 `getBoundingClientRect` 调用 = **0**（修复前为 7） |
+| 控制台 | 0 message / 0 error |
+
+### 顺带解答两条悬案
+
+- **`vars.BASE_URL` 已设**：值就是 `https://calvin-xia.github.io`（`deploy.yml:38` 的默认值一致）；之前记的「未决事实」可销。
+- **镜像 canonical 不会跟生产抢收录**（之前的 C 类项）：镜像文章页的 `rel=canonical` 与 `og:url` 都是 `https://calvin-xia.cn/...`，即镜像不自指。唯一不一致：legacy 跳转页的 canonical 走 `BASE_URL`（镜像上为 `calvin-xia.github.io`），而内容页走固定的生产域名。影响极低（跳转页本身是 meta refresh 中转页），不修。
+- 新的小观察（未修，价值低）：未知 `/api/*` 路径（如 `/api/nope`）由 assets 层直接 404（`max-age=0, must-revalidate`），不会进 Worker，也就不经过 `logSecurityRequest`。
+
+### 验证方法上的一条教训（下次别再犯）
+
+第一次在生产上跑探针时报了 **两个假失败**（首页二次进入 `fade-in-up: 0`、灯箱 `0/0/0`）。原因不是站点，是探针自己：远端站点（RTT + 交换动画）下 1.1~1.6s 的等待不够，第二次点击落在了 `body` 互换的中途。改成「每步断言当前路径 + 用 `window` 标记判是否整页重载、并记 `astro:page-load` 次数」后，生产与镜像逐帧一致且全部正确。**教训：跨源/远端探针不能隐式假定导航已完成，每步都要断言“我在哪一页”。**
 
 **同源背景**：此条是在排查上一条 Codex 意见时顺手发现的；它与批次③ / 本次修复无关（批次③ 前后行为一致），属于既有缺陷，也不在文档先前记录的清单里。
