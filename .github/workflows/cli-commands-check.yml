@@ -8,6 +8,7 @@ on:
       - scripts/**
       - tools/**
       - tests/**
+      - src/lib/content-taxonomy.js
       - package.json
       - package-lock.json
       - .github/workflows/cli-commands-check.yml
@@ -16,6 +17,7 @@ on:
       - scripts/**
       - tools/**
       - tests/**
+      - src/lib/content-taxonomy.js
       - package.json
       - package-lock.json
       - .github/workflows/cli-commands-check.yml
@@ -63,10 +65,27 @@ jobs:
           SMOKE_DIR="${RUNNER_TEMP}/new-post-smoke"
           npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --excerpt "smoke" --category "ci" --tags "ci,smoke" --content-dir "$SMOKE_DIR"
           test -n "$(find "$SMOKE_DIR" -name '20260101-*.md' -print -quit)"
-          if npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --content-dir "$SMOKE_DIR"; then
+          if npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --category "ci" --tags "ci,smoke" --content-dir "$SMOKE_DIR"; then
             echo "duplicate creation must fail" >&2
             exit 1
           fi
+
+      - name: Missing category or tags must fail validation and write nothing
+        run: |
+          MISSING_DIR="${RUNNER_TEMP}/new-post-missing-taxonomy"
+          if npm run new-post -- --title "No Taxonomy Post" --date 2026-01-02 --content-dir "$MISSING_DIR"; then
+            echo "creation without category/tags must fail" >&2
+            exit 1
+          fi
+          if npm run new-post -- --title "No Category Post" --date 2026-01-02 --tags "ci" --content-dir "$MISSING_DIR"; then
+            echo "creation without category must fail" >&2
+            exit 1
+          fi
+          if npm run new-post -- --title "No Tags Post" --date 2026-01-02 --category "ci" --content-dir "$MISSING_DIR"; then
+            echo "creation without tags must fail" >&2
+            exit 1
+          fi
+          test -z "$(find "$MISSING_DIR" -name '*.md' -print -quit 2>/dev/null)"
 
       - name: Unknown publish flags must fail fast
         run: |

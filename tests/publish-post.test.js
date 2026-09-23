@@ -13,6 +13,7 @@ import {
     uploadAssets,
     validatePublishEnvs,
 } from '../scripts/publish-post.js';
+import { CATEGORY_WHITELIST } from '../src/lib/content-taxonomy.js';
 
 const execFileAsync = promisify(execFile);
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -173,9 +174,10 @@ describe('publish post uploads', () => {
         assert.ok(!calls.includes('writeFile'), 'markdown must not be written when uploads fail');
     });
 
-    test('metadata prompt shows the default tag and uses it when tags are blank', async () => {
+    test('metadata prompt requires explicit category and tags instead of defaulting', async () => {
         const prompts = [];
-        const answers = ['新文章', '', '摘要', '', ''];
+        const logs = [];
+        const answers = ['新文章', '', '摘要', '', '随笔', '', '自我, 旅行'];
 
         const metadata = await promptForPostMetadata('20260603-my-post', {
             createInterface: () => ({
@@ -185,22 +187,25 @@ describe('publish post uploads', () => {
                 },
                 close() {},
             }),
-            logger: { log() {} },
+            logger: { log: (message) => logs.push(message) },
         });
 
         assert.deepEqual(metadata, {
             title: '新文章',
             date: '2026-06-03',
             excerpt: '摘要',
-            category: '未分类',
-            tags: ['未分类'],
+            category: '随笔',
+            tags: ['自我', '旅行'],
         });
-        assert.equal(prompts[4], '标签 (逗号分隔) [未分类]: ');
+        assert.equal(prompts[3], `分类 (${CATEGORY_WHITELIST.join('/')}): `);
+        assert.equal(prompts[5], '标签 (逗号分隔): ');
+        assert.ok(logs.some((message) => message.includes('分类不能为空')));
+        assert.ok(logs.some((message) => message.includes('标签不能为空')));
     });
 
     test('re-asks the date prompt until it is a valid YYYY-MM-DD date', async () => {
         const logs = [];
-        const answers = ['新文章', '2026/06/03', '', '2026-06-05', '摘要', '', ''];
+        const answers = ['新文章', '2026/06/03', '', '2026-06-05', '摘要', '随笔', '自我'];
 
         const metadata = await promptForPostMetadata('no-date-prefix', {
             createInterface: () => ({

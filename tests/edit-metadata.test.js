@@ -195,7 +195,7 @@ describe('edit metadata CLI helpers', () => {
                     date: '2026-06-02',
                     excerpt: '新摘要',
                     category: '记录',
-                    tags: [],
+                    tags: ['新标签'],
                 },
                 {
                     rename: async () => {
@@ -309,15 +309,15 @@ describe('edit metadata CLI helpers', () => {
         });
     });
 
-    test('normalizePostMetadata defaults empty tags to uncategorized', () => {
+    test('rejects empty tags instead of defaulting to uncategorized', () => {
         const withEmptyArray = validatePostMetadata({
             title: '标题',
             date: '2026-06-01',
             category: '随笔',
             tags: [],
         });
-        assert.equal(withEmptyArray.errors, null);
-        assert.deepEqual(withEmptyArray.value.tags, ['未分类']);
+        assert.equal(withEmptyArray.value, null);
+        assert.deepEqual(withEmptyArray.errors, { tags: '标签不能为空' });
 
         const withEmptyString = validatePostMetadata({
             title: '标题',
@@ -325,8 +325,17 @@ describe('edit metadata CLI helpers', () => {
             category: '随笔',
             tags: '',
         });
-        assert.equal(withEmptyString.errors, null);
-        assert.deepEqual(withEmptyString.value.tags, ['未分类']);
+        assert.equal(withEmptyString.value, null);
+        assert.deepEqual(withEmptyString.errors, { tags: '标签不能为空' });
+
+        const withSkipValidation = validatePostMetadata({
+            title: '标题',
+            date: '2026-06-01',
+            category: '随笔',
+            tags: '',
+        }, { skipValidation: true });
+        assert.equal(withSkipValidation.errors, null);
+        assert.deepEqual(withSkipValidation.value.tags, []);
     });
 
     test('writePostMetadataAtomic allows clearing optional fields', async () => {

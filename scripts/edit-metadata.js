@@ -13,7 +13,7 @@ const blogMetadataSchema = z.object({
     date: z.string().regex(datePattern, '日期格式必须为 YYYY-MM-DD'),
     excerpt: z.string(),
     category: z.string().min(1, '分类不能为空'),
-    tags: z.array(z.string()),
+    tags: z.array(z.string()).min(1, '标签不能为空'),
     featured: z.boolean().optional(),
     author: z.string().optional(),
     readTime: z.string().optional(),
@@ -73,7 +73,7 @@ export function normalizePostMetadata(metadata) {
     normalized.excerpt = cleanString(source.excerpt);
     normalized.category = cleanString(source.category);
     const tags = normalizeTags(source.tags);
-    normalized.tags = tags.length > 0 ? tags : ['未分类'];
+    normalized.tags = tags;
 
     const featured = normalizeFeatured(source.featured);
     if (featured === undefined) {
@@ -257,7 +257,7 @@ export function createMetadataQuestions(currentMetadata) {
             type: 'text',
             name: 'category',
             message: '分类',
-            initial: metadata.category || '未分类',
+            initial: metadata.category,
             validate: (value) => cleanString(value) ? true : '分类不能为空',
         },
         {
@@ -266,6 +266,7 @@ export function createMetadataQuestions(currentMetadata) {
             message: '标签（逗号分隔）',
             initial: metadata.tags.join(', '),
             separator: ',',
+            validate: (value) => normalizeTags(value).length > 0 ? true : '标签不能为空',
         },
         {
             type: 'select',

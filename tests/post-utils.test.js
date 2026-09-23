@@ -63,6 +63,8 @@ describe('post utility functions', () => {
         assert.deepEqual(invalid.errors, {
             title: '标题不能为空',
             date: '日期不能为空',
+            category: '分类不能为空',
+            tags: '标签不能为空',
         });
 
         const valid = validatePostPayload({
@@ -319,6 +321,7 @@ describe('post utility functions', () => {
             dirName: '20260503-my-post',
             publicUrl: 'https://content.example.com',
             assetSlug: 'my-post',
+            metadata: { category: '随笔', tags: ['自我'] },
         };
 
         const result = await readTransformedMarkdown(plan);
@@ -326,8 +329,8 @@ describe('post utility functions', () => {
         assert.match(result, /^---\n/);
         assert.match(result, /title: "20260503-my-post"/);
         assert.match(result, /date: "2026-05-03"/);
-        assert.match(result, /category: "未分类"/);
-        assert.match(result, /tags:\n  - "未分类"/);
+        assert.match(result, /category: "随笔"/);
+        assert.match(result, /tags:\n  - "自我"/);
         assert.match(result, /!\[图\]\(https:\/\/content\.example\.com\/my-post\/a\.png\)/);
         assert.ok(result.includes('\n\n# Hello\n'));
     });
@@ -337,7 +340,7 @@ describe('post utility functions', () => {
         const postDir = path.join(vaultDir, '20260503-my-post');
         await mkdir(postDir, { recursive: true });
         await writeFile(path.join(postDir, 'draft.md'),
-            '---\ntitle: "My Title"\ndate: "2026-04-01"\ntags:\n  - "tag1"\n---\n\n# Hello\n', 'utf8');
+            '---\ntitle: "My Title"\ndate: "2026-04-01"\ncategory: "随笔"\ntags:\n  - "tag1"\n---\n\n# Hello\n', 'utf8');
 
         const plan = {
             sourceMarkdownPath: path.join(postDir, 'draft.md'),
@@ -354,12 +357,10 @@ describe('post utility functions', () => {
         assert.match(result, /# Hello/);
     });
 
-    test('readTransformedMarkdown defaults empty source tags to uncategorized', async () => {
+    test('readTransformedMarkdown requires explicit category and tags instead of defaulting', async () => {
         const vaultDir = await createTempDir();
         const postDir = path.join(vaultDir, '20260503-my-post');
         await mkdir(postDir, { recursive: true });
-        await writeFile(path.join(postDir, 'draft.md'),
-            '---\ntitle: "My Title"\ndate: "2026-04-01"\ntags:\n---\n\n# Hello\n', 'utf8');
 
         const plan = {
             sourceMarkdownPath: path.join(postDir, 'draft.md'),
@@ -368,9 +369,19 @@ describe('post utility functions', () => {
             assetSlug: 'my-post',
         };
 
-        const result = await readTransformedMarkdown(plan);
+        await writeFile(path.join(postDir, 'draft.md'),
+            '---\ntitle: "My Title"\ndate: "2026-04-01"\ntags:\n  - "tag1"\n---\n\n# Hello\n', 'utf8');
+        await assert.rejects(
+            () => readTransformedMarkdown(plan),
+            /category（分类）不能为空/,
+        );
 
-        assert.match(result, /tags:\n  - "未分类"/);
+        await writeFile(path.join(postDir, 'draft.md'),
+            '---\ntitle: "My Title"\ndate: "2026-04-01"\ncategory: "随笔"\ntags:\n---\n\n# Hello\n', 'utf8');
+        await assert.rejects(
+            () => readTransformedMarkdown(plan),
+            /tags（标签）不能为空/,
+        );
     });
 
     test('readTransformedMarkdown gives user metadata priority over source frontmatter', async () => {
@@ -413,6 +424,7 @@ describe('post utility functions', () => {
             'title: "My Title"',
             'date: 2026-04-01',
             'excerpt: ""',
+            'category: "随笔"',
             'tags:',
             '  - t1',
             '---',

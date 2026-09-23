@@ -80,12 +80,30 @@ describe('new-post CLI creation', () => {
             /元数据校验失败/,
         );
     });
+
+    test('rejects payloads missing category or tags instead of defaulting', async () => {
+        const dir = await createTempContentDir();
+
+        await assert.rejects(
+            () => runNewPost({ payload: { title: '缺分类标签', date: '2026-06-03' }, contentDir: dir }),
+            (error) => (
+                /category: 分类不能为空/.test(error.message)
+                && /tags: 标签不能为空/.test(error.message)
+            ),
+        );
+    });
 });
 
 describe('new-post CLI prompts', () => {
-    test('collects and normalizes interactive answers using defaults', async () => {
+    test('collects and normalizes interactive answers', async () => {
         const mockPrompts = async (questions) => {
-            const raw = { title: '  交互文章  ', date: '', excerpt: '', category: '', tags: '' };
+            const raw = {
+                title: '  交互文章  ',
+                date: '',
+                excerpt: '',
+                category: '  随笔  ',
+                tags: ' 自我 , 旅行 ',
+            };
             const answers = {};
             for (const question of questions) {
                 answers[question.name] = raw[question.name] || question.initial || '';
@@ -99,9 +117,27 @@ describe('new-post CLI prompts', () => {
             title: '交互文章',
             date: '2026-06-03',
             excerpt: '',
-            category: '未分类',
-            tags: '未分类',
+            category: '随笔',
+            tags: '自我 , 旅行',
         });
+    });
+
+    test('prompts require explicit category and tags input', async () => {
+        let questions = [];
+        const mockPrompts = async (allQuestions) => {
+            questions = allQuestions;
+            return { title: '交互文章', date: '2026-06-03', excerpt: '', category: '随笔', tags: '自我' };
+        };
+
+        await promptForNewPostMetadata({ prompts: mockPrompts, dateDefault: '2026-06-03' });
+
+        const categoryQuestion = questions.find((question) => question.name === 'category');
+        const tagsQuestion = questions.find((question) => question.name === 'tags');
+
+        assert.notEqual(categoryQuestion.validate('   '), true);
+        assert.equal(categoryQuestion.validate('随笔'), true);
+        assert.notEqual(tagsQuestion.validate('   '), true);
+        assert.equal(tagsQuestion.validate('自我'), true);
     });
 
     test('throws on cancellation', async () => {

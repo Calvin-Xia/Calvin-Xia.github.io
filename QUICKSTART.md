@@ -62,7 +62,7 @@ npx wrangler secret put HEALTH_CHECK_TOKEN
 
 1. 在 Obsidian vault 中准备文章目录。
 2. 先运行 `npm run publish -- --dry-run <dir>` 检查 Markdown 目标路径和 R2 key。
-3. 确认后运行 `npm run publish -- <dir>`；标签提示直接回车时默认使用 `未分类`。
+3. 确认后运行 `npm run publish -- <dir>`；分类与标签为必填（无默认值），留空会重新提示直到显式输入。
 4. 运行 `npm test` 和 `npm run build`。
 
 这条流程只修改仓库副本，不修改 Obsidian vault 原文。

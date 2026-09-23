@@ -13,6 +13,7 @@ import sharp from 'sharp';
 import { getContentType } from './content-types.js';
 import { isSupportedImage, probeImageFile } from './image-dimensions.js';
 import { buildPublishPlan, deriveDateFromDirName, readTransformedMarkdown } from './post-utils.js';
+import { CATEGORY_WHITELIST } from '../src/lib/content-taxonomy.js';
 
 dotenv.config({ quiet: true });
 
@@ -266,9 +267,24 @@ export async function promptForPostMetadata(dirName, {
         }
 
         const excerpt = (await rl.question('摘要: ')).trim();
-        const category = (await rl.question('分类 [未分类]: ')).trim() || '未分类';
-        const tagsInput = (await rl.question('标签 (逗号分隔) [未分类]: ')).trim();
-        const tags = tagsInput ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean) : ['未分类'];
+
+        // category/tags 没有默认值：留空会一直重新提示，直到显式输入为止。
+        let category = '';
+        while (!category) {
+            category = (await rl.question(`分类 (${CATEGORY_WHITELIST.join('/')}): `)).trim();
+            if (!category) {
+                logger.log('分类不能为空，请显式输入');
+            }
+        }
+
+        let tags = [];
+        while (tags.length === 0) {
+            const tagsInput = (await rl.question('标签 (逗号分隔): ')).trim();
+            tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean);
+            if (tags.length === 0) {
+                logger.log('标签不能为空，请至少显式输入 1 个（逗号分隔）');
+            }
+        }
 
         return { title, date, excerpt, category, tags };
     } finally {

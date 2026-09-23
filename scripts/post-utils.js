@@ -29,15 +29,12 @@ export function deriveDateFromDirName(dirName) {
     return '';
 }
 
-function tagsWithDefault(tags) {
-    const normalizedTags = normalizeTags(tags);
-    return normalizedTags.length > 0 ? normalizedTags : ['未分类'];
-}
-
 export function validatePostPayload(payload) {
     const source = payload && typeof payload === 'object' ? payload : {};
     const title = String(source.title || '').trim();
     const date = String(source.date || '').trim();
+    const category = String(source.category || '').trim();
+    const tags = normalizeTags(source.tags);
     const errors = {};
 
     if (!title) {
@@ -50,6 +47,14 @@ export function validatePostPayload(payload) {
         errors.date = '日期格式必须为 YYYY-MM-DD';
     }
 
+    if (!category) {
+        errors.category = '分类不能为空';
+    }
+
+    if (tags.length === 0) {
+        errors.tags = '标签不能为空';
+    }
+
     if (Object.keys(errors).length > 0) {
         return { errors, value: null };
     }
@@ -60,8 +65,8 @@ export function validatePostPayload(payload) {
             title,
             date,
             excerpt: String(source.excerpt || '').trim(),
-            category: String(source.category || '未分类').trim() || '未分类',
-            tags: normalizeTags(source.tags),
+            category,
+            tags,
             body: String(source.body || '').trim(),
         },
     };
@@ -181,12 +186,24 @@ export async function readTransformedMarkdown(plan) {
 
     const userMeta = plan.metadata || {};
 
+    // category/tags 不再落入「未分类」默认值：缺任一项直接报错，强制显式提供。
+    const category = String(userMeta.category || sourceMeta.category || '').trim();
+    const tags = normalizeTags(userMeta.tags || sourceMeta.tags);
+
+    if (!category) {
+        throw new Error('category（分类）不能为空：请显式提供，不再写入「未分类」默认值');
+    }
+
+    if (tags.length === 0) {
+        throw new Error('tags（标签）不能为空：请显式提供，不再写入「未分类」默认值');
+    }
+
     const post = {
         title: userMeta.title || sourceMeta.title || plan.dirName,
         date: toIsoDate(userMeta.date || sourceMeta.date) || deriveDateFromDirName(plan.dirName),
         excerpt: userMeta.excerpt || sourceMeta.excerpt || '',
-        category: userMeta.category || sourceMeta.category || '未分类',
-        tags: tagsWithDefault(userMeta.tags || sourceMeta.tags || ['未分类']),
+        category,
+        tags,
         body: transformedBody,
         featured: userMeta.featured ?? sourceMeta.featured,
         author: userMeta.author || sourceMeta.author,

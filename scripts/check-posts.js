@@ -3,6 +3,12 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { listPostFiles, readPostFile } from './blog-posts.js';
+import {
+    CATEGORY_WHITELIST,
+    TAG_MAX_COUNT,
+    TAG_MIN_COUNT,
+    TAG_WHITELIST,
+} from '../src/lib/content-taxonomy.js';
 
 const rootDir = path.resolve(import.meta.dirname, '..');
 const defaultContentDir = path.join(rootDir, 'src', 'content', 'blog');
@@ -17,25 +23,9 @@ const HTML_IMG_SRC_PATTERN = /<img\b[^>]*\bsrc=["']([^"']+)["']/gi;
 const INTERNAL_ARTICLE_LINK_PATTERN = /\[[^\]]*]\(\/articles\/([^)\s#?/]+)\/?[)#]/g;
 const UNTRANSFORMED_ASSET_LINK_PATTERN = /!?\[[^\]]*]\(\s*(?:\.\/|\.\.\/)?file\//i;
 
-// Blog taxonomy — 与 AGENTS.md 的 "Blog Taxonomy" 小节必须保持同步：
-// category 是栏目（每篇恰好一个），tags 是跨栏目的封闭主题白名单（每篇 1-4 个）。
-// 改动任意一侧时都要同步另一侧，否则 `npm run check` 会与本文件脱节。
-export const CATEGORY_WHITELIST = ['随笔', '总结', '日志'];
-export const TAG_WHITELIST = [
-    '武汉大学',
-    '高考',
-    '旅行',
-    '铁路',
-    '人工智能',
-    '故乡',
-    '测绘',
-    '自我',
-    '劳动',
-    '语言文化',
-    '科技',
-];
-const TAG_MIN_COUNT = 1;
-const TAG_MAX_COUNT = 4;
+// Blog taxonomy —— 词表唯一定义在 src/lib/content-taxonomy.js（与 AGENTS.md 的
+// "Blog Taxonomy" 小节同步，src/content.config.ts 复用同一份）。
+// 本文件只负责在词表之上叠加人类友好的报错层，不要在报错消息里手写词条副本。
 
 function describeValue(value) {
     return JSON.stringify(value);
