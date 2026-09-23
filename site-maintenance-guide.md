@@ -21,7 +21,7 @@ Astro 内容集合：
 辅助脚本：
 
 - `tools/api-server.js`：本地 `/new-post/` API
-- `scripts/publish-post.js`：Obsidian→R2 发布管线，标签留空时默认写入 `未分类`，探测图片尺寸写入 `imageDimensions`，交互式选择头图，覆盖已有文章需 `--force`
+- `scripts/publish-post.js`：Obsidian→R2 发布管线，分类与标签必填（留空会重新提示直到显式输入），探测图片尺寸写入 `imageDimensions`，交互式选择头图，覆盖已有文章需 `--force`
 - `scripts/edit-metadata.js`：交互式编辑单篇 Markdown frontmatter，Zod 验证并原子写入
 - `scripts/check-posts.js`、`scripts/post-stats.js`、`scripts/new-post-cli.js`、`scripts/list-posts.js`：写作 CLI（校验/统计/离线建稿/概览）
 - `scripts/og-card.js` + `scripts/generate-og-images.mjs`：构建时用 satori + resvg 渲染逐篇 OG 分享卡到 `dist/og/`
@@ -133,7 +133,7 @@ npm run build
 
 发布脚本只修改仓库中的 Markdown 副本，不修改 Obsidian vault 原始内容。
 
-标签提示为空时，发布脚本会默认写入 `未分类`，避免生成空的 `tags:` frontmatter。
+分类与标签均为必填：留空会重新提示直到显式输入，不再写入 `未分类`；`tags` 归一化为独立数组项。
 
 ### 多文件发布
 

@@ -15,12 +15,12 @@ This repository is a static website fully migrated to Astro from root-level HTML
 - Comments: `src/components/GiscusComments.astro` (giscus + GitHub Discussions). 该组件只出现在文章详情页，有两条必须保留的约束：
     - giscus 加载器脚本带 `data-astro-rerun`。Astro ClientRouter 会记录并跳过已执行过的脚本，而 giscus 的 `client.js` 每次执行只扫描一次 `.giscus`；去掉该属性后，站内客户端跳转到第二篇文章会留下一个空容器，评论区要硬刷新才恢复。`tests/giscus-comments.test.js` 以构建产物断言拦截该回退（在 `astro-build-check.yml` 里构建之后运行）。
     - 不要给评论区加 `transition:persist`。giscus 的 iframe `src` 把当前路径烘焙进了 discussion 键值，保留旧容器会让新文章显示上一篇的评论。
-- Article content: `src/lib/word-count.js` (字数 & 阅读时间), `src/lib/archive.js` (归档分组), `src/lib/article-enhancements/` (图片灯箱、标题锚点、目录、阅读进度、逐段渐显).
+- Article content: `src/lib/word-count-core.js` (字数 & 阅读时间的唯一统计核心，无 i18n 依赖), `src/lib/word-count.js` (同一核心的站点包装，补 i18n 展示字符串), `src/lib/content-taxonomy.js` (category/tags 白名单单一事实源), `src/lib/archive.js` (归档分组), `src/lib/article-enhancements/` (图片灯箱、标题锚点、目录、阅读进度、逐段渐显).
 - Publishing and local authoring scripts: `scripts/publish-post.js`, `scripts/post-utils.js`, `tools/api-server.js`; authoring CLI: `scripts/check-posts.js`, `scripts/post-stats.js`, `scripts/new-post-cli.js`, `scripts/list-posts.js`, `scripts/edit-metadata.js`.
-- Shared script modules: `scripts/blog-posts.js` (post discovery and frontmatter/body reading), `scripts/markdown-utils.js` (frontmatter serialization and tag normalization), `scripts/slug.js` (title→slug), `scripts/content-types.js` (extension→MIME map), `scripts/readable-stats.js` (CLI word count & reading time), `scripts/image-dimensions.js` (zero-dependency image dimension probing), `scripts/backfill-image-dimensions.js` (one-off backfill of `imageDimensions` for existing posts).
+- Shared script modules: `scripts/blog-posts.js` (post discovery and frontmatter/body reading), `scripts/markdown-utils.js` (frontmatter serialization and tag normalization), `scripts/slug.js` (title→slug), `scripts/content-types.js` (extension→MIME map), `scripts/readable-stats.js` (CLI word count & reading time，复用 `src/lib/word-count-core.js`，算法不得在此或 `src/lib/word-count.js` 内重复实现；对拍测试见 `tests/word-count-parity.test.js`), `scripts/image-dimensions.js` (zero-dependency image dimension probing), `scripts/backfill-image-dimensions.js` (one-off backfill of `imageDimensions` for existing posts).
 - Fonts are self-hosted via `@fontsource/*` packages (imports in `src/layouts/BaseLayout.astro`); do not reintroduce Google Fonts `@import` or CSP origins.
 - Other assets: `storage/`, `.well-known/`.
-- CI/CD workflows: `.github/workflows/deploy.yml`, `astro-build-check.yml`, `phase-2-content-check.yml`, `metadata-editor-check.yml`, `cli-commands-check.yml`, `legacy-redirects-check.yml`.
+- CI/CD workflows: `.github/workflows/deploy.yml`, `astro-build-check.yml`, `phase-2-content-check.yml`, `metadata-editor-check.yml`, `cli-commands-check.yml`, `legacy-redirects-check.yml`, `word-count-parity-check.yml`.
 
 When adding new files, keep them in the existing folder conventions and use relative links.
 
@@ -65,7 +65,7 @@ Rules:
 - `tags` 不得出现与该篇 `category` 相同的值（历史问题：`学业总结`、`生活总结`、`随笔`、`日志` 曾同时作为 category 和 tag 存在）。
 - 每个 tag 必须写成独立的数组项。禁止用逗号把多个词塞进一个字符串（历史 bug：`- "思考，随笔，旅行，自我"`）。
 - 覆盖度参考：`自我` 覆盖面最广（14 篇中 10 篇），`故乡`、`劳动` 目前各只落在 1 篇。它们是已知的偏冷项，写新文章时优先复用，而不是另造新词。
-- 白名单校验由 `scripts/check-posts.js` 承担（随 2026-09-23 这批文档同步落地）：改动 frontmatter 后跑 `npm run check` 即可。该校验合并前进仓库时仍需人工自检本节词表。
+- 白名单的单一事实源是 `src/lib/content-taxonomy.js`（`src/content.config.ts` 的 Zod schema 与 `scripts/check-posts.js` 共用；构建期由 schema 兜底，`npm run check` 提供人类友好报错）。改动 frontmatter 后跑 `npm run check` 即可。发布/建稿链路无默认值：缺 category/tags 会校验报错、强制显式输入。
 
 ## Blog Slugs
 文章文件名决定 URL（`generateId: fileStem`），因此必须满足两条硬性要求：
@@ -94,6 +94,12 @@ When implementing or modifying file operation features (such as content pipeline
 - Contain appropriate test cases that cover normal operation, edge cases (empty input, missing files), and error handling paths.
 - Be placed under `.github/workflows/` and follow the naming convention `*-check.yml` or `*-ci.yml`.
 - Run on relevant events (push, pull request) for the branches affected by the file operation changes.
+
+Legacy exemptions（存量豁免，无需配套 `*-check.yml`）：
+- `scripts/backfill-image-dimensions.js`（一次性回填工具；由 `tests/backfill-dimensions.test.js` 间接覆盖）。
+- `scripts/generate-og-images.mjs` + `scripts/og-card.js`（构建期 OG 卡片生成；由 `astro-build-check.yml` 的 OG 卡片产物断言间接覆盖）。
+
+新增文件操作特性仍须按本节要求配套 `*-check.yml` workflow。
 
 ## Commit & Pull Request Guidelines
 Recent history shows short, task-focused commit subjects (English or Chinese). Follow that style:
