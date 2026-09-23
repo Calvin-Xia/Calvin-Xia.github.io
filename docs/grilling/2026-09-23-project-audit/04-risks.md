@@ -201,7 +201,7 @@ PR #15 上 `chatgpt-codex-connector[bot]` 提了 1 条 P2 inline 意见，指向
 
 ---
 
-## 9. 同源新发现：站内导航后再进文章页，图片灯箱静默失效（**未修，待裁决**）
+## 9. 同源新发现：站内导航后再进文章页，图片灯箱静默失效（**已修**）
 
 排查上一条时顺手发现的**用户可见功能缺陷**，与批次③ / 本次修复无关（批次③ 前后行为一致），基线里也没有记过。
 
@@ -217,6 +217,14 @@ PR #15 上 `chatgpt-codex-connector[bot]` 提了 1 条 P2 inline 意见，指向
 
 **影响**：任何一次站内导航之后再打开的文章页，图片灯箱（含缩略图/键盘 Enter）都是死的；硬刷新一次即恢复。线上同样成立。图注、标题锚点、目录、进度条不受影响（它们不缓存跨页节点）。
 
-**最小修复方向**（供裁决，尚未实施）：`ensureDialog()` 里加一句失效判定，`if (state.dialog && !state.dialog.isConnected) { state.dialog = null; }`，让它重建 dialog 并重新挂到 `documentRef.body`；等价思路是把共享控制器的键换成「当前 body」或在 `astro:before-swap` 时清掉缓存。两个方向都要补一条能抓到该场景的测试（现有 `tests/article-lightbox.test.js` 只覆盖单次初始化 + 手动 close）。
+**修复**（用户当场批准，进同一个 PR）：`ensureDialog()` 开头加失效判定 —— `if (state.dialog && state.dialog.isConnected === false) { state.dialog = null; }`，让它落到下面的重建分支，把新 dialog 挂到**当前** body 上。仅当环境明确报告 `isConnected === false` 时才重建，因此同一 body 内仍然复用旧 dialog（`sharedControllers` 的本意不变）。
 
-**本 PR 未处理的原因**：批次③ 的四项条目由用户冻结，此条属于新发现，不自行增补；与本 PR 的任何改动无关（属于既有缺陷）。
+| 验证 | 结果 |
+|---|---|
+| 新增 `tests/article-lightbox.test.js` 用例 | `reuses the cached dialog while it is still connected`（保证不过度重建）+ `rebuilds the dialog after the cached one was detached by a body swap`（回归守卫） |
+| 反向控制 | 撤掉判定后 `rebuilds ...` 条 fail（12 pass / 1 fail），恢复后 13 pass / 0 fail |
+| 真实浏览器（同一脚本、修复前后各跑一次） | `afterSecondClick`：修复前 `inDom/connected/open = 0/0/0`（点图片无反应）→ 修复后 `1/1/1` ✅；`afterFirstClick` 两边都是 `1/1/1`；导航离开后 dialog 随 body 一起消失（预期） |
+
+说明：现修法会在每次 `open()` 时读一次 `isConnected`（几乎零成本），代价可忽略；备选的「按当前 body 作为共享键」需要改 `sharedControllers` 的语义与相关测试，收益不明显。
+
+**同源背景**：此条是在排查上一条 Codex 意见时顺手发现的；它与批次③ / 本次修复无关（批次③ 前后行为一致），属于既有缺陷，也不在文档先前记录的清单里。
