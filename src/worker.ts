@@ -9,7 +9,11 @@ interface Env {
     UMAMI_USERNAME?: string;
     UMAMI_PASSWORD?: string;
     HEALTH_CHECK_TOKEN?: string;
-    WORKER_VERSION?: string;
+    CF_VERSION_METADATA?: {
+        id: string;
+        tag?: string;
+        timestamp?: string;
+    };
     ASSETS?: {
         fetch(request: Request): Response | Promise<Response>;
     };
@@ -76,7 +80,7 @@ async function handleHealthRequest(request: Request, env: Env): Promise<Response
     }
 
     try {
-        const health = await checkHealth(env, env.WORKER_VERSION || '0.0.1');
+        const health = await checkHealth(env);
 
         if (!bearerToken) {
             return createJsonResponse({
