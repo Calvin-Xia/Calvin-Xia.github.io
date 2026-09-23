@@ -124,4 +124,6 @@ import { t } from '../lib/i18n.ts';
     } else {
         initStyleguidePage();
     }
+
+    document.addEventListener('astro:page-load', initStyleguidePage);
 </script>

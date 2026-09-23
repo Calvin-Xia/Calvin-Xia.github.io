@@ -72,4 +72,6 @@ import { t } from '../lib/i18n.ts';
     } else {
         initAboutPage();
     }
+
+    document.addEventListener('astro:page-load', initAboutPage);
 </script>
