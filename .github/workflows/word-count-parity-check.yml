@@ -51,12 +51,15 @@ jobs:
       - name: Exercise CLI stats pipeline against repository content
         run: |
           npm run stats
-          npm run stats -- --json > stats-report.json
+          npm run --silent stats -- --json > stats-report.json
 
       - name: Validate stats JSON output shape
         run: |
           node -e "
-          const report = JSON.parse(require('fs').readFileSync('stats-report.json', 'utf8'));
+          const raw = require('fs').readFileSync('stats-report.json', 'utf8');
+          const start = raw.indexOf('{');
+          if (start < 0) throw new Error('no JSON object found in stats-report.json');
+          const report = JSON.parse(raw.slice(start));
           if (!Number.isInteger(report.count) || report.count < 1) throw new Error('missing post count');
           if (!Array.isArray(report.posts) || report.posts.length !== report.count) throw new Error('post list mismatch');
           for (const post of report.posts) {
