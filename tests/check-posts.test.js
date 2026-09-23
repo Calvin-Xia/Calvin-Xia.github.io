@@ -34,13 +34,15 @@ async function writePost(dir, fileName, frontmatter, body = '') {
     return filePath;
 }
 
+// Taxonomy-valid fixture: category/tags must stay inside the whitelist enforced by
+// scripts/check-posts.js (see the Blog Taxonomy section in AGENTS.md).
 const validFrontmatter = [
     'title: "测试文章"',
     'date: "2026-06-03"',
     'excerpt: "摘要内容"',
-    'category: "测试"',
+    'category: "随笔"',
     'tags:',
-    '  - "测试"',
+    '  - "自我"',
     '',
 ].join('\n');
 
@@ -50,8 +52,8 @@ describe('check-posts frontmatter validation', () => {
             title: '测试',
             date: '2026-06-03',
             excerpt: '摘要',
-            category: '分类',
-            tags: ['a'],
+            category: '随笔',
+            tags: ['自我', '旅行'],
         });
 
         assert.deepEqual(issues, []);
@@ -75,8 +77,8 @@ describe('check-posts frontmatter validation', () => {
             title: 'T',
             date: '2026/06/03',
             excerpt: '摘要',
-            category: '分类',
-            tags: ['a'],
+            category: '随笔',
+            tags: ['自我'],
             featured: 'yes',
             status: 3,
         });
@@ -88,9 +90,65 @@ describe('check-posts frontmatter validation', () => {
     });
 
     test('flags a non-array tags field', () => {
-        const issues = validateFrontmatter({ title: 'T', date: '2026-06-03', excerpt: 'e', category: 'c', tags: 'a,b' });
+        const issues = validateFrontmatter({ title: 'T', date: '2026-06-03', excerpt: 'e', category: '随笔', tags: 'a,b' });
 
         assert.ok(issues.some((issue) => issue.level === 'error' && issue.message.includes('tags 必须为非空字符串数组')));
+    });
+});
+
+describe('check-posts taxonomy validation', () => {
+    const baseTaxonomyMeta = { title: 'T', date: '2026-06-03', excerpt: 'e', category: '随笔' };
+
+    test('accepts every whitelisted category paired with a distinct whitelisted tag', () => {
+        for (const category of ['随笔', '总结', '日志']) {
+            assert.deepEqual(
+                validateFrontmatter({ ...baseTaxonomyMeta, category, tags: ['自我'] }),
+                [],
+                `category ${category} 应被接受`,
+            );
+        }
+    });
+
+    test('rejects a category outside the whitelist and reports the actual value', () => {
+        const issues = validateFrontmatter({ ...baseTaxonomyMeta, category: '学业总结', tags: ['自我'] });
+        const error = issues.find((issue) => issue.level === 'error' && issue.message.includes('category 必须为'));
+
+        assert.ok(error, '非法 category 必须报错');
+        assert.ok(error.message.includes('学业总结'), `错误消息应回显实际值，实际: ${error.message}`);
+        assert.ok(error.message.includes('随笔 / 总结 / 日志'));
+    });
+
+    test('rejects a tag outside the whitelist and reports the actual value', () => {
+        const issues = validateFrontmatter({ ...baseTaxonomyMeta, tags: ['自我', '学业总结'] });
+        const error = issues.find((issue) => issue.level === 'error' && issue.message.includes('白名单外'));
+
+        assert.ok(error, '未知 tag 必须报错');
+        assert.ok(error.message.includes('学业总结'), `错误消息应回显实际值，实际: ${error.message}`);
+    });
+
+    test('rejects zero tags and more than four tags', () => {
+        const zeroTags = validateFrontmatter({ ...baseTaxonomyMeta, tags: [] });
+        const zeroError = zeroTags.find((issue) => issue.level === 'error' && issue.message.includes('tags 数量必须为'));
+
+        assert.ok(zeroError, '0 个 tags 必须报错');
+        assert.ok(zeroError.message.includes('实际值: 0 个'));
+
+        const fiveTags = validateFrontmatter({
+            ...baseTaxonomyMeta,
+            tags: ['武汉大学', '高考', '旅行', '铁路', '自我'],
+        });
+        const fiveError = fiveTags.find((issue) => issue.level === 'error' && issue.message.includes('tags 数量必须为'));
+
+        assert.ok(fiveError, '5 个 tags 必须报错');
+        assert.ok(fiveError.message.includes('实际值: 5 个'));
+    });
+
+    test('rejects a tag that duplicates the article category', () => {
+        const issues = validateFrontmatter({ ...baseTaxonomyMeta, category: '日志', tags: ['日志', '自我'] });
+        const error = issues.find((issue) => issue.level === 'error' && issue.message.includes('不得与 category 相同'));
+
+        assert.ok(error, 'tag 等于 category 必须报错');
+        assert.ok(error.message.includes('"日志"'));
     });
 });
 
@@ -123,7 +181,7 @@ describe('check-posts body validation', () => {
         const issues = analyzePost({
             filePath: 'C:/tmp/20260603-a.md',
             fileName: '20260603-a.md',
-            frontmatter: { title: 'T', date: '2026-06-03', excerpt: 'e', category: 'c', tags: ['a'] },
+            frontmatter: { title: 'T', date: '2026-06-03', excerpt: 'e', category: '随笔', tags: ['自我'] },
             body: '[失效](/articles/20990101-nope/) [外链](https://calvin-xia.cn)',
         }, { knownSlugs: new Set(['20260603-a']) });
 
@@ -148,7 +206,7 @@ describe('check-posts directory scan', () => {
 
     test('reports broken frontmatter, leftover file links and missing internal targets', async () => {
         const dir = await createTempContentDir();
-        await writePost(dir, '20260604-broken-post.md', 'title: ""\ndate: "2026-06-04"\nexcerpt: ""\ncategory: "测试"\ntags:\n  - "测试"\n', '![本地](file/cover.png)\n[失效](/articles/20990101-nope/)');
+        await writePost(dir, '20260604-broken-post.md', 'title: ""\ndate: "2026-06-04"\nexcerpt: ""\ncategory: "随笔"\ntags:\n  - "自我"\n', '![本地](file/cover.png)\n[失效](/articles/20990101-nope/)');
 
         const report = await collectPostIssues(dir);
         const errors = report.issues.filter((issue) => issue.level === 'error').map((issue) => issue.message);
@@ -198,7 +256,7 @@ describe('check-posts directory scan', () => {
 });
 
 describe('check-posts hero and imageDimensions validation', () => {
-    const baseMeta = { title: 'T', date: '2026-06-03', excerpt: 'e', category: 'c', tags: ['a'] };
+    const baseMeta = { title: 'T', date: '2026-06-03', excerpt: 'e', category: '随笔', tags: ['自我'] };
 
     test('accepts a well-formed hero and imageDimensions manifest', () => {
         const issues = validateFrontmatter({

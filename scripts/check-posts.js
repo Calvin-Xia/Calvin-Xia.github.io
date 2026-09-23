@@ -17,6 +17,30 @@ const HTML_IMG_SRC_PATTERN = /<img\b[^>]*\bsrc=["']([^"']+)["']/gi;
 const INTERNAL_ARTICLE_LINK_PATTERN = /\[[^\]]*]\(\/articles\/([^)\s#?/]+)\/?[)#]/g;
 const UNTRANSFORMED_ASSET_LINK_PATTERN = /!?\[[^\]]*]\(\s*(?:\.\/|\.\.\/)?file\//i;
 
+// Blog taxonomy — 与 AGENTS.md 的 "Blog Taxonomy" 小节必须保持同步：
+// category 是栏目（每篇恰好一个），tags 是跨栏目的封闭主题白名单（每篇 1-4 个）。
+// 改动任意一侧时都要同步另一侧，否则 `npm run check` 会与本文件脱节。
+export const CATEGORY_WHITELIST = ['随笔', '总结', '日志'];
+export const TAG_WHITELIST = [
+    '武汉大学',
+    '高考',
+    '旅行',
+    '铁路',
+    '人工智能',
+    '故乡',
+    '测绘',
+    '自我',
+    '劳动',
+    '语言文化',
+    '科技',
+];
+const TAG_MIN_COUNT = 1;
+const TAG_MAX_COUNT = 4;
+
+function describeValue(value) {
+    return JSON.stringify(value);
+}
+
 function isRealCalendarDate(value) {
     const [year, month, day] = value.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
@@ -46,14 +70,44 @@ export function validateFrontmatter(meta = {}) {
 
     if (typeof meta.category !== 'string' || !meta.category.trim()) {
         issues.push({ level: 'error', message: 'category 必须为非空字符串' });
+    } else if (!CATEGORY_WHITELIST.includes(meta.category)) {
+        issues.push({
+            level: 'error',
+            message: `category 必须为 ${CATEGORY_WHITELIST.join(' / ')} 之一，实际值: ${describeValue(meta.category)}（见 AGENTS.md 的 Blog Taxonomy）`,
+        });
     }
 
     if (
         !Array.isArray(meta.tags)
-        || meta.tags.length === 0
         || meta.tags.some((tag) => typeof tag !== 'string' || !tag.trim())
     ) {
-        issues.push({ level: 'error', message: 'tags 必须为非空字符串数组' });
+        issues.push({
+            level: 'error',
+            message: `tags 必须为非空字符串数组，实际值: ${describeValue(meta.tags)}`,
+        });
+    } else {
+        if (meta.tags.length < TAG_MIN_COUNT || meta.tags.length > TAG_MAX_COUNT) {
+            issues.push({
+                level: 'error',
+                message: `tags 数量必须为 ${TAG_MIN_COUNT}-${TAG_MAX_COUNT} 个，实际值: ${meta.tags.length} 个（${meta.tags.map(describeValue).join('、')}）`,
+            });
+        }
+
+        const unknownTags = meta.tags.filter((tag) => !TAG_WHITELIST.includes(tag));
+        if (unknownTags.length > 0) {
+            issues.push({
+                level: 'error',
+                message: `tags 含白名单外的词: ${unknownTags.map(describeValue).join('、')}，允许: ${TAG_WHITELIST.join('、')}（见 AGENTS.md 的 Blog Taxonomy）`,
+            });
+        }
+
+        const categoryTags = meta.tags.filter((tag) => tag === meta.category);
+        if (categoryTags.length > 0) {
+            issues.push({
+                level: 'error',
+                message: `tags 不得与 category 相同: ${describeValue(categoryTags[0])}（category = ${describeValue(meta.category)}）`,
+            });
+        }
     }
 
     if (meta.featured !== undefined && typeof meta.featured !== 'boolean') {
@@ -253,6 +307,7 @@ function printUsage(logger = console) {
         '  --help      显示本帮助',
         '',
         '检查项：frontmatter 规范（title/date/excerpt/category/tags 及可选字段类型）、',
+        'taxonomy 白名单（category 栏目、tags 主题词表、tags 数量 1-4、tags 不得等于 category）、',
         '残留 file/ 本地资源链接、无效 URL、指向不存在文章的内部链接。',
     ].join('\n'));
 }
