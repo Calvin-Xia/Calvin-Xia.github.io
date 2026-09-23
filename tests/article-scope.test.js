@@ -72,7 +72,11 @@ describe('article enhancement scope source contracts', () => {
         assert.match(runtime, /document\.querySelector\(ARTICLE_CONTENT_SELECTOR\)/);
         assert.match(runtime, /const articleContent = findArticleContent\(\);/);
         assert.match(runtime, /if \(!articleContent\) \{\s*return;\s*\}/);
-        assert.match(runtime, /initArticleEnhancements\(articleContent\)/);
+        // 找不到容器时也要进增强入口：清理上一篇的监听器/observer 就发生在它内部。
+        // 写成先 return 再调用的形状会让离开文章页后的 window/document 监听器和
+        // IntersectionObserver 一直留着（回归守卫见 article-enhancements-cleanup.test.js）。
+        assert.match(runtime, /initArticleEnhancements\(articleContent \|\| document\)/);
+        assert.doesNotMatch(runtime, /initArticleEnhancements\(articleContent\)/);
         assert.match(runtime, /renderArticleMermaid\(articleContent\)/);
         // Page transitions must keep running even when no article body is present.
         assert.match(runtime, /initPageTransitions\(document, window\)/);
