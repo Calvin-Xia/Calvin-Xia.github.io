@@ -198,3 +198,25 @@ PR #15 上 `chatgpt-codex-connector[bot]` 提了 1 条 P2 inline 意见，指向
 | 门禁 | `npm run lint` 0 error、`npm test` **459/459**、`npm run check` 0 错误、`npm run build` 成功 |
 
 根因写法（供以后避免）：把「找到容器就做增强」写成了「找不到容器就 `return`」，而同一个入口还兼着「先清理上一次」的职责 —— 早退把清理一起绝了。判断这类早退是否安全，看它是否跨过了已有的生命周期副作用，而不是看它跳过的那个功能本身。
+
+---
+
+## 9. 同源新发现：站内导航后再进文章页，图片灯箱静默失效（**未修，待裁决**）
+
+排查上一条时顺手发现的**用户可见功能缺陷**，与批次③ / 本次修复无关（批次③ 前后行为一致），基线里也没有记过。
+
+**现象**（真实浏览器，`npm run preview`，产物为本 PR 构建）：
+
+| 步骤 | `dialog.article-lightbox` 在 DOM / connected / open |
+|---|---|
+| 首次进文章页 → 点图片 | 1 / 1 / 1 ✅ |
+| 站内跳到首页 | 0 / 0 / 0（dialog 随 body 一起被换掉） |
+| 再进文章页（站内导航）→ 点图片 | 0 / 0 / 0 ❌ 点下去没有任何反应 |
+
+**机制**：`sharedControllers` 是以**持久的 document** 为键的 WeakMap（`src/lib/article-enhancements/image-lightbox.js:458-466`），而 `state.dialog` 只在 `ensureDialog()` 里赋值一次（`:408`）、从不重置；`ensureDialog()` 开头是 `if (state.dialog) return state.dialog`（`:306-308`）。ClientRouter 导航会整体替换 `document.body`，于是缓存里的 dialog 变成脱离节点，第二次进文章页时 `open()` → `ensureDialog()` 返回这个脱离节点，`showModal()` 打在不存在的节点上 → 无弹层、无报错。
+
+**影响**：任何一次站内导航之后再打开的文章页，图片灯箱（含缩略图/键盘 Enter）都是死的；硬刷新一次即恢复。线上同样成立。图注、标题锚点、目录、进度条不受影响（它们不缓存跨页节点）。
+
+**最小修复方向**（供裁决，尚未实施）：`ensureDialog()` 里加一句失效判定，`if (state.dialog && !state.dialog.isConnected) { state.dialog = null; }`，让它重建 dialog 并重新挂到 `documentRef.body`；等价思路是把共享控制器的键换成「当前 body」或在 `astro:before-swap` 时清掉缓存。两个方向都要补一条能抓到该场景的测试（现有 `tests/article-lightbox.test.js` 只覆盖单次初始化 + 手动 close）。
+
+**本 PR 未处理的原因**：批次③ 的四项条目由用户冻结，此条属于新发现，不自行增补；与本 PR 的任何改动无关（属于既有缺陷）。
