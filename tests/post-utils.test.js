@@ -19,6 +19,12 @@ import {
 } from '../scripts/post-utils.js';
 import { deriveAssetSlug, slugifyTitle } from '../scripts/slug.js';
 
+// 测试词表（假值），通过 validateTaxonomy 的注入接口生效：不对生产词表变更过敏。
+const TEST_TAXONOMY = {
+    categoryWhitelist: ['生活总结', '随笔', 'c1', 'c2'],
+    tagWhitelist: ['测试', 'Astro', 'tag1', 't1', 't2', 't3', 't4', 't5', 'a', 'b', '自我', 'c1'],
+};
+
 const tempDirs = [];
 const rootDir = path.resolve(import.meta.dirname, '..');
 
@@ -59,7 +65,7 @@ describe('post utility functions', () => {
     });
 
     test('validatePostPayload reports missing required fields and normalizes valid payloads', () => {
-        const invalid = validatePostPayload({ title: '', date: '', body: '正文' });
+        const invalid = validatePostPayload({ title: '', date: '', body: '正文' }, TEST_TAXONOMY);
         assert.deepEqual(invalid.errors, {
             title: '标题不能为空',
             date: '日期不能为空',
@@ -74,10 +80,26 @@ describe('post utility functions', () => {
             tags: '测试, Astro',
             excerpt: '摘要',
             body: '# 正文',
-        });
+        }, TEST_TAXONOMY);
 
         assert.equal(valid.errors, null);
         assert.deepEqual(valid.value.tags, ['测试', 'Astro']);
+    });
+
+    test('validatePostPayload rejects taxonomy violations on top of nonempty checks', () => {
+        const base = { title: '新建文章', date: '2026-04-30', excerpt: '摘要', body: '# 正文' };
+
+        const offCategory = validatePostPayload({ ...base, category: 'c9', tags: 't1' }, TEST_TAXONOMY);
+        assert.match(offCategory.errors.category, /category 必须为/);
+
+        const offTag = validatePostPayload({ ...base, category: 'c1', tags: 't1,t9' }, TEST_TAXONOMY);
+        assert.match(offTag.errors.tags, /tags 含白名单外的词: t9/);
+
+        const tooManyTags = validatePostPayload({ ...base, category: 'c1', tags: 't1,t2,t3,t4,t5' }, TEST_TAXONOMY);
+        assert.match(tooManyTags.errors.tags, /tags 数量必须为 1-4 个，实际值: 5 个/);
+
+        const sameAsCategory = validatePostPayload({ ...base, category: 'c1', tags: 'c1,t1' }, TEST_TAXONOMY);
+        assert.match(sameAsCategory.errors.tags, /tags 不得与 category 相同: c1/);
     });
 
     test('buildMarkdownDocument writes complete YAML frontmatter before body content', () => {
@@ -324,7 +346,7 @@ describe('post utility functions', () => {
             metadata: { category: '随笔', tags: ['自我'] },
         };
 
-        const result = await readTransformedMarkdown(plan);
+        const result = await readTransformedMarkdown(plan, TEST_TAXONOMY);
 
         assert.match(result, /^---\n/);
         assert.match(result, /title: "20260503-my-post"/);
@@ -349,7 +371,7 @@ describe('post utility functions', () => {
             assetSlug: 'my-post',
         };
 
-        const result = await readTransformedMarkdown(plan);
+        const result = await readTransformedMarkdown(plan, TEST_TAXONOMY);
 
         assert.match(result, /title: "My Title"/);
         assert.match(result, /date: "2026-04-01"/);
@@ -372,16 +394,44 @@ describe('post utility functions', () => {
         await writeFile(path.join(postDir, 'draft.md'),
             '---\ntitle: "My Title"\ndate: "2026-04-01"\ntags:\n  - "tag1"\n---\n\n# Hello\n', 'utf8');
         await assert.rejects(
-            () => readTransformedMarkdown(plan),
+            () => readTransformedMarkdown(plan, TEST_TAXONOMY),
             /category（分类）不能为空/,
         );
 
         await writeFile(path.join(postDir, 'draft.md'),
             '---\ntitle: "My Title"\ndate: "2026-04-01"\ncategory: "随笔"\ntags:\n---\n\n# Hello\n', 'utf8');
         await assert.rejects(
-            () => readTransformedMarkdown(plan),
+            () => readTransformedMarkdown(plan, TEST_TAXONOMY),
             /tags（标签）不能为空/,
         );
+    });
+
+    test('readTransformedMarkdown rejects taxonomy violations before writing', async () => {
+        const vaultDir = await createTempDir();
+        const postDir = path.join(vaultDir, '20260503-my-post');
+        await mkdir(postDir, { recursive: true });
+        const sourceMarkdownPath = path.join(postDir, 'draft.md');
+        const plan = {
+            sourceMarkdownPath,
+            dirName: '20260503-my-post',
+            publicUrl: 'https://content.example.com',
+            assetSlug: 'my-post',
+        };
+
+        const cases = [
+            { frontmatter: 'category: "c9"\ntags:\n  - "t1"', message: /category 必须为/ },
+            { frontmatter: 'category: "c1"\ntags:\n  - "t9"', message: /tags 含白名单外的词: t9/ },
+            { frontmatter: 'category: "c1"\ntags:\n  - t1\n  - t2\n  - t3\n  - t4\n  - t5', message: /tags 数量必须为 1-4 个，实际值: 5 个/ },
+            { frontmatter: 'category: "c1"\ntags:\n  - "c1"\n  - "t1"', message: /tags 不得与 category 相同: c1/ },
+        ];
+
+        for (const { frontmatter, message } of cases) {
+            await writeFile(sourceMarkdownPath, `---\ntitle: "My Title"\ndate: "2026-04-01"\n${frontmatter}\n---\n\n# Hello\n`, 'utf8');
+            await assert.rejects(
+                () => readTransformedMarkdown(plan, TEST_TAXONOMY),
+                (error) => /元数据校验失败/.test(error.message) && message.test(error.message),
+            );
+        }
     });
 
     test('readTransformedMarkdown gives user metadata priority over source frontmatter', async () => {
@@ -405,7 +455,7 @@ describe('post utility functions', () => {
             },
         };
 
-        const result = await readTransformedMarkdown(plan);
+        const result = await readTransformedMarkdown(plan, TEST_TAXONOMY);
 
         assert.match(result, /title: "New Title"/);
         assert.match(result, /date: "2026-05-03"/);
@@ -440,7 +490,7 @@ describe('post utility functions', () => {
             assetSlug: 'my-post',
         };
 
-        const result = await readTransformedMarkdown(plan);
+        const result = await readTransformedMarkdown(plan, TEST_TAXONOMY);
 
         assert.match(result, /excerpt: ""/, 'empty excerpt must stay an empty string, not become an array');
         assert.match(result, /date: "2026-04-01"/, 'unquoted ISO date parsed as Date must serialize back to YYYY-MM-DD');

@@ -6,11 +6,18 @@ import { afterEach, describe, test } from 'node:test';
 
 import {
     collectMetadataEdits,
+    createMetadataQuestions,
     parseEditMetadataArgs,
     readPostMetadata,
     validatePostMetadata,
     writePostMetadataAtomic,
 } from '../scripts/edit-metadata.js';
+
+// 测试词表（假值），通过 validateTaxonomy 的注入接口生效：不对生产词表变更过敏。
+const TEST_TAXONOMY = {
+    categoryWhitelist: ['记录', '随笔', 'c1'],
+    tagWhitelist: ['测试', 'Astro', '新标签', '标签', 't1', 't2', 't3', 't4', 't5', 'c1', '记录'],
+};
 
 const tempDirs = [];
 
@@ -86,7 +93,7 @@ describe('edit metadata CLI helpers', () => {
             date: '20260601',
             category: '',
             tags: '测试, Astro',
-        });
+        }, { taxonomy: TEST_TAXONOMY });
 
         assert.deepEqual(invalid.errors, {
             title: '标题不能为空',
@@ -104,7 +111,7 @@ describe('edit metadata CLI helpers', () => {
             readTime: ' 4 min ',
             status: ' published ',
             customField: 'kept',
-        });
+        }, { taxonomy: TEST_TAXONOMY });
 
         assert.equal(valid.errors, null);
         assert.deepEqual(valid.value, {
@@ -145,6 +152,7 @@ describe('edit metadata CLI helpers', () => {
                 tags: ['新标签', 'Astro'],
             },
             {
+                taxonomy: TEST_TAXONOMY,
                 writeFile: async (target, content, encoding) => {
                     operations.push({ type: 'writeFile', target });
                     await writeFile(target, content, encoding);
@@ -198,6 +206,7 @@ describe('edit metadata CLI helpers', () => {
                     tags: ['新标签'],
                 },
                 {
+                    taxonomy: TEST_TAXONOMY,
                     rename: async () => {
                         throw new Error('rename failed');
                     },
@@ -236,7 +245,7 @@ describe('edit metadata CLI helpers', () => {
             excerpt: '新摘要',
             category: '记录',
             tags: ['新标签'],
-        });
+        }, { taxonomy: TEST_TAXONOMY });
 
         await assert.rejects(() => access(stalePath), { code: 'ENOENT' });
         assert.match(await readFile(filePath, 'utf8'), /title: 新标题/);
@@ -338,6 +347,41 @@ describe('edit metadata CLI helpers', () => {
         assert.deepEqual(withSkipValidation.value.tags, []);
     });
 
+    test('rejects taxonomy violations on top of nonempty checks', () => {
+        const base = { title: '标题', date: '2026-06-01', excerpt: '' };
+
+        const offCategory = validatePostMetadata({ ...base, category: 'c9', tags: ['t1'] }, { taxonomy: TEST_TAXONOMY });
+        assert.match(offCategory.errors.category, /category 必须为/);
+
+        const offTag = validatePostMetadata({ ...base, category: 'c1', tags: ['t9'] }, { taxonomy: TEST_TAXONOMY });
+        assert.match(offTag.errors.tags, /tags 含白名单外的词: t9/);
+
+        const tooManyTags = validatePostMetadata({ ...base, category: 'c1', tags: ['t1', 't2', 't3', 't4', 't5'] }, { taxonomy: TEST_TAXONOMY });
+        assert.match(tooManyTags.errors.tags, /tags 数量必须为 1-4 个，实际值: 5 个/);
+
+        const sameAsCategory = validatePostMetadata({ ...base, category: 'c1', tags: ['c1', 't1'] }, { taxonomy: TEST_TAXONOMY });
+        assert.match(sameAsCategory.errors.tags, /tags 不得与 category 相同: c1/);
+    });
+
+    test('metadata question validators reject taxonomy violations', () => {
+        const questions = createMetadataQuestions({
+            title: '标题',
+            date: '2026-06-01',
+            excerpt: '',
+            category: '记录',
+            tags: ['测试'],
+        }, TEST_TAXONOMY);
+        const categoryValidate = questions.find((question) => question.name === 'category').validate;
+        const tagsValidate = questions.find((question) => question.name === 'tags').validate;
+
+        assert.match(categoryValidate('c9'), /category 必须为/);
+        assert.equal(categoryValidate('c1'), true);
+        assert.match(tagsValidate('t9'), /tags 含白名单外的词: t9/);
+        assert.match(tagsValidate('t1,t2,t3,t4,t5'), /tags 数量必须为 1-4 个/);
+        assert.match(tagsValidate('记录,t1'), /tags 不得与 category 相同: 记录/);
+        assert.equal(tagsValidate('t1, t2'), true);
+    });
+
     test('writePostMetadataAtomic allows clearing optional fields', async () => {
         const filePath = await createTempPost([
             '---',
@@ -360,7 +404,7 @@ describe('edit metadata CLI helpers', () => {
             author: '',
             readTime: '',
             status: '',
-        });
+        }, { taxonomy: TEST_TAXONOMY });
 
         assert.equal(result.metadata.author, undefined);
         assert.equal(result.metadata.readTime, undefined);

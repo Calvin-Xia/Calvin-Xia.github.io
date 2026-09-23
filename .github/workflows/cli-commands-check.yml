@@ -63,9 +63,9 @@ jobs:
       - name: Smoke test new-post CLI in a temp dir
         run: |
           SMOKE_DIR="${RUNNER_TEMP}/new-post-smoke"
-          npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --excerpt "smoke" --category "ci" --tags "ci,smoke" --content-dir "$SMOKE_DIR"
+          npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --excerpt "smoke" --category "随笔" --tags "自我,劳动" --content-dir "$SMOKE_DIR"
           test -n "$(find "$SMOKE_DIR" -name '20260101-*.md' -print -quit)"
-          if npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --category "ci" --tags "ci,smoke" --content-dir "$SMOKE_DIR"; then
+          if npm run new-post -- --title "CI Smoke Post" --date 2026-01-01 --category "随笔" --tags "自我,劳动" --content-dir "$SMOKE_DIR"; then
             echo "duplicate creation must fail" >&2
             exit 1
           fi
@@ -77,15 +77,46 @@ jobs:
             echo "creation without category/tags must fail" >&2
             exit 1
           fi
-          if npm run new-post -- --title "No Category Post" --date 2026-01-02 --tags "ci" --content-dir "$MISSING_DIR"; then
+          if npm run new-post -- --title "No Category Post" --date 2026-01-02 --tags "自我" --content-dir "$MISSING_DIR"; then
             echo "creation without category must fail" >&2
             exit 1
           fi
-          if npm run new-post -- --title "No Tags Post" --date 2026-01-02 --category "ci" --content-dir "$MISSING_DIR"; then
+          if npm run new-post -- --title "No Tags Post" --date 2026-01-02 --category "随笔" --content-dir "$MISSING_DIR"; then
             echo "creation without tags must fail" >&2
             exit 1
           fi
           test -z "$(find "$MISSING_DIR" -name '*.md' -print -quit 2>/dev/null)"
+
+      - name: Off-whitelist category or tag must fail validation and write nothing
+        run: |
+          OFF_DIR="${RUNNER_TEMP}/new-post-off-whitelist"
+          if npm run new-post -- --title "Off Category Post" --date 2026-01-03 --category "未分类" --tags "自我" --content-dir "$OFF_DIR"; then
+            echo "off-whitelist category must be rejected" >&2
+            exit 1
+          fi
+          if npm run new-post -- --title "Off Tag Post" --date 2026-01-03 --category "随笔" --tags "白名单外" --content-dir "$OFF_DIR"; then
+            echo "off-whitelist tag must be rejected" >&2
+            exit 1
+          fi
+          test -z "$(find "$OFF_DIR" -name '*.md' -print -quit 2>/dev/null)"
+
+      - name: More than four tags must fail validation and write nothing
+        run: |
+          FIVE_DIR="${RUNNER_TEMP}/new-post-five-tags"
+          if npm run new-post -- --title "Five Tags Post" --date 2026-01-04 --category "随笔" --tags "武汉大学,高考,旅行,铁路,人工智能" --content-dir "$FIVE_DIR"; then
+            echo "five tags must be rejected" >&2
+            exit 1
+          fi
+          test -z "$(find "$FIVE_DIR" -name '*.md' -print -quit 2>/dev/null)"
+
+      - name: Tag equal to category must fail validation and write nothing
+        run: |
+          SAME_DIR="${RUNNER_TEMP}/new-post-tag-equals-category"
+          if npm run new-post -- --title "Same Taxonomy Post" --date 2026-01-05 --category "随笔" --tags "随笔" --content-dir "$SAME_DIR"; then
+            echo "tag equal to category must be rejected" >&2
+            exit 1
+          fi
+          test -z "$(find "$SAME_DIR" -name '*.md' -print -quit 2>/dev/null)"
 
       - name: Unknown publish flags must fail fast
         run: |

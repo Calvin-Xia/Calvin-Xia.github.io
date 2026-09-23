@@ -44,8 +44,8 @@ export function parseNewPostArgs(argv = process.argv.slice(2)) {
     return values;
 }
 
-export async function runNewPost({ payload, contentDir }) {
-    const validation = validatePostPayload(payload);
+export async function runNewPost({ payload, contentDir, taxonomy = {} }) {
+    const validation = validatePostPayload(payload, taxonomy);
 
     if (validation.errors) {
         const detail = Object.entries(validation.errors)

@@ -13,7 +13,7 @@ import sharp from 'sharp';
 import { getContentType } from './content-types.js';
 import { isSupportedImage, probeImageFile } from './image-dimensions.js';
 import { buildPublishPlan, deriveDateFromDirName, readTransformedMarkdown } from './post-utils.js';
-import { CATEGORY_WHITELIST } from '../src/lib/content-taxonomy.js';
+import { CATEGORY_WHITELIST, validateTaxonomy } from '../src/lib/content-taxonomy.js';
 
 dotenv.config({ quiet: true });
 
@@ -248,6 +248,7 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export async function promptForPostMetadata(dirName, {
     createInterface: openInterface = createInterface,
     logger = console,
+    taxonomy = {},
 } = {}) {
     const rl = openInterface({ input, output });
     const derivedDate = deriveDateFromDirName(dirName);
@@ -268,22 +269,37 @@ export async function promptForPostMetadata(dirName, {
 
         const excerpt = (await rl.question('摘要: ')).trim();
 
-        // category/tags 没有默认值：留空会一直重新提示，直到显式输入为止。
+        // category/tags 没有默认值：留空或不在封闭词表内会一直重新提示，直到显式输入合法值为止。
+        const categoryHint = (taxonomy.categoryWhitelist ?? CATEGORY_WHITELIST).join('/');
         let category = '';
         while (!category) {
-            category = (await rl.question(`分类 (${CATEGORY_WHITELIST.join('/')}): `)).trim();
-            if (!category) {
+            const answer = (await rl.question(`分类 (${categoryHint}): `)).trim();
+            if (!answer) {
                 logger.log('分类不能为空，请显式输入');
+                continue;
             }
+            const categoryError = validateTaxonomy(answer, undefined, taxonomy).category;
+            if (categoryError) {
+                logger.log(categoryError);
+                continue;
+            }
+            category = answer;
         }
 
         let tags = [];
         while (tags.length === 0) {
             const tagsInput = (await rl.question('标签 (逗号分隔): ')).trim();
-            tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean);
-            if (tags.length === 0) {
+            const parsedTags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean);
+            if (parsedTags.length === 0) {
                 logger.log('标签不能为空，请至少显式输入 1 个（逗号分隔）');
+                continue;
             }
+            const tagsError = validateTaxonomy(category, parsedTags, taxonomy).tags;
+            if (tagsError) {
+                logger.log(tagsError);
+                continue;
+            }
+            tags = parsedTags;
         }
 
         return { title, date, excerpt, category, tags };

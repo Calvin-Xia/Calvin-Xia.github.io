@@ -9,6 +9,7 @@ import {
     transformMarkdownAssetLinks,
 } from './markdown-utils.js';
 import { deriveAssetSlug, slugifyTitle } from './slug.js';
+import { validateTaxonomy } from '../src/lib/content-taxonomy.js';
 
 function compactDate(date) {
     return String(date || '').replaceAll('-', '');
@@ -29,7 +30,7 @@ export function deriveDateFromDirName(dirName) {
     return '';
 }
 
-export function validatePostPayload(payload) {
+export function validatePostPayload(payload, taxonomy = {}) {
     const source = payload && typeof payload === 'object' ? payload : {};
     const title = String(source.title || '').trim();
     const date = String(source.date || '').trim();
@@ -53,6 +54,13 @@ export function validatePostPayload(payload) {
 
     if (tags.length === 0) {
         errors.tags = '标签不能为空';
+    }
+
+    // 非空校验之上叠加封闭词表校验（白名单/数量/tag≠category）；非空报错优先。
+    for (const [field, message] of Object.entries(validateTaxonomy(category, tags, taxonomy))) {
+        if (!(field in errors)) {
+            errors[field] = message;
+        }
     }
 
     if (Object.keys(errors).length > 0) {
@@ -174,7 +182,7 @@ export async function buildPublishPlan({ vaultDir, dirName, outputDir, publicUrl
     }));
 }
 
-export async function readTransformedMarkdown(plan) {
+export async function readTransformedMarkdown(plan, taxonomy = {}) {
     const markdown = await readFile(plan.sourceMarkdownPath, 'utf8');
     const parsed = matter(markdown);
     const sourceMeta = parsed.data || {};
@@ -196,6 +204,14 @@ export async function readTransformedMarkdown(plan) {
 
     if (tags.length === 0) {
         throw new Error('tags（标签）不能为空：请显式提供，不再写入「未分类」默认值');
+    }
+
+    const taxonomyErrors = validateTaxonomy(category, tags, taxonomy);
+    if (Object.keys(taxonomyErrors).length > 0) {
+        const detail = Object.entries(taxonomyErrors)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join('；');
+        throw new Error(`元数据校验失败：${detail}`);
     }
 
     const post = {

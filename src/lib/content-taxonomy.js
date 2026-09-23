@@ -20,3 +20,55 @@ export const TAG_WHITELIST = [
 ];
 export const TAG_MIN_COUNT = 1;
 export const TAG_MAX_COUNT = 4;
+
+// category/tags 封闭词表规则校验，供三个写入口（scripts/post-utils.js 的
+// validatePostPayload / readTransformedMarkdown、scripts/publish-post.js 的交互循环、
+// scripts/edit-metadata.js 的 schema 与 prompts validate）在各自的非空校验之上叠加调用。
+// - tags 传 undefined 时跳过 tags 维度（用于只提示 category 的交互场景）；
+// - options 可注入 { categoryWhitelist?, tagWhitelist? }（测试用假词表，避免对词表变更过敏）。
+// 返回 { category?: string, tags?: string }（空对象表示通过），报错文案与 check-posts.js /
+// content.config.ts 的既有句式保持一致。
+export function validateTaxonomy(category, tags, options = {}) {
+    const categoryWhitelist = options.categoryWhitelist ?? CATEGORY_WHITELIST;
+    const tagWhitelist = options.tagWhitelist ?? TAG_WHITELIST;
+    const errors = {};
+
+    const cleanCategory = String(category ?? '').trim();
+    const rawTags = tags === undefined
+        ? []
+        : (Array.isArray(tags) ? tags : String(tags).split(',')).map((tag) => String(tag ?? '').trim()).filter(Boolean);
+
+    if (!cleanCategory) {
+        errors.category = '分类不能为空';
+    } else if (!categoryWhitelist.includes(cleanCategory)) {
+        errors.category = `category 必须为 ${categoryWhitelist.join(' / ')} 之一，实际值: ${cleanCategory}（见 AGENTS.md 的 Blog Taxonomy）`;
+    }
+
+    if (tags === undefined) {
+        return errors;
+    }
+
+    const tagIssues = [];
+    if (rawTags.length === 0) {
+        tagIssues.push('标签不能为空');
+    } else {
+        if (rawTags.length < TAG_MIN_COUNT || rawTags.length > TAG_MAX_COUNT) {
+            tagIssues.push(`tags 数量必须为 ${TAG_MIN_COUNT}-${TAG_MAX_COUNT} 个，实际值: ${rawTags.length} 个`);
+        }
+
+        const unknownTags = rawTags.filter((tag) => !tagWhitelist.includes(tag));
+        if (unknownTags.length > 0) {
+            tagIssues.push(`tags 含白名单外的词: ${unknownTags.join('、')}，允许: ${tagWhitelist.join('、')}（见 AGENTS.md 的 Blog Taxonomy）`);
+        }
+
+        if (cleanCategory && rawTags.includes(cleanCategory)) {
+            tagIssues.push(`tags 不得与 category 相同: ${cleanCategory}（见 AGENTS.md 的 Blog Taxonomy）`);
+        }
+    }
+
+    if (tagIssues.length > 0) {
+        errors.tags = tagIssues.join('；');
+    }
+
+    return errors;
+}

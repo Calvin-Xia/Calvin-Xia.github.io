@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, test } from 'node:test';
@@ -9,6 +9,12 @@ import {
     runNewPost,
     todayLocalDate,
 } from '../scripts/new-post-cli.js';
+
+// 测试词表（假值），通过 validateTaxonomy 的注入接口生效。
+const TEST_TAXONOMY = {
+    categoryWhitelist: ['c'],
+    tagWhitelist: ['c', 't', 't1', 't2'],
+};
 
 const tempDirs = [];
 
@@ -52,6 +58,7 @@ describe('new-post CLI creation', () => {
         const result = await runNewPost({
             payload: { title: 'CLI Test', date: '2026-06-03', excerpt: 'e', category: 'c', tags: 't1,t2' },
             contentDir: dir,
+            taxonomy: TEST_TAXONOMY,
         });
 
         assert.equal(result.entrySlug, '20260603-cli-test');
@@ -64,10 +71,10 @@ describe('new-post CLI creation', () => {
     test('rejects duplicate entry slugs with a friendly message', async () => {
         const dir = await createTempContentDir();
         const payload = { title: 'CLI Test', date: '2026-06-03', excerpt: 'e', category: 'c', tags: 't' };
-        await runNewPost({ payload, contentDir: dir });
+        await runNewPost({ payload, contentDir: dir, taxonomy: TEST_TAXONOMY });
 
         await assert.rejects(
-            () => runNewPost({ payload, contentDir: dir }),
+            () => runNewPost({ payload, contentDir: dir, taxonomy: TEST_TAXONOMY }),
             /同名文章已存在/,
         );
     });
@@ -91,6 +98,29 @@ describe('new-post CLI creation', () => {
                 && /tags: 标签不能为空/.test(error.message)
             ),
         );
+    });
+
+    test('rejects taxonomy violations and writes nothing', async () => {
+        const dir = await createTempContentDir();
+        const base = { title: 'Taxonomy Test', date: '2026-06-04', excerpt: 'e' };
+
+        await assert.rejects(
+            () => runNewPost({ payload: { ...base, category: 'c9', tags: 't1' }, contentDir: dir, taxonomy: TEST_TAXONOMY }),
+            (error) => (
+                /元数据校验失败/.test(error.message)
+                && /category: category 必须为/.test(error.message)
+            ),
+        );
+
+        await assert.rejects(
+            () => runNewPost({ payload: { ...base, category: 'c', tags: 'c,t1' }, contentDir: dir, taxonomy: TEST_TAXONOMY }),
+            (error) => (
+                /元数据校验失败/.test(error.message)
+                && /tags 不得与 category 相同/.test(error.message)
+            ),
+        );
+
+        assert.deepEqual(await readdir(dir), [], 'rejected payloads must not leave markdown behind');
     });
 });
 
