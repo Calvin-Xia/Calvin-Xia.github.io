@@ -18,7 +18,6 @@ declare global {
 
 const SELECTOR_ITEM_TEXT_CLASS = 'selector-item-text';
 const SUPPORTED_FILE_EXTENSIONS = new Set(['txt', 'md', 'docx']);
-const MAMMOTH_CDN_URL = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js';
 const MAMMOTH_LOCAL_URL = '/libs/mammoth/mammoth.browser.min.js';
 
 const state: RandomSelectorState = {
@@ -142,18 +141,13 @@ function loadScript(src: string): Promise<void> {
 }
 
 async function loadMammoth(): Promise<void> {
+    // Loaded on demand once per document and retried on the next attempt after a failure.
     if (window.mammoth) {
         return;
     }
 
-    try {
-        await loadScript(MAMMOTH_CDN_URL);
-        console.log('[CDN Fallback] Successfully loaded mammoth.js from CDN');
-    } catch (error) {
-        console.warn('[CDN Fallback] CDN failed for mammoth.js, trying local', error);
-        await loadScript(MAMMOTH_LOCAL_URL);
-        console.log('[CDN Fallback] Successfully loaded mammoth.js from local');
-    }
+    await loadScript(MAMMOTH_LOCAL_URL);
+    console.log('[mammoth] Successfully loaded mammoth.js from the local bundle');
 }
 
 function extractBlockText(html: string): string {
@@ -175,7 +169,7 @@ async function extractDocx(arrayBuffer: ArrayBuffer): Promise<void> {
         const result = await window.mammoth.convertToHtml({ arrayBuffer });
         fillFromText(extractBlockText(result.value));
     } catch (error) {
-        console.error('[CDN Fallback] Failed to load mammoth.js:', error);
+        console.error('[mammoth] Failed to load mammoth.js:', error);
         window.alert(t('random.wordUnavailable'));
     }
 }

@@ -119,7 +119,7 @@ describe('Phase 3 tool migration', () => {
         assert.match(widget, /import\s+['"]\.\.\/scripts\/random-selector\.ts['"]/);
     });
 
-    test('random-selector.ts preserves option management, file import, and mammoth fallback', async () => {
+    test('random-selector.ts preserves option management, file import, and local mammoth loading', async () => {
         const source = await readExistingFile('src', 'scripts', 'random-selector.ts');
 
         for (const fn of ['addItem', 'deleteItem', 'deleteAll', 'chooseRandom', 'openFilePicker', 'handleFiles', 'updateList']) {
@@ -131,8 +131,13 @@ describe('Phase 3 tool migration', () => {
         assert.match(source, /\.txt|txt/);
         assert.match(source, /\.md|md/);
         assert.match(source, /\.docx|docx/);
-        assert.match(source, /cdnjs\.cloudflare\.com\/ajax\/libs\/mammoth/);
-        assert.match(source, /\/libs\/mammoth\/mammoth\.browser\.min\.js/);
+        // The site CSP (public/_headers) does not allow cdnjs.cloudflare.com, so mammoth must be
+        // loaded from the bundled local copy only: no CDN constant, no CDN request.
+        assert.doesNotMatch(source, /cdnjs\.cloudflare\.com/);
+        assert.doesNotMatch(source, /MAMMOTH_CDN_URL/);
+        assert.match(source, /await loadScript\(MAMMOTH_LOCAL_URL\)/);
+        assert.match(source, /loadMammoth/);
+        assert.match(source, /window\.mammoth/);
         assert.match(source, /window\.RandomSelector\s*=/);
     });
 
@@ -229,7 +234,17 @@ describe('Phase 3 tool migration', () => {
         assert.match(page, /<MarkdownToolWidget\s*\/>/);
     });
 
-    test('mammoth local fallback remains available under public assets', async () => {
+    test('mammoth local bundle remains available under public assets', async () => {
         await assertFileExists('public', 'libs', 'mammoth', 'mammoth.browser.min.js');
+    });
+
+    test('BaseLayout no longer preconnects to the cdnjs origin blocked by the site CSP', async () => {
+        const layout = await readExistingFile('src', 'layouts', 'BaseLayout.astro');
+        const headers = await readExistingFile('public', '_headers');
+
+        assert.doesNotMatch(layout, /cdnjs\.cloudflare\.com/);
+        // The CSP script-src intentionally omits cdnjs, so no bundled script may depend on it.
+        assert.doesNotMatch(headers, /script-src[^;]*cdnjs\.cloudflare\.com/);
+        assert.match(headers, /script-src[^;]*'self'/);
     });
 });
