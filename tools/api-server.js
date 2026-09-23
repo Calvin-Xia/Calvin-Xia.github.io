@@ -201,6 +201,7 @@ export function createNewPostServer({
     contentDir = defaultContentDir,
     secret = process.env.NEW_POST_SECRET || '',
     logger = console,
+    taxonomy = {},
 } = {}) {
     return createServer(async (request, response) => {
         const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
@@ -237,7 +238,7 @@ export function createNewPostServer({
         try {
             const rawBody = await readRequestBody(request);
             const payload = JSON.parse(rawBody || '{}');
-            const validation = validatePostPayload(payload);
+            const validation = validatePostPayload(payload, taxonomy);
 
             if (validation.errors) {
                 sendJson(request, response, 422, { errors: validation.errors });

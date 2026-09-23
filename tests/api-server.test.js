@@ -200,6 +200,8 @@ describe('new-post API CORS policy', () => {
             secret: 'dev-secret',
             contentDir,
             logger: { error() {} },
+            // 测试词表（假值）：不对生产词表变更过敏。
+            taxonomy: { categoryWhitelist: ['测试'], tagWhitelist: ['review', 'api'] },
         });
         const port = await listen(server);
 

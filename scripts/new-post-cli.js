@@ -3,6 +3,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import prompts from 'prompts';
 import { createPostFile, validatePostPayload } from './post-utils.js';
+import { CATEGORY_WHITELIST, TAG_MAX_COUNT, TAG_MIN_COUNT } from '../src/lib/content-taxonomy.js';
 
 const rootDir = path.resolve(import.meta.dirname, '..');
 const defaultContentDir = path.join(rootDir, 'src', 'content', 'blog');
@@ -43,8 +44,8 @@ export function parseNewPostArgs(argv = process.argv.slice(2)) {
     return values;
 }
 
-export async function runNewPost({ payload, contentDir }) {
-    const validation = validatePostPayload(payload);
+export async function runNewPost({ payload, contentDir, taxonomy = {} }) {
+    const validation = validatePostPayload(payload, taxonomy);
 
     if (validation.errors) {
         const detail = Object.entries(validation.errors)
@@ -82,8 +83,18 @@ export async function promptForNewPostMetadata({
             validate: (value) => (DATE_PATTERN.test(String(value || '').trim()) ? true : '日期必须为 YYYY-MM-DD 格式'),
         },
         { type: 'text', name: 'excerpt', message: '摘要:' },
-        { type: 'text', name: 'category', message: '分类:', initial: '未分类' },
-        { type: 'text', name: 'tags', message: '标签 (逗号分隔):', initial: '未分类' },
+        {
+            type: 'text',
+            name: 'category',
+            message: `分类 (${CATEGORY_WHITELIST.join('/')}):`,
+            validate: (value) => (String(value || '').trim() ? true : '分类不能为空'),
+        },
+        {
+            type: 'text',
+            name: 'tags',
+            message: '标签 (逗号分隔):',
+            validate: (value) => (String(value || '').trim() ? true : '标签不能为空'),
+        },
     ]);
 
     if (!answers || !String(answers.title || '').trim()) {
@@ -94,8 +105,8 @@ export async function promptForNewPostMetadata({
         title: String(answers.title).trim(),
         date: String(answers.date || '').trim(),
         excerpt: String(answers.excerpt || '').trim(),
-        category: String(answers.category || '').trim() || '未分类',
-        tags: String(answers.tags || '').trim() || '未分类',
+        category: String(answers.category || '').trim(),
+        tags: String(answers.tags || '').trim(),
     };
 }
 
@@ -107,8 +118,8 @@ function printUsage(logger = console) {
         '  --title <t>       文章标题（提供 title 与 date 时跳过交互）',
         '  --date <d>        日期 YYYY-MM-DD',
         '  --excerpt <e>     摘要',
-        '  --category <c>    分类（默认 未分类）',
-        '  --tags <a,b,c>    标签，逗号分隔（默认 未分类）',
+        `  --category <c>    分类（必填，${CATEGORY_WHITELIST.join('/')}）`,
+        `  --tags <a,b,c>    标签，逗号分隔（必填，${TAG_MIN_COUNT}-${TAG_MAX_COUNT} 个）`,
         '  --content-dir <d> 输出目录（默认 src/content/blog）',
         '  --help            显示本帮助',
         '',

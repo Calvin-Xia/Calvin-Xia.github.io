@@ -1,0 +1,82 @@
+name: Word Count Parity Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - src/lib/word-count-core.js
+      - src/lib/word-count.js
+      - scripts/readable-stats.js
+      - scripts/post-stats.js
+      - scripts/blog-posts.js
+      - src/content/blog/**
+      - tests/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/word-count-parity-check.yml
+  pull_request:
+    paths:
+      - src/lib/word-count-core.js
+      - src/lib/word-count.js
+      - scripts/readable-stats.js
+      - scripts/post-stats.js
+      - scripts/blog-posts.js
+      - src/content/blog/**
+      - tests/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/word-count-parity-check.yml
+
+jobs:
+  validate-word-count-parity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run word-count parity and stats test suites
+        run: node --test tests/word-count-parity.test.js tests/phase-6-stats-archive.test.js tests/post-stats.test.js
+
+      - name: Exercise CLI stats pipeline against repository content
+        run: |
+          npm run stats
+          npm run --silent stats -- --json > stats-report.json
+
+      - name: Validate stats JSON output shape
+        run: |
+          node -e "
+          const raw = require('fs').readFileSync('stats-report.json', 'utf8');
+          const start = raw.indexOf('{');
+          if (start < 0) throw new Error('no JSON object found in stats-report.json');
+          const report = JSON.parse(raw.slice(start));
+          if (!Number.isInteger(report.count) || report.count < 1) throw new Error('missing post count');
+          if (!Array.isArray(report.posts) || report.posts.length !== report.count) throw new Error('post list mismatch');
+          for (const post of report.posts) {
+            for (const field of ['characters', 'englishWords', 'totalCount', 'readTimeMinutes']) {
+              if (!Number.isFinite(post[field])) throw new Error(\`invalid \${field} for \${post.file}\`);
+            }
+          }
+          for (const field of ['characters', 'englishWords', 'totalCount', 'readTimeMinutes', 'images']) {
+            if (!Number.isFinite(report.totals[field])) throw new Error(\`invalid totals.\${field}\`);
+          }
+          console.log('stats JSON valid for', report.count, 'posts');
+          "
+
+      - name: Error handling for missing stats directory
+        run: |
+          if npm run stats -- --dir ./does-not-exist; then
+            echo "expected stats to fail for a missing directory" >&2
+            exit 1
+          fi
+          echo "missing-directory failure path verified"

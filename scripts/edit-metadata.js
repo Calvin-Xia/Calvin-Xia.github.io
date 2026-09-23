@@ -5,20 +5,29 @@ import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import prompts from 'prompts';
 import { z } from 'zod';
+import { validateTaxonomy } from '../src/lib/content-taxonomy.js';
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
-const blogMetadataSchema = z.object({
-    title: z.string().min(1, '标题不能为空'),
-    date: z.string().regex(datePattern, '日期格式必须为 YYYY-MM-DD'),
-    excerpt: z.string(),
-    category: z.string().min(1, '分类不能为空'),
-    tags: z.array(z.string()),
-    featured: z.boolean().optional(),
-    author: z.string().optional(),
-    readTime: z.string().optional(),
-    status: z.string().optional(),
-}).passthrough();
+// z.min(1) 的非空校验之上叠加封闭词表校验（superRefine 仅在非空校验通过后运行）。
+// taxonomy 可注入 { categoryWhitelist, tagWhitelist }（测试用假词表）。
+function createBlogMetadataSchema(taxonomy = {}) {
+    return z.object({
+        title: z.string().min(1, '标题不能为空'),
+        date: z.string().regex(datePattern, '日期格式必须为 YYYY-MM-DD'),
+        excerpt: z.string(),
+        category: z.string().min(1, '分类不能为空'),
+        tags: z.array(z.string()).min(1, '标签不能为空'),
+        featured: z.boolean().optional(),
+        author: z.string().optional(),
+        readTime: z.string().optional(),
+        status: z.string().optional(),
+    }).passthrough().superRefine((meta, ctx) => {
+        for (const [field, message] of Object.entries(validateTaxonomy(meta.category, meta.tags, taxonomy))) {
+            ctx.addIssue({ code: 'custom', path: [field], message });
+        }
+    });
+}
 
 function cleanString(value) {
     return String(value ?? '').trim();
@@ -73,7 +82,7 @@ export function normalizePostMetadata(metadata) {
     normalized.excerpt = cleanString(source.excerpt);
     normalized.category = cleanString(source.category);
     const tags = normalizeTags(source.tags);
-    normalized.tags = tags.length > 0 ? tags : ['未分类'];
+    normalized.tags = tags;
 
     const featured = normalizeFeatured(source.featured);
     if (featured === undefined) {
@@ -102,14 +111,14 @@ function formatValidationErrors(issues) {
     return errors;
 }
 
-export function validatePostMetadata(metadata, { skipValidation = false } = {}) {
+export function validatePostMetadata(metadata, { skipValidation = false, taxonomy = {} } = {}) {
     const normalized = normalizePostMetadata(metadata);
 
     if (skipValidation) {
         return { errors: null, value: normalized };
     }
 
-    const result = blogMetadataSchema.safeParse(normalized);
+    const result = createBlogMetadataSchema(taxonomy).safeParse(normalized);
     if (result.success) {
         return { errors: null, value: result.data };
     }
@@ -189,11 +198,12 @@ export async function writePostMetadataAtomic(filePath, metadata, {
     rename = defaultRename,
     unlink = defaultUnlink,
     skipValidation = false,
+    taxonomy = {},
     tempPath = createTempPath(filePath),
 } = {}) {
     const current = await readPostMetadata(filePath, { readFile });
     const merged = { ...current.metadata, ...stripUndefined(metadata) };
-    const validation = validatePostMetadata(merged, { skipValidation });
+    const validation = validatePostMetadata(merged, { skipValidation, taxonomy });
 
     if (validation.errors) {
         throw createValidationError(validation.errors);
@@ -229,7 +239,7 @@ function featuredInitialValue(metadata) {
     return 0;
 }
 
-export function createMetadataQuestions(currentMetadata) {
+export function createMetadataQuestions(currentMetadata, taxonomy = {}) {
     const metadata = normalizePostMetadata(currentMetadata);
 
     return [
@@ -257,8 +267,12 @@ export function createMetadataQuestions(currentMetadata) {
             type: 'text',
             name: 'category',
             message: '分类',
-            initial: metadata.category || '未分类',
-            validate: (value) => cleanString(value) ? true : '分类不能为空',
+            initial: metadata.category,
+            validate: (value) => {
+                const clean = cleanString(value);
+                if (!clean) return '分类不能为空';
+                return validateTaxonomy(clean, undefined, taxonomy).category ?? true;
+            },
         },
         {
             type: 'list',
@@ -266,6 +280,13 @@ export function createMetadataQuestions(currentMetadata) {
             message: '标签（逗号分隔）',
             initial: metadata.tags.join(', '),
             separator: ',',
+            // prompts 的 validate 只拿到本题答案，tag=category 以当前 category 初值best-effort校验，
+            // 用户改了 category 时由 schema superRefine 在写入前兜底拦截。
+            validate: (value) => {
+                const tags = normalizeTags(value);
+                if (tags.length === 0) return '标签不能为空';
+                return validateTaxonomy(metadata.category, tags, taxonomy).tags ?? true;
+            },
         },
         {
             type: 'select',
@@ -317,8 +338,9 @@ export function createMetadataQuestions(currentMetadata) {
 
 export async function collectMetadataEdits(currentMetadata, {
     prompts: promptUser = prompts,
+    taxonomy = {},
 } = {}) {
-    const response = await promptUser(createMetadataQuestions(currentMetadata));
+    const response = await promptUser(createMetadataQuestions(currentMetadata, taxonomy));
     const {
         skipValidation = false,
         confirmed = false,

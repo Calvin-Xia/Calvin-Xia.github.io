@@ -4,7 +4,29 @@ on:
   push:
     branches:
       - main
+    paths:
+      - src/**
+      - public/**
+      - scripts/**
+      - tests/**
+      - tools/**
+      - eslint.config.js
+      - tsconfig.json
+      - package.json
+      - package-lock.json
+      - .github/workflows/phase-2-content-check.yml
   pull_request:
+    paths:
+      - src/**
+      - public/**
+      - scripts/**
+      - tests/**
+      - tools/**
+      - eslint.config.js
+      - tsconfig.json
+      - package.json
+      - package-lock.json
+      - .github/workflows/phase-2-content-check.yml
 
 jobs:
   validate-content-pipeline:
@@ -26,10 +48,7 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Run file operation tests
-        run: npm test
-
-      - name: Run coverage report
+      - name: Run file operation tests with coverage
         run: npm run test:coverage
 
       - name: Validate content structure
@@ -40,6 +59,4 @@ jobs:
 
       - name: Run content check
         run: npm run check
-
-      - name: Build Astro site
-        run: npm run build
+        # 全量构建及 build 产物断言只在 astro-build-check.yml 跑一次，本 workflow 不再重复 npm run build。

@@ -245,6 +245,10 @@ describe('hero and dimensions frontmatter round-trip', () => {
                 hero: '20260603-my-post.webp',
                 imageDimensions: [{ path: 'my-post/cover.png', width: 64, height: 48 }],
             },
+        }, {
+            // 测试词表（假值）：不对生产词表变更过敏。
+            categoryWhitelist: ['c'],
+            tagWhitelist: ['t'],
         });
 
         assert.match(markdown, /hero: "20260603-my-post\.webp"/);

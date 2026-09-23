@@ -4,7 +4,27 @@ on:
   push:
     branches:
       - main
+    paths:
+      - src/**
+      - public/**
+      - scripts/**
+      - tests/**
+      - astro.config.mjs
+      - tsconfig.json
+      - package.json
+      - package-lock.json
+      - .github/workflows/astro-build-check.yml
   pull_request:
+    paths:
+      - src/**
+      - public/**
+      - scripts/**
+      - tests/**
+      - astro.config.mjs
+      - tsconfig.json
+      - package.json
+      - package-lock.json
+      - .github/workflows/astro-build-check.yml
 
 jobs:
   astro-build-check:
