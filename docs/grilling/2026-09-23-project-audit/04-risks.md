@@ -178,3 +178,23 @@
 验证口径：`npm test` **456/456**（批次② 后为 433，本批 +23）、`npm run lint` 0 error、`npm run check` 0 错误、`npm run build` 成功（15 张 OG 卡 + 17 条跳转页）。
 
 至此批次①/②/③ 全部落地，PR 内不再存在「文档领先代码」的窗口（见 [`05-doc-drift.md`](05-doc-drift.md) §3）。
+
+---
+
+## 8. 自动审查驱动的第 4 项修复（2026-09-23，批次③ 收尾）
+
+PR #15 上 `chatgpt-codex-connector[bot]` 提了 1 条 P2 inline 意见，指向批次③ 3-4 引入的早退：
+
+| 项 | 内容 |
+|---|---|
+| 意见 | `article-runtime.js:17`：从文章页跳到非文章页时提前 `return`，跳过了 `initArticleEnhancements`；而上一篇的清理就发生在它入口处（`enhancementCleanups` 以持久的 document 为键），于是旧监听器与 observer 留了下来 |
+| 复核 | 另开只读 agent（`xiaomi/mimo-v2.6-pro`）独立复核：**成立**，报告见 [`reports/codex-review-p2-verification.md`](reports/codex-review-p2-verification.md)；主管逐条核验（含它新发现的「`tests/article-scope.test.js:74-76` 用正则钉死了旧形状」） |
+| 残留具体项 | `window` scroll ×2（`reading-progress.js:253`、`selection-toolbar.js:231`）、`window` resize ×1（`reading-progress.js:254`）、`document` keydown ×1（`selection-toolbar.js:230`）、两个 IntersectionObserver（`reading-progress.js:235-245`、`section-reveals.js:58-72`）；吊住的还有整篇已脱离 DOM 的正文 + 目录。绑在**元素**上的监听器、灯箱 dialog 与复制反馈条不算（随节点/body 一起被丢弃） |
+| 严重性 | 有界（任意时刻只滞留一篇的量，进下一篇时被覆盖清理），无用户可见故障；代价是离开文章页后每次滚动都在量已脱离 DOM 的正文，并保留一整篇正文 DOM |
+| 修复 | `initArticleEnhancements(articleContent \|\| document)`：找不到容器仍然进增强入口（内部先清理、再因无容器整体跳过）；mermaid 仍只对文章跑。2 行改动，不新增公共 API |
+| 测试 | 新增 `tests/article-enhancements-cleanup.test.js`（fake DOM；断言监听器归零、observer 已 disconnect、清理幂等）；`tests/article-scope.test.js` 的源码断言改为 `initArticleEnhancements(articleContent \|\| document)` 并加 `doesNotMatch(initArticleEnhancements(articleContent))` 拦住旧形状 |
+| 反向控制 | ① 测试自身：把 `article-runtime.js` 换回有 bug 版本 → 源码断言 fail（10 pass / 1 fail），换回修复版本 → 11 pass / 0 fail。② 真实浏览器：基线（直接进首页滚动）= **0** 次 `getBoundingClientRect`；修复前（文章→首页→滚动）= **7** 次；修复后 = **0** 次；文章→工具页 = 0 次 |
+| 回归 | 文章增强仍正常：标题锚点 4、图注 figure 13、目录可见 |
+| 门禁 | `npm run lint` 0 error、`npm test` **459/459**、`npm run check` 0 错误、`npm run build` 成功 |
+
+根因写法（供以后避免）：把「找到容器就做增强」写成了「找不到容器就 `return`」，而同一个入口还兼着「先清理上一次」的职责 —— 早退把清理一起绝了。判断这类早退是否安全，看它是否跨过了已有的生命周期副作用，而不是看它跳过的那个功能本身。
