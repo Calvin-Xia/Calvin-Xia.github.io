@@ -365,4 +365,42 @@ describe('article image lightbox', () => {
         assert.equal(controller.getState().isPinching, false, 'isPinching stays false');
         assert.equal(controller.getState().touchStartScale, initialStartScale, 'touchStartScale unchanged for non-pinch touchend');
     });
+
+    test('reuses the cached dialog while it is still connected', async () => {
+        const { createLightboxController } = await import('../src/lib/article-enhancements/image-lightbox.js');
+        const documentRef = createFakeDocument();
+        const image = new FakeElement('img', { src: '/storage/photo.jpg', alt: 'Photo' });
+        const controller = createLightboxController({ documentRef });
+
+        controller.open(image, [image]);
+        const firstDialog = documentRef.body.querySelector('.article-lightbox');
+        controller.close();
+        controller.open(image, [image]);
+
+        assert.equal(documentRef.body.querySelector('.article-lightbox'), firstDialog, '同一个 body 上应复用同一个 dialog');
+    });
+
+    // 回归守卫：站内导航会整体替换 document.body，而共享控制器以持久的 document 为键，
+    // 于是缓存里的 dialog 会变成脱离节点。此时必须重建，否则点图片没有任何反应。
+    test('rebuilds the dialog after the cached one was detached by a body swap', async () => {
+        const { createLightboxController } = await import('../src/lib/article-enhancements/image-lightbox.js');
+        const documentRef = createFakeDocument();
+        const image = new FakeElement('img', { src: '/storage/photo.jpg', alt: 'Photo' });
+        const controller = createLightboxController({ documentRef });
+
+        controller.open(image, [image]);
+        const detachedDialog = documentRef.body.querySelector('.article-lightbox');
+        controller.close();
+
+        // ClientRouter 换 body：旧 dialog 留在旧 body 里，成为脱离节点。
+        detachedDialog.isConnected = false;
+        documentRef.body = new FakeElement('body');
+
+        controller.open(image, [image]);
+
+        const rebuiltDialog = documentRef.body.querySelector('.article-lightbox');
+        assert.ok(rebuiltDialog, '应在新 body 上重建 dialog');
+        assert.notEqual(rebuiltDialog, detachedDialog);
+        assert.equal(rebuiltDialog.open, true, '重建后的 dialog 应真的打开');
+    });
 });
