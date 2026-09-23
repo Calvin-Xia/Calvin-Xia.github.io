@@ -1,5 +1,7 @@
 # 项目结构探查报告(2026-09-12)
 
+> **历史快照（2026-09-12）**：本文已被 `docs/grilling/2026-09-23-project-audit/00-project-map.md` 取代，保留仅作当时事实的对照。其中的 commit 数、测试文件数与行数、workflow 数、`tools/api-server.js` 行数与鉴权方式（当时写 `===` 非 timing-safe，现为 `crypto.timingSafeEqual`）等数字与结论均已过期，请以新审计文档和当前代码为准。
+
 > 本文档是 grilling 流程的事实基础,由 3 个并行探索代理产出,只含代码中可验证的事实。
 > 后续文档:[01-design-tree.md](01-design-tree.md) · [02-rounds.md](02-rounds.md)
 

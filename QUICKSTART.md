@@ -42,8 +42,11 @@ npm run lint
 npm run check
 npm run stats
 npm run list-posts
-npm run api
+npm run new-post
 npm run edit-metadata -- <markdown-file>
+npm run redirects
+npm run og
+npm run api
 npm run publish -- --dry-run <obsidian-post-dir>
 npm run publish -- <obsidian-post-dir>
 npx wrangler secret put UMAMI_USERNAME

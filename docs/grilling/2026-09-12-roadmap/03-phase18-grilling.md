@@ -1,5 +1,7 @@
 # Phase 18 专项 grilling 记录(2026-09-12)
 
+> **历史快照（2026-09-12）**：那一轮的产物，现状见 docs/grilling/2026-09-23-project-audit/00-project-map.md。
+
 > 收官阶段五问,逐题作答,全部定案。事实依据:works.astro 文案走双语 i18n 键而 works JSON 中文单语、articles.astro 约 650 行内联 script、global.css @import 四族字重、manifest theme_color #1a1a2e。
 
 ### Q1 - works 双语策略

@@ -1,5 +1,7 @@
 # Grilling 设计树(2026-09-12)— 终稿
 
+> **历史快照（2026-09-12）**：那一轮的产物，现状见 docs/grilling/2026-09-23-project-audit/00-project-map.md。
+
 > 命题:功能优化 / 新功能加入 / CLI 优化新增 的整体规划。
 > **状态:三轮 20 问全部完成,用户于 Q19 确认共识。全部节点已决,无悬空分支。**
 > 事实:[00-project-map.md](00-project-map.md) · 答复原文:[02-rounds.md](02-rounds.md) · 决策表:[03-decisions.md](03-decisions.md) · 实施:[04-phases-p14-p18.md](04-phases-p14-p18.md)

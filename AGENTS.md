@@ -16,7 +16,8 @@ This repository is a static website fully migrated to Astro from root-level HTML
     - giscus 加载器脚本带 `data-astro-rerun`。Astro ClientRouter 会记录并跳过已执行过的脚本，而 giscus 的 `client.js` 每次执行只扫描一次 `.giscus`；去掉该属性后，站内客户端跳转到第二篇文章会留下一个空容器，评论区要硬刷新才恢复。`tests/giscus-comments.test.js` 以构建产物断言拦截该回退（在 `astro-build-check.yml` 里构建之后运行）。
     - 不要给评论区加 `transition:persist`。giscus 的 iframe `src` 把当前路径烘焙进了 discussion 键值，保留旧容器会让新文章显示上一篇的评论。
 - Article content: `src/lib/word-count.js` (字数 & 阅读时间), `src/lib/archive.js` (归档分组), `src/lib/article-enhancements/` (图片灯箱、标题锚点、目录、阅读进度、逐段渐显).
-- Publishing and local authoring scripts: `scripts/publish-post.js`, `scripts/post-utils.js`, `tools/api-server.js`; authoring CLI: `scripts/check-posts.js`, `scripts/post-stats.js`, `scripts/new-post-cli.js`, `scripts/list-posts.js`.
+- Publishing and local authoring scripts: `scripts/publish-post.js`, `scripts/post-utils.js`, `tools/api-server.js`; authoring CLI: `scripts/check-posts.js`, `scripts/post-stats.js`, `scripts/new-post-cli.js`, `scripts/list-posts.js`, `scripts/edit-metadata.js`.
+- Shared script modules: `scripts/blog-posts.js` (post discovery and frontmatter/body reading), `scripts/markdown-utils.js` (frontmatter serialization and tag normalization), `scripts/slug.js` (title→slug), `scripts/content-types.js` (extension→MIME map), `scripts/readable-stats.js` (CLI word count & reading time), `scripts/image-dimensions.js` (zero-dependency image dimension probing), `scripts/backfill-image-dimensions.js` (one-off backfill of `imageDimensions` for existing posts).
 - Fonts are self-hosted via `@fontsource/*` packages (imports in `src/layouts/BaseLayout.astro`); do not reintroduce Google Fonts `@import` or CSP origins.
 - Other assets: `storage/`, `.well-known/`.
 - CI/CD workflows: `.github/workflows/deploy.yml`, `astro-build-check.yml`, `phase-2-content-check.yml`, `metadata-editor-check.yml`, `cli-commands-check.yml`, `legacy-redirects-check.yml`.
@@ -27,12 +28,15 @@ When adding new files, keep them in the existing folder conventions and use rela
 - `npm install`: Install Astro and npm-managed libraries.
 - `npm run dev`: Start the Astro development server, usually at `http://localhost:4321`.
 - `npm run build`: Build the Astro static output into `dist/`, then generate OG share cards and legacy redirect pages.
+- `npm run og`: Regenerate the OG share cards only (`scripts/generate-og-images.mjs`) without a full build.
+- `npm run astro`: Pass-through to the local Astro CLI (e.g. `npm run astro -- info`, `npm run astro -- sync`).
 - `npm run preview`: Preview the Astro production build locally.
 - `npm run redirects`: Regenerate the legacy redirect pages on their own (they are otherwise only produced by `npm run build`; `npm run dev` does not generate them).
 - `npm test`: Run Node test suites for content migration, publishing, and local API behavior.
 - `npm run test:coverage`: Run the same tests with Node's experimental coverage report.
 - `npm run lint` / `npm run lint:fix`: Run ESLint checks or auto-fix.
-- `npm run check`: Validate frontmatter, dates, tags, slug filenames, links and R2 asset consistency for all posts.
+- `npm run check`: Validate frontmatter types and real calendar dates, hero file existence under `src/assets/hero/`, leftover `file/` asset links, invalid http URLs, `/articles/x/` internal link targets, ASCII filenames and the `tags` taxonomy whitelist (see Blog Taxonomy below) for every post. R2 assets are not checked.
+- `npm run edit-metadata -- <markdown-file>`: Interactively edit one post's frontmatter, validating against the blog schema with Zod and writing via temp file + rename; `--skip-validation` bypasses the schema check.
 - `npm run stats`: Print word count and reading time for all posts.
 - `npm run new-post`: Create a draft post interactively offline (shared validation with the publish pipeline).
 - `npm run list-posts`: Overview of all blog posts.
@@ -54,19 +58,22 @@ When adding new files, keep them in the existing folder conventions and use rela
 ## Blog Taxonomy
 `src/content/blog/*.md` frontmatter carries two independent dimensions. Keep them strictly separated:
 - `category` — 栏目。每篇恰好一个，只能取 `随笔` / `总结` / `日志`。驱动文章列表的第一个筛选组与卡片角标。
-- `tags` — 主题。跨栏目，每篇 1-4 个，只能取以下封闭白名单：`武汉大学`、`高考`、`旅行`、`铁路`、`人工智能`、`故乡`、`测绘`、`自我`、`劳动`、`语言文化`。
+- `tags` — 主题。跨栏目，每篇 1-4 个，只能取以下封闭白名单：`武汉大学`、`高考`、`旅行`、`铁路`、`人工智能`、`故乡`、`测绘`、`自我`、`劳动`、`语言文化`、`科技`（`科技` 为 2026-09-23 的一次显式新增决定）。
 
 Rules:
 - 白名单是封闭词表：新增词必须是一次显式决定，并同步更新本节列表；不要为单篇文章临时造词。
 - `tags` 不得出现与该篇 `category` 相同的值（历史问题：`学业总结`、`生活总结`、`随笔`、`日志` 曾同时作为 category 和 tag 存在）。
 - 每个 tag 必须写成独立的数组项。禁止用逗号把多个词塞进一个字符串（历史 bug：`- "思考，随笔，旅行，自我"`）。
-- 覆盖度参考：`自我` 覆盖面最广（13 篇中 10 篇），`故乡`、`劳动` 目前各只落在 1 篇。它们是已知的偏冷项，写新文章时优先复用，而不是另造新词。
-- 本约定目前仅由文档约束，没有自动校验，改动 frontmatter 时请自检。
+- 覆盖度参考：`自我` 覆盖面最广（14 篇中 10 篇），`故乡`、`劳动` 目前各只落在 1 篇。它们是已知的偏冷项，写新文章时优先复用，而不是另造新词。
+- 白名单校验由 `scripts/check-posts.js` 承担（随 2026-09-23 这批文档同步落地）：改动 frontmatter 后跑 `npm run check` 即可。该校验合并前进仓库时仍需人工自检本节词表。
 
 ## Blog Slugs
 文章文件名决定 URL（`generateId: fileStem`），因此必须满足两条硬性要求：
 - **只允许 ASCII**：文件名必须匹配 `^[A-Za-z0-9._-]+$`。中文文件名会让 URL 出现百分号转义。`npm run check` 会以 error 拦截。
-- **英文语义名**：`<YYYYMMDD>-<english-semantic-slug>`，例如 `20260411-ai-reliance`、`20260706-short-term-training-diary-1`、`20260315-two-hour-loop-ride`。不要用拼音首字母——发布管线里的 `slugifyTitle()` 会产出 `fxxj-pjcz` 这类不可读结果，手写文件名时请覆盖它。
+- **英文语义名**：`<YYYYMMDD>-<english-semantic-slug>`，例如 `20260411-ai-reliance`、`20260706-short-term-training-diary-1`、`20260315-two-hour-loop-ride`。文件名决定 URL，而两条建稿路径对 slug 的控制能力不同：
+    - `npm run publish <obsidian-post-dir>`：目标文件名取 Obsidian 目录名（`scripts/post-utils.js:154`），所以**在 Obsidian 里就把目录命名成 `<YYYYMMDD>-<english-slug>`**；
+    - `npm run new-post` / `POST /api/new-post`：走 `createPostFile` → `slugifyTitle()`（`scripts/post-utils.js:71-73`），只会得到标题拼音首字母（如 `fxxj-pjcz`），**没有覆盖入口**。想保留语义名就建稿后手动重命名；已发布的文章改名必须同时补 legacy 跳转项。
+- **日期段与 `date` 允许不一致**：文件名里的 `<YYYYMMDD>` 是起稿日（Obsidian vault 的文件命名习惯），frontmatter `date` 是实际发布/完成日。两者不相等是正常现象（例如 `20260609-gaokao-chinese-essay` 的 `date: 2026-07-04`），不必为了对齐而改名——改名反而要补 legacy 跳转项。
 
 改名或删除已发布文章时，必须在 `scripts/legacy-redirects.js` 里补上旧 URL 的跳转项（同时覆盖 `/blog/<旧名>.html` 与 `/articles/<旧名>/` 两种历史形态），否则旧书签、RSS 条目和分享链接会 404。跳转页由 `npm run build` 生成，本地可用 `npm run redirects` 单独产出。
 

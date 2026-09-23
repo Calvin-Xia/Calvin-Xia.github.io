@@ -349,7 +349,7 @@ UI 国际化使用自定义轻量实现，不引入路由级 `/en`：
 - 写入使用临时文件 + rename，失败时清理临时文件
 - `metadata-editor-check.yml` 会在相关文件变更时验证 CLI 测试和 help 入口
 
-Phase 14 补上的写作 CLI 集中在 `scripts/`：`check-posts.js`（frontmatter/日期/标签/链接/R2 资产校验）、`post-stats.js`（字数与阅读时长统计）、`new-post-cli.js`（离线交互建稿，校验函数与发布管线共享）、`list-posts.js`（全站概览）。`publish-post.js` 带覆盖保护（`--force`）、`--version` 和未知参数报错；`tools/api-server.js` 的 Bearer 比较使用 `crypto.timingSafeEqual`。行为测试在 `tests/check-posts.test.js`、`tests/post-stats.test.js`、`tests/new-post-cli.test.js`、`tests/list-posts.test.js`、`tests/api-server.test.js`，CI 门禁为 `cli-commands-check.yml`。
+Phase 14 补上的写作 CLI 集中在 `scripts/`：`check-posts.js`（frontmatter 类型与日期真实性、`src/assets/hero/` 本地文件存在性、正文残留 `file/` 链接、无效 http 链接、`/articles/x/` 内部链接与文件名 ASCII 校验；`tags` 白名单对照 AGENTS.md 的 Blog Taxonomy，R2 资产不在校验范围内）、`post-stats.js`（字数与阅读时长统计）、`new-post-cli.js`（离线交互建稿，校验函数与发布管线共享）、`list-posts.js`（全站概览）。`publish-post.js` 带覆盖保护（`--force`）、`--version` 和未知参数报错；`tools/api-server.js` 的 Bearer 比较使用 `crypto.timingSafeEqual`。行为测试在 `tests/check-posts.test.js`、`tests/post-stats.test.js`、`tests/new-post-cli.test.js`、`tests/list-posts.test.js`、`tests/api-server.test.js`，CI 门禁为 `cli-commands-check.yml`。
 
 发布流程标签默认值修复位于 `scripts/publish-post.js` 与 `scripts/post-utils.js`，对应测试在 `tests/publish-post.test.js` 和 `tests/post-utils.test.js`。
 
@@ -380,6 +380,13 @@ Phase 14 补上的写作 CLI 集中在 `scripts/`：`check-posts.js`（frontmatt
 
 - 生产站点 `https://calvin-xia.cn` 由 Cloudflare Workers 提供：`wrangler.jsonc` 的 `mr-xia-site`，ASSETS 指向 `./dist`，`/api/*` 先走 Worker，自定义域在 Cloudflare 控制台绑定。部署 = 先 `npm run build`，再 `npx wrangler deploy`。
 - GitHub Pages 镜像由 `deploy.yml` 在 push main 时自动构建发布（`https://calvin-xia.github.io`），与生产站相互独立。
+
+### 回滚
+
+- Worker：`npx wrangler deployments list` 看历史版本，`npx wrangler rollback [version-id] --name mr-xia-site --message "<原因>"` 切回指定版本；也可在 Cloudflare 控制台的 Workers → `mr-xia-site` → Deployments 里点 Rollback。Workers 的版本包含该次部署的静态资产，所以回滚同时把 `dist/` 退回当时那一版。
+- 内容：文章与 hero 都是普通文件，`git revert <commit>`（或 `git checkout <sha> -- <path>`）后重新 `npm run build` + `npx wrangler deploy` 即可；已推到 R2 的资源没有删除逻辑（代码里没有 `DeleteObjectCommand`），只能重新上传覆盖同名 key。
+- GitHub Pages 镜像：在 Actions 里对历史的 `deploy` run 选 Re-run all jobs，或 revert 对应 commit 后等 push main 重新部署。
+- 没有自动回滚：生产部署是人工操作，仓库里也没有“构建产物是否与 HEAD 一致”的闸门，回滚前先确认本地 `dist/` 来自哪个 commit。
 - `public/_headers` 的 CSP：`script-src` 放行 `https://static.cloudflareinsights.com`（Cloudflare Web Analytics beacon 脚本），`connect-src` 放行 `https://cloudflareinsights.com`（beacon 上报）；调整白名单时同步更新 `tests/phase-5-seo-comments.test.js` 的断言。
 
 ## CI
