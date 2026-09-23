@@ -67,13 +67,20 @@
 - **该要求已记入 [`01-design-tree.md`](01-design-tree.md) B5 的批次③ 条目 3**（taxonomy 校验落进 `scripts/check-posts.js` + `20260918-zcode-…-2.md` 追加 `人工智能`），并在 [`04-risks.md`](04-risks.md) 里记作 P1-10 → 批次③ 3-3。
 - 顺带需要同 PR 处理的一致性：`src/content/blog/20260918-zcode-silent-workspace-snapshot-upload-2.md:7` 目前仍是 `tags: ["科技"]`（`[复核]` 第 7 行），Q8 要求的「追加 `人工智能`」尚未执行；`AGENTS.md:61` 的白名单已含 `科技`，所以该校验一落地必须能通过 —— 白名单收编已完成，正文追加属内容变更。
 
+### 窗口已闭合（2026-09-23，批次③ 3-3）
+
+- `scripts/check-posts.js` 已加入 category 三选一、tags 白名单、1–4 数量、tag ≠ category 四类校验（白名单常量 `TAG_WHITELIST` 就写在文件顶部，注释指向 `AGENTS.md` 的 Blog Taxonomy）。
+- `src/content/blog/20260918-zcode-silent-workspace-snapshot-upload-2.md` 的 tags 已追加 `人工智能`（保留 `科技`），因此新校验一落地就能过。
+- 实测：`npm run check` 输出「检查完成：14 篇文章，0 个错误，0 个警告」；新增反例断言见 `tests/check-posts.test.js`。
+- 因此本 PR 合入时，§3 那条「文档领先代码」不再成立，四处文档描述与代码一致。
+
 ---
 
 ## 4. 判定方向速查（Q3 规则的落地形态）
 
 | 文档 | 类型 | 该做什么 | 本批状态 |
 |---|---|---|---|
-| `AGENTS.md`、`README.md`、`QUICKSTART.md`、`site-maintenance-guide.md` | 操作型 | 以代码为准修正 | §1 的 11 条操作型漂移（条目 1–9、14，加上收尾新增的条目 16）**已全部落地**；其中条目 2 方向反了（见 §3），已由批次③ 3-3 的计划接住 |
+| `AGENTS.md`、`README.md`、`QUICKSTART.md`、`site-maintenance-guide.md` | 操作型 | 以代码为准修正 | §1 的 11 条操作型漂移（条目 1–9、14，加上收尾新增的条目 16）**已全部落地**；其中条目 2 方向反了（见 §3），**已由批次③ 3-3 接住并闭合** |
 | `DESIGN.md` | 目标型 | 逐条标注「已实现 / 未实现（差异原因）」 | **批次①-a 已执行** —— 顶部新增「实现状态（2026-09-23）」小节；数值取舍属 C3 |
 | `prd-*`、`move-to-astro/*/spec.md` | 目标型 | 同上 | 本批未系统过一遍；`move-to-astro/README.md` 只加了 Phase 覆盖范围说明 |
 | 旧审计/计划文档（`docs/grilling/2026-09-12-roadmap/`、`docs/superpowers/**`、`frontend-visual-reform/checklist.md`） | 历史快照 | 只加日期或后续状态标注，不改写旧数字 | §1 的 4 条快照行（条目 10–13）已落地；`2026-09-12-roadmap/` 目录 6/6 文件均带标注 |

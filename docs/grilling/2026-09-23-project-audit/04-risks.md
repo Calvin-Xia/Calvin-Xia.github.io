@@ -145,3 +145,36 @@
 | 2-6 | 根 `storage/` 的 3 个跟踪文件已 `git rm`，`public/storage/` 5 个文件未动 | 删除前复跑引用面：页面用的是 `/storage/*` URL（由 `public/storage/` 应答），无任何代码读取根目录路径 |
 
 验证口径：`npm test` 433/433（改动前 414，+19 断言）、`npm run lint` 0 error、`npm run check` 0 错误、`npm run build` 成功。`wrangler.jsonc` 的合法性由 `npx wrangler deploy --dry-run` 实际验证（无需登录/联网），输出确认已识别 `CF_VERSION_METADATA — Worker Version Metadata`。
+
+---
+
+## 7. 批次③ 落地记录（2026-09-23）
+
+四项已批准条目全部落地：
+
+| 编号 | 落地情况 |
+|---|---|
+| 3-1 | `index.astro` / `about.astro` / `styleguide.astro` 按仓库既有约定补 `astro:page-load` 注册（`Header.astro` 是同一写法）。四个被调用的 init 全部幂等（`TimeDisplay` 先 `clearInterval`、ripples 先 `abort`、`EmailProtection` 有 `existingLink` 早退、`PageAnimations` 只重设类名/样式且不建 observer），因此「首次加载立即执行 + `load` 时的 `astro:page-load`」不会产生重复副作用。新增 `tests/page-hooks.test.js` |
+| 3-2 | `random-selector.ts` 去掉 `MAMMOTH_CDN_URL` 与 CDN 优先分支，只留 `/libs/mammoth/`；`BaseLayout.astro` 删 cdnjs preconnect / dns-prefetch；`tests/phase-3-tools.test.js` 的断言反转为「源码内不得再出现站内 cdnjs 引用」。`markdown-renderer.ts` 里给导出用独立 HTML 的那份按计划未动 |
+| 3-3 | `scripts/check-posts.js` 加入 category 三选一 / tags 白名单 / 1–4 数量 / tag ≠ category 四类校验（白名单常量在文件顶部，注释指向 AGENTS.md）；文章 tags 追加 `人工智能`（保留 `科技`）。`npm run check` → 14 篇 0 错误 |
+| 3-4 | 新增 `src/lib/article-enhancements/article-scope.js`（容器判据 `[data-article-content]`）；文章页正文容器加该属性；`article-runtime.js` / `article-mermaid.js` / `article-enhancements.js` 改为先解析容器、找不到就整体跳过（不影响页面过渡与浏览量）。新增 `tests/article-scope.test.js` |
+
+### 真实浏览器核对（Playwright CLI + `npm run preview`，`127.0.0.1:4321`）
+
+| 场景 | 结果 |
+|---|---|
+| 首页首次整页加载 | `main > section.fade-in-up` = 5，时钟在走 |
+| 首页 → 文章 → 首页（客户端导航二次进入） | `fade-in-up` = **5**、时钟在走 → 3-1 生效 |
+| **反向控制**：临时 `git stash` 掉 3-1 的三处改动并重建 | 同一路径下 `fade-in-up` = **0** → 这个信号确实能抓到原 bug（时钟仍在走，因为它读的是上次残留的 interval） |
+| 关于页二次进入 | `.email-link` = 1 |
+| styleguide 二次进入（注入链接走 ClientRouter） | `.card` 5 个，其中带 `animation-delay` 的 **5 个**，时钟在走 |
+| 工具页 Markdown 预览（含 `## 标题` 与图片） | 预览渲染出 `h2`，但 `.heading-anchor` = 0、`figure.markdown-image-figure` = 0、`[data-captioned]` = 0，且页面无 `[data-article-content]` → 3-4 生效 |
+| 文章页（回归守卫） | 容器存在、`.heading-anchor` = 4、图注 figure = 13、进度条存在、目录可见 → 增强未被打坏 |
+| 控制台 | 0 error，无 CSP / cdnjs 相关条目 |
+| 构建产物 | `dist/**/*.html` 中 cdnjs 命中数 = 0 |
+
+核对脚本与原始输出留在 `tmp/verify.sh`、`tmp/g.js`（`tmp/` 被 gitignore，不入库）。唯一需注意的环境细节：`astro preview` 默认只监听 IPv6 `[::1]`，需 `npm run preview -- --host 127.0.0.1` 才能被 curl / Playwright 访问。
+
+验证口径：`npm test` **456/456**（批次② 后为 433，本批 +23）、`npm run lint` 0 error、`npm run check` 0 错误、`npm run build` 成功（15 张 OG 卡 + 17 条跳转页）。
+
+至此批次①/②/③ 全部落地，PR 内不再存在「文档领先代码」的窗口（见 [`05-doc-drift.md`](05-doc-drift.md) §3）。
